@@ -1,0 +1,469 @@
+    Updating crates.io index
+     Locking 14 packages to latest compatible versions
+      Adding base64 v0.22.1
+      Adding deranged v0.5.5
+      Adding jsonwebtoken v9.3.1 (available: v10.3.0)
+      Adding num-bigint v0.4.6
+      Adding num-conv v0.2.0
+      Adding num-integer v0.1.46
+      Adding pem v3.0.6
+      Adding powerfmt v0.2.0
+      Adding simple_asn1 v0.6.3
+      Adding thiserror v2.0.18
+      Adding thiserror-impl v2.0.18
+      Adding time v0.3.46
+      Adding time-core v0.1.8
+      Adding time-macros v0.2.26
+ Downloading crates ...
+  Downloaded itoa v1.0.17
+  Downloaded axum-core v0.4.5
+  Downloaded block-buffer v0.10.4
+  Downloaded scopeguard v1.2.0
+  Downloaded bitflags v2.10.0
+  Downloaded axum-macros v0.4.2
+  Downloaded base64ct v1.8.3
+  Downloaded sync_wrapper v0.1.2
+  Downloaded async-trait v0.1.89
+  Downloaded atomic-waker v1.1.2
+  Downloaded autocfg v1.5.0
+  Downloaded tower-service v0.3.3
+  Downloaded anyhow v1.0.100
+  Downloaded equivalent v1.0.2
+  Downloaded rustversion v1.0.22
+  Downloaded httpdate v1.0.3
+  Downloaded http-body v0.4.6
+  Downloaded form_urlencoded v1.2.2
+  Downloaded generic-array v0.14.7
+  Downloaded log v0.4.29
+  Downloaded futures-task v0.3.31
+  Downloaded dotenvy v0.15.7
+  Downloaded num-conv v0.2.0
+  Downloaded cfg-if v1.0.4
+  Downloaded cpufeatures v0.2.17
+  Downloaded lock_api v0.4.14
+  Downloaded sha1_smol v1.0.1
+  Downloaded idna_adapter v1.2.1
+  Downloaded http-body v1.0.1
+  Downloaded fnv v1.0.7
+  Downloaded serde_urlencoded v0.7.1
+  Downloaded futures-channel v0.3.31
+  Downloaded num-integer v0.1.46
+  Downloaded rustls-pemfile v1.0.4
+  Downloaded getrandom v0.2.17
+  Downloaded mime v0.3.17
+  Downloaded futures-core v0.3.31
+  Downloaded semver v1.0.27
+  Downloaded jsonwebtoken v9.3.1
+  Downloaded nu-ansi-term v0.50.3
+  Downloaded iana-time-zone v0.1.65
+  Downloaded pin-utils v0.1.0
+  Downloaded icu_provider v2.1.1
+  Downloaded pin-project-lite v0.2.16
+  Downloaded potential_utf v0.1.4
+  Downloaded rand_core v0.6.4
+  Downloaded percent-encoding v2.3.2
+  Downloaded signature v2.2.0
+  Downloaded hyper-rustls v0.24.2
+  Downloaded pem v3.0.6
+  Downloaded num-traits v0.2.19
+  Downloaded once_cell v1.21.3
+  Downloaded parking_lot v0.12.5
+  Downloaded errno v0.3.14
+  Downloaded curve25519-dalek-derive v0.1.1
+  Downloaded rustc_version v0.4.1
+  Downloaded crypto-common v0.1.7
+  Downloaded find-msvc-tools v0.1.9
+  Downloaded futures-sink v0.3.31
+  Downloaded ipnet v2.11.0
+  Downloaded lazy_static v1.5.0
+  Downloaded powerfmt v0.2.0
+  Downloaded hex v0.4.3
+  Downloaded sct v0.7.1
+  Downloaded shlex v1.3.0
+  Downloaded serde_path_to_error v0.1.20
+  Downloaded sha2 v0.10.9
+  Downloaded thread_local v1.1.9
+  Downloaded subtle v2.6.1
+  Downloaded serde_core v1.0.228
+  Downloaded http-body-util v0.1.3
+  Downloaded proc-macro2 v1.0.106
+  Downloaded displaydoc v0.2.5
+  Downloaded slab v0.4.12
+  Downloaded sharded-slab v0.1.7
+  Downloaded ryu v1.0.22
+  Downloaded matchit v0.7.3
+  Downloaded ed25519 v2.2.3
+  Downloaded serde_derive v1.0.228
+  Downloaded deranged v0.5.5
+  Downloaded matchers v0.2.0
+  Downloaded socket2 v0.5.10
+  Downloaded thiserror-impl v1.0.69
+  Downloaded signal-hook-registry v1.4.8
+  Downloaded tower-layer v0.3.3
+  Downloaded untrusted v0.9.0
+  Downloaded sync_wrapper v1.0.2
+  Downloaded uuid v1.20.0
+  Downloaded parking_lot_core v0.9.12
+  Downloaded pkcs8 v0.10.2
+  Downloaded httparse v1.10.1
+  Downloaded quote v1.0.44
+  Downloaded tokio-macros v2.6.0
+  Downloaded icu_properties v2.1.2
+  Downloaded futures-util v0.3.31
+  Downloaded try-lock v0.2.5
+  Downloaded tracing-log v0.2.0
+  Downloaded time-core v0.1.8
+  Downloaded simple_asn1 v0.6.3
+  Downloaded thiserror-impl v2.0.18
+  Downloaded bytes v1.11.0
+  Downloaded unicode-ident v1.0.22
+  Downloaded zerofrom v0.1.6
+  Downloaded base64 v0.21.7
+  Downloaded getrandom v0.3.4
+  Downloaded litemap v0.8.1
+  Downloaded utf8_iter v1.0.4
+  Downloaded digest v0.10.7
+  Downloaded const-oid v0.9.6
+  Downloaded version_check v0.9.5
+  Downloaded zerofrom-derive v0.1.6
+  Downloaded time-macros v0.2.26
+  Downloaded yoke v0.8.1
+  Downloaded spki v0.7.3
+  Downloaded zeroize v1.8.2
+  Downloaded aho-corasick v1.1.4
+  Downloaded writeable v0.6.2
+  Downloaded thiserror v2.0.18
+  Downloaded tokio-rustls v0.24.1
+  Downloaded want v0.3.1
+  Downloaded base64 v0.22.1
+  Downloaded axum v0.7.9
+  Downloaded stable_deref_trait v1.2.1
+  Downloaded hashbrown v0.16.1
+  Downloaded thiserror v1.0.69
+  Downloaded yoke-derive v0.8.1
+  Downloaded zerovec-derive v0.11.2
+  Downloaded h2 v0.3.27
+  Downloaded synstructure v0.13.2
+  Downloaded hyper v0.14.32
+  Downloaded socket2 v0.4.10
+  Downloaded hyper-util v0.1.20
+  Downloaded cc v1.2.55
+  Downloaded tracing-attributes v0.1.31
+  Downloaded ed25519-dalek v2.2.0
+  Downloaded icu_properties_data v2.1.2
+  Downloaded zmij v1.0.19
+  Downloaded tracing-core v0.1.36
+  Downloaded socket2 v0.6.2
+  Downloaded smallvec v1.15.1
+  Downloaded hyper v1.8.1
+  Downloaded http v0.2.12
+  Downloaded tinystr v0.8.2
+  Downloaded encoding_rs v0.8.35
+  Downloaded indexmap v2.13.0
+  Downloaded regex-syntax v0.8.8
+  Downloaded icu_normalizer_data v2.1.1
+  Downloaded libc v0.2.180
+  Downloaded tokio-util v0.7.18
+  Downloaded num-bigint v0.4.6
+  Downloaded icu_normalizer v2.1.1
+  Downloaded der v0.7.10
+  Downloaded combine v4.6.7
+  Downloaded chrono v0.4.43
+  Downloaded rustls-webpki v0.101.7
+  Downloaded icu_locale_core v2.1.1
+  Downloaded icu_collections v2.1.1
+  Downloaded curve25519-dalek v4.1.3
+  Downloaded idna v1.1.0
+  Downloaded mio v1.1.1
+  Downloaded http v1.4.0
+  Downloaded ring v0.17.14
+  Downloaded serde_json v1.0.149
+  Downloaded reqwest v0.11.27
+  Downloaded redis v0.24.0
+  Downloaded rustls v0.21.12
+  Downloaded memchr v2.7.6
+  Downloaded regex-automata v0.4.13
+  Downloaded serde v1.0.228
+  Downloaded syn v2.0.114
+  Downloaded tower v0.5.3
+  Downloaded tokio v1.49.0
+  Downloaded zerovec v0.11.5
+  Downloaded url v2.5.8
+  Downloaded tower-http v0.5.2
+  Downloaded tower v0.4.13
+  Downloaded tracing-subscriber v0.3.22
+  Downloaded time v0.3.46
+  Downloaded webpki-roots v0.25.4
+  Downloaded typenum v1.19.0
+  Downloaded zerotrie v0.2.3
+  Downloaded tracing v0.1.44
+   Compiling proc-macro2 v1.0.106
+   Compiling quote v1.0.44
+   Compiling unicode-ident v1.0.22
+   Compiling libc v0.2.180
+    Checking cfg-if v1.0.4
+    Checking pin-project-lite v0.2.16
+    Checking itoa v1.0.17
+    Checking bytes v1.11.0
+    Checking smallvec v1.15.1
+   Compiling parking_lot_core v0.9.12
+    Checking futures-core v0.3.31
+    Checking scopeguard v1.2.0
+    Checking stable_deref_trait v1.2.1
+    Checking log v0.4.29
+    Checking lock_api v0.4.14
+    Checking once_cell v1.21.3
+   Compiling find-msvc-tools v0.1.9
+   Compiling shlex v1.3.0
+    Checking pin-utils v0.1.0
+   Compiling serde_core v1.0.228
+    Checking futures-sink v0.3.31
+    Checking futures-task v0.3.31
+    Checking tracing-core v0.1.36
+   Compiling cc v1.2.55
+    Checking litemap v0.8.1
+   Compiling version_check v0.9.5
+    Checking tower-service v0.3.3
+   Compiling typenum v1.19.0
+    Checking writeable v0.6.2
+    Checking futures-util v0.3.31
+   Compiling autocfg v1.5.0
+   Compiling icu_properties_data v2.1.2
+   Compiling icu_normalizer_data v2.1.1
+    Checking untrusted v0.9.0
+   Compiling httparse v1.10.1
+   Compiling generic-array v0.14.7
+    Checking http v1.4.0
+   Compiling num-traits v0.2.19
+   Compiling serde v1.0.228
+    Checking futures-channel v0.3.31
+    Checking http-body v1.0.1
+    Checking percent-encoding v2.3.2
+    Checking fnv v1.0.7
+    Checking httpdate v1.0.3
+    Checking errno v0.3.14
+    Checking socket2 v0.6.2
+   Compiling syn v2.0.114
+    Checking mio v1.1.1
+   Compiling ring v0.17.14
+    Checking getrandom v0.2.17
+    Checking signal-hook-registry v1.4.8
+   Compiling zmij v1.0.19
+    Checking parking_lot v0.12.5
+    Checking memchr v2.7.6
+    Checking form_urlencoded v1.2.2
+    Checking http v0.2.12
+    Checking hashbrown v0.16.1
+    Checking equivalent v1.0.2
+    Checking tower-layer v0.3.3
+   Compiling semver v1.0.27
+   Compiling rustls v0.21.12
+   Compiling serde_json v1.0.149
+    Checking block-buffer v0.10.4
+   Compiling rustc_version v0.4.1
+    Checking crypto-common v0.1.7
+   Compiling rustversion v1.0.22
+    Checking indexmap v2.13.0
+   Compiling num-conv v0.2.0
+   Compiling time-core v0.1.8
+    Checking ryu v1.0.22
+   Compiling thiserror v2.0.18
+    Checking slab v0.4.12
+    Checking powerfmt v0.2.0
+    Checking utf8_iter v1.0.4
+    Checking try-lock v0.2.5
+   Compiling time-macros v0.2.26
+   Compiling curve25519-dalek v4.1.3
+    Checking digest v0.10.7
+    Checking want v0.3.1
+    Checking http-body v0.4.6
+    Checking deranged v0.5.5
+    Checking num-integer v0.1.46
+    Checking socket2 v0.5.10
+    Checking http-body-util v0.1.3
+    Checking cpufeatures v0.2.17
+   Compiling getrandom v0.3.4
+    Checking atomic-waker v1.1.2
+    Checking regex-syntax v0.8.8
+    Checking sync_wrapper v1.0.2
+    Checking mime v0.3.17
+    Checking num-bigint v0.4.6
+    Checking lazy_static v1.5.0
+   Compiling anyhow v1.0.100
+   Compiling thiserror v1.0.69
+    Checking base64 v0.21.7
+    Checking subtle v2.6.1
+    Checking signature v2.2.0
+    Checking zeroize v1.8.2
+    Checking base64 v0.22.1
+    Checking ed25519 v2.2.3
+    Checking rustls-pemfile v1.0.4
+    Checking pem v3.0.6
+    Checking sharded-slab v0.1.7
+    Checking sha2 v0.10.9
+    Checking regex-automata v0.4.13
+    Checking serde_path_to_error v0.1.20
+    Checking socket2 v0.4.10
+    Checking tracing-log v0.2.0
+    Checking thread_local v1.1.9
+    Checking encoding_rs v0.8.35
+    Checking ipnet v2.11.0
+    Checking time v0.3.46
+    Checking webpki-roots v0.25.4
+    Checking iana-time-zone v0.1.65
+    Checking bitflags v2.10.0
+    Checking sync_wrapper v0.1.2
+    Checking nu-ansi-term v0.50.3
+    Checking sha1_smol v1.0.1
+    Checking matchit v0.7.3
+    Checking uuid v1.20.0
+    Checking dotenvy v0.15.7
+    Checking hex v0.4.3
+   Compiling synstructure v0.13.2
+    Checking matchers v0.2.0
+   Compiling zerofrom-derive v0.1.6
+   Compiling yoke-derive v0.8.1
+   Compiling tokio-macros v2.6.0
+   Compiling zerovec-derive v0.11.2
+   Compiling displaydoc v0.2.5
+   Compiling tracing-attributes v0.1.31
+   Compiling serde_derive v1.0.228
+   Compiling async-trait v0.1.89
+   Compiling thiserror-impl v2.0.18
+   Compiling curve25519-dalek-derive v0.1.1
+   Compiling axum-macros v0.4.2
+    Checking tokio v1.49.0
+   Compiling thiserror-impl v1.0.69
+    Checking tracing v0.1.44
+    Checking zerofrom v0.1.6
+    Checking simple_asn1 v0.6.3
+    Checking yoke v0.8.1
+    Checking ed25519-dalek v2.2.0
+    Checking axum-core v0.4.5
+    Checking tower-http v0.5.2
+    Checking tower v0.4.13
+    Checking tracing-subscriber v0.3.22
+    Checking zerovec v0.11.5
+    Checking zerotrie v0.2.3
+    Checking tinystr v0.8.2
+    Checking potential_utf v0.1.4
+    Checking rustls-webpki v0.101.7
+    Checking sct v0.7.1
+    Checking icu_collections v2.1.1
+    Checking icu_locale_core v2.1.1
+    Checking serde_urlencoded v0.7.1
+    Checking chrono v0.4.43
+    Checking jsonwebtoken v9.3.1
+    Checking icu_provider v2.1.1
+    Checking icu_normalizer v2.1.1
+    Checking icu_properties v2.1.2
+    Checking tokio-util v0.7.18
+    Checking tokio-rustls v0.24.1
+    Checking hyper v1.8.1
+    Checking tower v0.5.3
+    Checking idna_adapter v1.2.1
+    Checking idna v1.1.0
+    Checking h2 v0.3.27
+    Checking combine v4.6.7
+    Checking hyper-util v0.1.20
+    Checking url v2.5.8
+    Checking axum v0.7.9
+    Checking hyper v0.14.32
+    Checking redis v0.24.0
+    Checking hyper-rustls v0.24.2
+    Checking reqwest v0.11.27
+    Checking atrosha-proxy v0.1.0 (/app)
+warning: unused imports: `IntoResponse` and `Request`
+  --> src/main.rs:14:31
+   |
+14 |     http::{HeaderMap, Method, Request, StatusCode},
+   |                               ^^^^^^^
+15 |     response::{IntoResponse, Response},
+   |                ^^^^^^^^^^^^
+   |
+   = note: `#[warn(unused_imports)]` (part of `#[warn(unused)]`) on by default
+
+warning: unused import: `Instrument`
+  --> src/main.rs:21:26
+   |
+21 | use tracing::{info_span, Instrument};
+   |                          ^^^^^^^^^^
+
+error: this function depends on never type fallback being `()`
+  --> src/policy.rs:68:5
+   |
+68 |     pub async fn reset_usage(&self, agent_id: &str) -> Result<(), PolicyError> {
+   |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+   |
+   = warning: this was previously accepted by the compiler but is being phased out; it will become a hard error in Rust 2024 and in a future release in all editions!
+   = note: for more information, see <https://doc.rust-lang.org/edition-guide/rust-2024/never-type-fallback.html>
+   = help: specify the types explicitly
+note: in edition 2024, the requirement `!: FromRedisValue` will fail
+  --> src/policy.rs:71:14
+   |
+71 |         conn.set(&usage_key, 0.0).await?;
+   |              ^^^
+   = note: `#[deny(dependency_on_unit_never_type_fallback)]` (part of `#[deny(rust_2024_compatibility)]`) on by default
+help: use `()` annotations to avoid fallback changes
+   |
+71 |         conn.set::<_, _, ()>(&usage_key, 0.0).await?;
+   |                 ++++++++++++
+
+error: this function depends on never type fallback being `()`
+  --> src/policy.rs:77:5
+   |
+77 |     pub async fn set_limit(&self, agent_id: &str, limit: f64) -> Result<(), PolicyError> {
+   |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+   |
+   = warning: this was previously accepted by the compiler but is being phased out; it will become a hard error in Rust 2024 and in a future release in all editions!
+   = note: for more information, see <https://doc.rust-lang.org/edition-guide/rust-2024/never-type-fallback.html>
+   = help: specify the types explicitly
+note: in edition 2024, the requirement `!: FromRedisValue` will fail
+  --> src/policy.rs:80:14
+   |
+80 |         conn.set(&limit_key, limit).await?;
+   |              ^^^
+help: use `()` annotations to avoid fallback changes
+   |
+80 |         conn.set::<_, _, ()>(&limit_key, limit).await?;
+   |                 ++++++++++++
+
+error: this function depends on never type fallback being `()`
+  --> src/registry.rs:41:5
+   |
+41 |     pub async fn register_agent(&self, agent_id: &str, public_key_hex: &str) -> Result<(), RegistryError> {
+   |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+   |
+   = warning: this was previously accepted by the compiler but is being phased out; it will become a hard error in Rust 2024 and in a future release in all editions!
+   = note: for more information, see <https://doc.rust-lang.org/edition-guide/rust-2024/never-type-fallback.html>
+   = help: specify the types explicitly
+note: in edition 2024, the requirement `!: FromRedisValue` will fail
+  --> src/registry.rs:50:14
+   |
+50 |         conn.set(&key, public_key_hex).await?;
+   |              ^^^
+help: use `()` annotations to avoid fallback changes
+   |
+50 |         conn.set::<_, _, ()>(&key, public_key_hex).await?;
+   |                 ++++++++++++
+
+warning: variant `ChannelClosed` is never constructed
+  --> src/audit.rs:10:5
+   |
+ 8 | pub enum AuditError {
+   |          ---------- variant in this enum
+ 9 |     #[error("channel closed")]
+10 |     ChannelClosed,
+   |     ^^^^^^^^^^^^^
+   |
+   = note: `AuditError` has a derived impl for the trait `Debug`, but this is intentionally ignored during dead code analysis
+   = note: `#[warn(dead_code)]` (part of `#[warn(unused)]`) on by default
+
+warning: function `verify_signature` is never used
+  --> src/middleware.rs:13:14
+   |
+13 | pub async fn verify_signature(
+   |              ^^^^^^^^^^^^^^^^
+
+warning: `atrosha-proxy` (bin "atrosha-proxy") generated 4 warnings
+error: could not compile `atrosha-proxy` (bin "atrosha-proxy") due to 6 previous errors; 4 warnings emitted

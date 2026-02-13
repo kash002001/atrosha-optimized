@@ -1,0 +1,92 @@
+name: SpendGuard CI
+
+on:
+  push:
+    branches: [ "main" ]
+  pull_request:
+    branches: [ "main" ]
+
+env:
+  CARGO_TERM_COLOR: always
+
+jobs:
+#Rust proxy
+  proxy-check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Rust
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          components: clippy, rustfmt
+
+      - name: Cache Cargo Registry
+        uses: actions/cache@v3
+        with:
+          path: |
+            ~/.cargo/bin/
+            ~/.cargo/registry/index/
+            ~/.cargo/registry/cache/
+            ~/.cargo/git/db/
+            proxy/target/
+          key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}
+
+      - name: Check Formatting
+        run: cd proxy && cargo fmt -- --check
+
+      - name: Run Clippy
+        run: cd proxy && cargo clippy -- -D warnings
+
+      - name: Run Tests
+        run: cd proxy && cargo test --verbose
+
+#Test ( python)
+
+  validator-check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: "3.11"
+          cache: "pip"
+
+      - name: Install Dependencies
+        run: |
+          cd intent_validator
+          pip install -r requirements.txt
+          pip install pytest httpx
+
+      - name: Run Tests
+        # Assuming tests exist in tests/ or implicitly
+        # For now, we perform a syntax/import check if no tests exist
+        run: |
+          cd intent_validator
+          python -m compileall .
+
+# For the verification of the docker build
+  docker-build:
+    runs-on: ubuntu-latest
+    needs: [proxy-check, validator-check]
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v2
+
+      - name: Build Proxy
+        uses: docker/build-push-action@v4
+        with:
+          context: ./proxy
+          push: false
+          tags: spendguard/proxy:ci
+
+      - name: Build Intent Validator
+        uses: docker/build-push-action@v4
+        with:
+          context: ./intent_validator
+          push: false
+          tags: spendguard/intent-validator:ci

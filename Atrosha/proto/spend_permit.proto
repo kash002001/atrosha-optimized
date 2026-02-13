@@ -1,0 +1,33 @@
+syntax = "proto3";
+
+package atrosha.v1;
+
+service SpendPermitService {
+  rpc RequestPermit (PermitRequest) returns (PermitResponse);
+  rpc ValidateIntent (IntentRequest) returns (IntentResponse);
+}
+
+message PermitRequest {
+  string agent_id = 1;
+  string target_api = 2; // e.g., "stripe.com/v1/charges"
+  double amount = 3;
+  string currency = 4;
+  string idempotency_key = 5;
+}
+
+message PermitResponse {
+  bool allowed = 1;
+  string rejection_reason = 2;
+  string permit_token = 3; // Signed JWT or opaque token
+  double remaining_budget = 4;
+}
+
+message IntentRequest {
+  string agent_task_description = 1;
+  string policy_mandate = 2;
+}
+
+message IntentResponse {
+  bool aligned = 1;
+  float similarity_score = 2;
+}

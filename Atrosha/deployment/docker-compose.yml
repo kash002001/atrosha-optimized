@@ -1,0 +1,98 @@
+# Atrosha Sovereign Edition (Docker Compose)
+# Zero-dependency stack for Institutional Runtime Policy Enforcement.
+
+services:
+  proxy:
+    build:
+      context: ../proxy
+      dockerfile: Dockerfile
+    ulimits:
+      nofile:
+        soft: 65536
+        hard: 65536
+    ports:
+      - "3000:3000"
+    environment:
+      - RUST_LOG=atrosha_proxy=info # Info level for perf
+      - REDIS_URL=redis://redis:6379/
+      - CLICKHOUSE_URL=http://clickhouse:8123/
+      - PERMIT_SECRET=sg-live-8f92-a9b3-4c5d-6e7f-8081 # ROTATED
+      - ETH_RPC_URL=http://anvil:8545
+      - ETH_PRIVATE_KEY=0xac0974bec39a17e36ba4a6b4d238ff944bacb478cbed5efcae784d7bf4f2ff80
+    depends_on:
+      - redis
+      - clickhouse
+    networks:
+      - atrosha-net
+
+  intent-validator:
+    build:
+      context: ../intent_validator
+      dockerfile: Dockerfile
+    ports:
+      - "8001:8001"
+    environment:
+      - QDRANT_HOST=qdrant
+      - QDRANT_PORT=6333
+      - ALIGNMENT_THRESHOLD=0.75
+      - PERMIT_SECRET=sg-live-8f92-a9b3-4c5d-6e7f-8081 # ROTATED
+      - PERMIT_TTL_SECONDS=300
+      - REDIS_URL=redis://redis:6379/
+      - CLICKHOUSE_HOST=clickhouse
+      - CLICKHOUSE_PORT=8123
+    depends_on:
+      - qdrant
+    networks:
+      - atrosha-net
+
+  redis:
+    image: redis:7-alpine
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis-data:/data
+    command: redis-server --appendonly yes
+    networks:
+      - atrosha-net
+
+  qdrant:
+    image: qdrant/qdrant:v1.7.4
+    ports:
+      - "6333:6333"
+      - "6334:6334"
+    volumes:
+      - qdrant-data:/qdrant/storage
+    networks:
+      - atrosha-net
+
+  clickhouse:
+    image: clickhouse/clickhouse-server:latest
+    ports:
+      - "8123:8123"
+      - "9000:9000"
+    volumes:
+      - clickhouse-data:/var/lib/clickhouse
+      - ../schemas:/docker-entrypoint-initdb.d:ro
+    environment:
+      - CLICKHOUSE_DB=atrosha
+      - CLICKHOUSE_USER=default
+      - CLICKHOUSE_PASSWORD=
+    networks:
+      - atrosha-net
+
+  anvil:
+    image: ghcr.io/foundry-rs/foundry:latest
+    entrypoint: anvil --host 0.0.0.0 --port 8545 --block-time 1
+    ports:
+      - "8545:8545"
+    networks:
+      - atrosha-net
+
+networks:
+  atrosha-net:
+    driver: bridge
+
+volumes:
+  redis-data:
+  qdrant-data:
+  clickhouse-data:

@@ -1,0 +1,16 @@
+{
+    "default_policy": {
+        "max_per_transaction": 100.0,
+        "max_daily_spend": 500.0
+    },
+    "agents": {
+        "agent-007": {
+            "max_per_transaction": 200.0,
+            "max_daily_spend": 1000.0
+        },
+        "agent-rogue": {
+            "max_per_transaction": 50.0,
+            "max_daily_spend": 100.0
+        }
+    }
+}

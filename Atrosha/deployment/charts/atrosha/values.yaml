@@ -1,0 +1,124 @@
+# Atrosha Helm Values
+# Override these in your environment-specific values files
+
+# Global settings
+global:
+  imageRegistry: ""
+  imagePullSecrets: []
+
+# Proxy (Rust)
+proxy:
+  replicaCount: 2
+  image:
+    repository: atrosha/proxy
+    tag: "0.2.0"
+    pullPolicy: IfNotPresent
+  
+  resources:
+    reqs:
+      cpu: 100m
+      memory: 128Mi
+    limits:
+      cpu: 500m
+      memory: 256Mi
+  
+  service:
+    type: ClusterIP
+    port: 3000
+  
+  config:
+    logLevel:"atrosha_proxy=info"
+    rateLimitRps: 10
+    # Sovereign Layer / EVM Config
+    ethRpcUrl: "http://atrosha-anvil:8545"
+    ethPrivateKey: "0xac0974bec39a17e36ba4a6b4d238ff944bacb478cbed5efcae784d7bf4f2ff80"
+
+# Anvil (Local Testnet)
+anvil:
+  enabled: true
+  replicaCount: 1
+  image:
+    repository: ghcr.io/foundry-rs/foundry
+    tag: latest
+    pullPolicy: IfNotPresent
+  service:
+    type: ClusterIP
+    port: 8545
+
+
+# Intent Validator (Python)
+intentValidator:
+  replicaCount: 1
+  image:
+    repository: atrosha/intent-validator
+    tag: "0.2.0"
+    pullPolicy: IfNotPresent
+  
+  resources:
+    reqs:
+      cpu: 200m
+      memory: 512Mi
+    limits:
+      cpu: 1000m
+      memory: 1Gi
+  
+  service:
+    type: ClusterIP
+    port: 8001
+  
+  config:
+    alignmentThreshold: "0.75"
+    permitTtlSeconds: "300"
+
+# Redis (dependency or external)
+redis:
+  enabled: true
+  auth:
+    enabled: false
+  master:
+    persistence:
+      enabled: true
+      size: 1Gi
+
+# External Redis (if redis.enabled is false)
+externalRedis:
+  host: ""
+  port: 6379
+
+# ClickHouse (external)
+clickhouse:
+  host: "clickhouse"
+  port: 8123
+  database: "atrosha"
+  user: "default"
+  # Password should be in a Secret, referenced below
+
+# Qdrant (external)
+qdrant:
+  host: "qdrant"
+  port: 6333
+
+# Secrets (create a K8s Secret named atrosha-secrets)
+  existingSecret: ""
+  permitSecretKey: "sg-live-8f92-a9b3-4c5d-6e7f-8081" # ROTATED
+  clickhousePasswordKey: "clickhouse-password"
+
+# Ingress
+ingress:
+  enabled: false
+  className: ""
+  annotations: {}
+  hosts:
+    - host: atrosha.local
+      paths:
+        - path: /
+          pathType: Prefix
+  tls: []
+
+# Prometheus ServiceMonitor
+metrics:
+  enabled: true
+  serviceMonitor:
+    enabled: false
+    interval: 30s
+    scrapeTimeout: 10s

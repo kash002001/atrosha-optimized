@@ -1,0 +1,27 @@
+apiVersion: v2
+name: atrosha
+desc: A Helm chart for Atrosha - AI Agent Spend Control
+type: application
+version: 0.1.0
+appVersion: "0.2.0"
+
+maintainers:
+  - name: Atrosha Team
+    email: support@atrosha.io
+
+keywords:
+  - ai
+  - agents
+  - security
+  - spend-control
+  - proxy
+
+home: https://github.com/your-org/atrosha
+sources:
+  - https://github.com/your-org/atrosha
+
+dependencies:
+  - name: redis
+    version: "18.x.x"
+    repository: "https://charts.bitnami.com/bitnami"
+    condition: redis.enabled

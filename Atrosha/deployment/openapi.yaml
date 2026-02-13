@@ -1,0 +1,199 @@
+openapi: 3.1.0
+info:
+  title: Atrosha API
+  desc: |
+    Atrosha is a high-performance proxy that intercepts AI agent API calls 
+    to enforce spend controls and safety policies.
+  version: 0.2.0
+  contact:
+    name: Atrosha Support
+    email: support@atrosha.io
+  license:
+    name: Apache 2.0
+    url: https://www.apache.org/licenses/LICENSE-2.0
+
+servers:
+  - url: http://localhost:3000
+    desc: Local development
+  - url: https://api.atrosha.io
+    desc: Production
+
+tags:
+  - name: Health
+    desc: Health check endpoints
+  - name: Metrics
+    desc: Prometheus metrics
+  - name: Admin
+    desc: Administrative operations
+  - name: Proxy
+    desc: Protected proxy endpoints
+
+paths:
+  /health:
+    get:
+      summary: Health check
+      desc: Returns OK if the service is healthy
+      tags: [Health]
+      ress:
+        '200':
+          desc: Service is healthy
+          content:
+            text/plain:
+              schema:
+                type: string
+                example: "OK"
+
+  /metrics:
+    get:
+      summary: Prometheus metrics
+      desc: Returns metrics in Prometheus text format
+      tags: [Metrics]
+      ress:
+        '200':
+          desc: Prometheus metrics
+          content:
+            text/plain:
+              schema:
+                type: string
+
+  /admin/agents:
+    post:
+      summary: Register an agent
+      desc: Register a new AI agent with its public key for sig verification
+      tags: [Admin]
+      reqBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RegisterAgentRequest'
+      ress:
+        '201':
+          desc: Agent registered successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RegisterAgentResponse'
+        '400':
+          desc: Invalid req
+
+  /proxy/{path}:
+    get:
+      summary: Proxy GET req
+      desc: Forward a GET req to the target API with spend controls
+      tags: [Proxy]
+      parameters:
+        - $ref: '#/components/parameters/PathParam'
+        - $ref: '#/components/parameters/PermitHeader'
+        - $ref: '#/components/parameters/AgentIdHeader'
+        - $ref: '#/components/parameters/SignatureHeader'
+        - $ref: '#/components/parameters/TimestampHeader'
+        - $ref: '#/components/parameters/ShadowModeHeader'
+      ress:
+        '200':
+          desc: Proxied res from target API
+        '401':
+          desc: Missing or invalid sig/permit
+        '403':
+          desc: Request denied by policy
+        '429':
+          desc: Rate limit exceeded
+
+    post:
+      summary: Proxy POST req
+      desc: Forward a POST req to the target API with spend controls
+      tags: [Proxy]
+      parameters:
+        - $ref: '#/components/parameters/PathParam'
+        - $ref: '#/components/parameters/PermitHeader'
+        - $ref: '#/components/parameters/AgentIdHeader'
+        - $ref: '#/components/parameters/SignatureHeader'
+        - $ref: '#/components/parameters/TimestampHeader'
+        - $ref: '#/components/parameters/ShadowModeHeader'
+      reqBody:
+        desc: Request body to forward
+        content:
+          application/json:
+            schema:
+              type: object
+      ress:
+        '200':
+          desc: Proxied res from target API
+        '401':
+          desc: Missing or invalid sig/permit
+        '403':
+          desc: Request denied by policy
+        '429':
+          desc: Rate limit exceeded
+
+components:
+  parameters:
+    PathParam:
+      name: path
+      in: path
+      required: true
+      desc: Target API path
+      schema:
+        type: string
+    PermitHeader:
+      name: X-Atrosha-Permit
+      in: header
+      required: true
+      desc: JWT permit issued by the Intent Validator
+      schema:
+        type: string
+    AgentIdHeader:
+      name: X-Atrosha-Agent-ID
+      in: header
+      required: true
+      desc: Unique identifier of the AI agent
+      schema:
+        type: string
+    SignatureHeader:
+      name: X-Atrosha-Signature
+      in: header
+      required: true
+      desc: Ed25519 sig of the req
+      schema:
+        type: string
+    TimestampHeader:
+      name: X-Atrosha-Timestamp
+      in: header
+      required: true
+      desc: Unix ts of the req
+      schema:
+        type: string
+    ShadowModeHeader:
+      name: X-Atrosha-Shadow-Mode
+      in: header
+      required: false
+      desc: If "true", violations are logged but reqs are allowed
+      schema:
+        type: string
+        enum: ["true", "false"]
+
+  schemas:
+    RegisterAgentRequest:
+      type: object
+      required:
+        - agent_id
+        - pub_hex
+      properties:
+        agent_id:
+          type: string
+          desc: Unique identifier for the agent
+          example: "agent-001"
+        pub_hex:
+          type: string
+          desc: Ed25519 public key in hexadecimal format
+          example: "a1b2c3d4..."
+
+    RegisterAgentResponse:
+      type: object
+      properties:
+        status:
+          type: string
+          example: "registered"
+        agent_id:
+          type: string
+          example: "agent-001"

@@ -1,0 +1,55 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "atrosha.fullname" . }}-intent-validator
+  labels:
+    {{- include "atrosha.labels" . | nindent 4 }}
+    app.kubernetes.io/component: intent-validator
+spec:
+  replicas: {{ .Values.intentValidator.replicaCount }}
+  selector:
+    matchLabels:
+      {{- include "atrosha.selectorLabels" . | nindent 6 }}
+      app.kubernetes.io/component: intent-validator
+  template:
+    metadata:
+      labels:
+        {{- include "atrosha.selectorLabels" . | nindent 8 }}
+        app.kubernetes.io/component: intent-validator
+    spec:
+      containers:
+        - name: intent-validator
+          image: "{{ .Values.intentValidator.image.repository }}:{{ .Values.intentValidator.image.tag }}"
+          imagePullPolicy: {{ .Values.intentValidator.image.pullPolicy }}
+          ports:
+            - name: http
+              containerPort: 8001
+              protocol: TCP
+          env:
+            - name: QDRANT_HOST
+              value: {{ .Values.qdrant.host | quote }}
+            - name: QDRANT_PORT
+              value: {{ .Values.qdrant.port | quote }}
+            - name: ALIGNMENT_THRESHOLD
+              value: {{ .Values.intentValidator.config.alignmentThreshold | quote }}
+            - name: PERMIT_TTL_SECONDS
+              value: {{ .Values.intentValidator.config.permitTtlSeconds | quote }}
+            - name: PERMIT_SECRET
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.secrets.existingSecret | default (printf "%s-secrets" (include "atrosha.fullname" .)) }}
+                  key: {{ .Values.secrets.permitSecretKey }}
+          resources:
+            {{- toYaml .Values.intentValidator.resources | nindent 12 }}
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: http
+            initialDelaySeconds: 10
+            periodSeconds: 10
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: http
+            initialDelaySeconds: 10
+            periodSeconds: 5

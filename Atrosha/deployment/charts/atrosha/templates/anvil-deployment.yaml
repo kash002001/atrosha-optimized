@@ -1,0 +1,38 @@
+{{- if .Values.anvil.enabled -}}
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "atrosha.fullname" . }}-anvil
+  labels:
+    {{- include "atrosha.labels" . | nindent 4 }}
+    app.kubernetes.io/component: anvil
+spec:
+  replicas: {{ .Values.anvil.replicaCount }}
+  selector:
+    matchLabels:
+      {{- include "atrosha.selectorLabels" . | nindent 6 }}
+      app.kubernetes.io/component: anvil
+  template:
+    metadata:
+      labels:
+        {{- include "atrosha.selectorLabels" . | nindent 8 }}
+        app.kubernetes.io/component: anvil
+    spec:
+      containers:
+        - name: anvil
+          image: "{{ .Values.anvil.image.repository }}:{{ .Values.anvil.image.tag }}"
+          imagePullPolicy: {{ .Values.anvil.image.pullPolicy }}
+          command: ["anvil"]
+          args: ["--host", "0.0.0.0", "--port", "{{ .Values.anvil.service.port }}", "--block-time", "1"]
+          ports:
+            - name: http
+              containerPort: {{ .Values.anvil.service.port }}
+              protocol: TCP
+          resources:
+            reqs:
+              cpu: 100m
+              memory: 128Mi
+            limits:
+              cpu: 500m
+              memory: 512Mi
+{{- end }}

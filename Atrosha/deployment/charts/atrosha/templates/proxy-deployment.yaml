@@ -1,0 +1,57 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "atrosha.fullname" . }}-proxy
+  labels:
+    {{- include "atrosha.labels" . | nindent 4 }}
+    app.kubernetes.io/component: proxy
+spec:
+  replicas: {{ .Values.proxy.replicaCount }}
+  selector:
+    matchLabels:
+      {{- include "atrosha.selectorLabels" . | nindent 6 }}
+      app.kubernetes.io/component: proxy
+  template:
+    metadata:
+      labels:
+        {{- include "atrosha.selectorLabels" . | nindent 8 }}
+        app.kubernetes.io/component: proxy
+    spec:
+      containers:
+        - name: proxy
+          image: "{{ .Values.proxy.image.repository }}:{{ .Values.proxy.image.tag }}"
+          imagePullPolicy: {{ .Values.proxy.image.pullPolicy }}
+          ports:
+            - name: http
+              containerPort: 3000
+              protocol: TCP
+          env:
+            - name: RUST_LOG
+              value: {{ .Values.proxy.config.logLevel | quote }}
+            - name: REDIS_URL
+              value: "redis://{{ include "atrosha.redisHost" . }}:{{ .Values.externalRedis.port | default 6379 }}/"
+            - name: CLICKHOUSE_URL
+              value: "http://{{ .Values.clickhouse.host }}:{{ .Values.clickhouse.port }}/"
+            - name: PERMIT_SECRET
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.secrets.existingSecret | default (printf "%s-secrets" (include "atrosha.fullname" .)) }}
+                  key: {{ .Values.secrets.permitSecretKey }}
+            - name: ETH_RPC_URL
+              value: {{ .Values.proxy.config.ethRpcUrl | quote }}
+            - name: ETH_PRIVATE_KEY
+              value: {{ .Values.proxy.config.ethPrivateKey | quote }}
+          resources:
+            {{- toYaml .Values.proxy.resources | nindent 12 }}
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: http
+            initialDelaySeconds: 5
+            periodSeconds: 10
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: http
+            initialDelaySeconds: 5
+            periodSeconds: 5

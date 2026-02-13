@@ -1,0 +1,9 @@
+node_modules
+.next
+dist
+target
+.env
+.env.local
+.DS_Store
+at_os_logs
+*.log

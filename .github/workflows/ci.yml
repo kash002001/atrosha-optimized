@@ -1,0 +1,53 @@
+name: Atrosha CI
+
+on:
+  push:
+    branches: [ "main" ]
+  pull_request:
+    branches: [ "main" ]
+
+jobs:
+  build-landing:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v4
+    - name: Use Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: '20'
+    - run: npm ci
+      working-directory: ./landing-page
+    - run: npm run lint
+      working-directory: ./landing-page
+    - run: npm run build
+      working-directory: ./landing-page
+      env:
+        # Dummy envs for build
+        NEXT_PUBLIC_SUPABASE_URL: "https://example.supabase.co"
+        NEXT_PUBLIC_SUPABASE_ANON_KEY: "eyJh..."
+
+  build-dashboard:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v4
+    - name: Use Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: '20'
+    - run: npm ci
+      working-directory: ./Atrosha/dashboard
+    - run: npm run lint
+      working-directory: ./Atrosha/dashboard
+    - run: npm run build
+      working-directory: ./Atrosha/dashboard
+      env:
+        NEXT_PUBLIC_SUPABASE_URL: "https://example.supabase.co"
+        NEXT_PUBLIC_SUPABASE_ANON_KEY: "eyJh..."
+
+  build-proxy:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v4
+    - name: Build Proxy
+      run: docker build . -t atrosha-proxy
+      working-directory: ./Atrosha/proxy
