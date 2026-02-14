@@ -5,9 +5,14 @@ export async function middleware(req: NextRequest) {
     let res = NextResponse.next({ request: req });
     console.log("Middleware request:", req.nextUrl.pathname);
 
+    if (!process.env.NEXT_PUBLIC_SUPABASE_URL || !process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY) {
+        console.warn("Middleware: Missing Supabase Env Vars - Skipping Auth Check");
+        return res;
+    }
+
     const supabase = createServerClient(
-        process.env.NEXT_PUBLIC_SUPABASE_URL!,
-        process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+        process.env.NEXT_PUBLIC_SUPABASE_URL,
+        process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY,
         {
             cookies: {
                 getAll() {
