@@ -2,6 +2,7 @@ import { createServerClient } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
 
 export async function middleware(req: NextRequest) {
+    // Vercel Rebuild Trigger: Ensure Debug Middleware is Active
     let res = NextResponse.next({ request: req });
     // DEBUG: Check what the middleware sees
     if (req.nextUrl.searchParams.has('debug_middleware')) {
