@@ -23,10 +23,10 @@ export default function LoginPage() {
             process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
             {
                 cookieOptions: {
-                    domain: 'localhost',
+                    domain: process.env.NODE_ENV === 'production' ? '.atrosha.bond' : 'localhost',
                     path: '/',
                     sameSite: 'lax',
-                    secure: false,
+                    secure: process.env.NODE_ENV === 'production',
                 }
             }
         );

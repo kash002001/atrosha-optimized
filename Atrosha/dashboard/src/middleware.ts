@@ -26,10 +26,10 @@ export async function middleware(req: NextRequest) {
             },
             // Shared options for localhost
             cookieOptions: {
-                domain: 'localhost',
+                domain: process.env.NODE_ENV === 'production' ? '.atrosha.bond' : 'localhost',
                 path: '/',
                 sameSite: 'lax',
-                secure: false,
+                secure: process.env.NODE_ENV === 'production',
             }
         }
     );
