@@ -3,8 +3,17 @@ import { NextResponse, type NextRequest } from "next/server";
 
 export async function middleware(req: NextRequest) {
     let res = NextResponse.next({ request: req });
-    console.log("Dashboard Middleware:", req.nextUrl.pathname);
-    console.log("Cookies:", req.cookies.getAll().map(c => `${c.name}=${c.value.substring(0, 10)}...`));
+    // DEBUG: Check what the middleware sees
+    if (req.nextUrl.searchParams.has('debug_middleware')) {
+        return NextResponse.json({
+            message: "Debug Middleware",
+            env: process.env.NODE_ENV,
+            cookieNames: req.cookies.getAll().map(c => c.name),
+            hasSupabaseUrl: !!process.env.NEXT_PUBLIC_SUPABASE_URL,
+            hasAnonKey: !!process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY,
+            loginUrl: process.env.NEXT_PUBLIC_LOGIN_URL,
+        });
+    }
 
     const supabase = createServerClient(
         process.env.NEXT_PUBLIC_SUPABASE_URL!,
