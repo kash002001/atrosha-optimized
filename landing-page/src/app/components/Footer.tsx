@@ -162,8 +162,8 @@ export default function Footer() {
                     </div>
                 </div>
                 <div className="pt-8 border-t border-gray-100 dark:border-gray-800 flex flex-col md:flex-row justify-between items-center gap-4">
-                    <p className="text-xs text-muted-light dark:text-muted-dark">
-                        © 2024 Atrosha Inc. All rights reserved.
+                    <p className="text-sm text-muted-light dark:text-muted-dark mt-8">
+                        © {new Date().getFullYear()} Atrosha. All rights reserved. <span className="opacity-50 text-xs">v1.1</span>
                     </p>
                     <div className="flex space-x-6">
                         <a
