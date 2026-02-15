@@ -45,9 +45,11 @@ export async function middleware(req: NextRequest) {
 
     // no session → bounce to landing page login
     const loginUrl = process.env.NEXT_PUBLIC_LOGIN_URL || "https://atrosha.bond/login";
+    /*
     if (!user) {
         return NextResponse.redirect(loginUrl);
     }
+    */
 
     // Security Headers
     res.headers.set("X-Frame-Options", "DENY");
