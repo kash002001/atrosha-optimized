@@ -13,12 +13,11 @@ function getAdmin() {
     );
 }
 
-// Map plan names to Stripe Price IDs (Test Mode)
-// In production, these should be env vars or fetched from DB
+// Map plan names to Stripe Price IDs (Supports both Test and Live via Env Vars)
 const PLAN_PRICE_IDS: Record<string, string> = {
-    growth: "price_1T0KXIC71o1yQxw3YdHH6cpi", // Growth Plan
-    scale: "price_1T0KYqC71o1yQxw3BySz8bHw",  // Scale Plan
-    enterprise: "",          // Custom flow
+    growth: process.env.STRIPE_PRICE_GROWTH || "price_1T0KXIC71o1yQxw3YdHH6cpi", // Default to Test ID if missing
+    scale: process.env.STRIPE_PRICE_SCALE || "price_1T0KYqC71o1yQxw3BySz8bHw",
+    enterprise: "", // Custom flow
 };
 
 export async function POST(req: Request) {

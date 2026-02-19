@@ -85,6 +85,23 @@ export default function StatusPage() {
                         </span>
                     </div>
                 </div>
+
+                {/* Proxy / Edge */}
+                <div className="chart-card">
+                    <h3 style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 16 }}>
+                        <Shield size={16} /> Proxy / Edge
+                    </h3>
+                    <div className="policy-field">
+                        <label>Status</label>
+                        <span className={`badge ${data.proxy?.status === "operational" ? "approved" : "denied"}`}>
+                            {data.proxy?.status || "Checking..."}
+                        </span>
+                    </div>
+                    <div className="policy-field">
+                        <label>Latency</label>
+                        <span className="mono">{data.proxy?.latency_ms > 0 ? `${data.proxy?.latency_ms}ms` : "N/A"}</span>
+                    </div>
+                </div>
             </div>
 
             <div className="chart-card" style={{ marginTop: 24 }}>

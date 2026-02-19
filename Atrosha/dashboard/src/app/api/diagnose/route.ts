@@ -47,6 +47,31 @@ export async function GET(request: NextRequest) {
         dbError = e.message;
     }
 
+    // Check Proxy Status
+    let proxyStatus = "unknown";
+    let proxyLatency = -1;
+    const proxyUrl = process.env.PROXY_URL;
+
+    if (proxyUrl) {
+        try {
+            const start = Date.now();
+            const res = await fetch(`${proxyUrl}/health`, {
+                method: 'GET',
+                signal: AbortSignal.timeout(3000) // 3s timeout
+            });
+            proxyLatency = Date.now() - start;
+            if (res.ok) {
+                proxyStatus = "operational";
+            } else {
+                proxyStatus = `error_${res.status}`;
+            }
+        } catch (e: any) {
+            proxyStatus = "unreachable";
+        }
+    } else {
+        proxyStatus = "not_configured";
+    }
+
     return NextResponse.json({
         status: 'ok',
         app: 'Atrosha Dashboard',
@@ -54,13 +79,18 @@ export async function GET(request: NextRequest) {
         loginUrl: process.env.NEXT_PUBLIC_LOGIN_URL,
         timestamp: new Date().toISOString(),
         auth: {
-            session: !!user, // Assuming 'session' refers to whether a user is logged in
+            session: !!user,
             user: user?.email || null,
         },
         db: {
             status: dbStatus,
             error: dbError,
             transactions_table_count: txCount
+        },
+        proxy: {
+            status: proxyStatus,
+            url: proxyUrl || null,
+            latency_ms: proxyLatency
         }
     });
 }
