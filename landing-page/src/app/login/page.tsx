@@ -14,33 +14,49 @@ export default function LoginPage() {
 
     const handleLogin = async (e: React.FormEvent) => {
         e.preventDefault();
-        // console.log("Attempting login with:", email);
         setLoading(true);
         setError("");
 
-        const supabase = createBrowserClient(
-            process.env.NEXT_PUBLIC_SUPABASE_URL!,
-            process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
-            {
-                cookieOptions: {
-                    domain: process.env.NODE_ENV === 'production' ? '.atrosha.bond' : 'localhost',
-                    path: '/',
-                    sameSite: 'lax',
-                    secure: process.env.NODE_ENV === 'production',
+        try {
+            // Robust cookie domain logic
+            const hostname = window.location.hostname;
+            const cookieDomain = hostname.includes('atrosha.bond') ? '.atrosha.bond' :
+                hostname === 'localhost' ? 'localhost' : undefined;
+
+            const supabase = createBrowserClient(
+                process.env.NEXT_PUBLIC_SUPABASE_URL!,
+                process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+                {
+                    cookieOptions: {
+                        domain: cookieDomain,
+                        path: '/',
+                        sameSite: 'lax',
+                        secure: window.location.protocol === 'https:',
+                    }
                 }
+            );
+
+            const { error: signInError } = await supabase.auth.signInWithPassword({ email, password });
+
+            if (signInError) {
+                console.error("Login Error:", signInError);
+                setError(signInError.message);
+                alert(`Login Failed: ${signInError.message}`); // Explicit feedback
+                setLoading(false);
+                return;
             }
-        );
-        const { error } = await supabase.auth.signInWithPassword({ email, password });
 
-        if (error) {
-            setError(error.message);
+            // Success - Redirect
+            const dashboardUrl = process.env.NEXT_PUBLIC_DASHBOARD_URL || "https://app.atrosha.bond";
+            // Use replace to avoid back-button loops
+            window.location.replace(dashboardUrl);
+
+        } catch (err: any) {
+            console.error("Unexpected Error:", err);
+            setError(err.message || "An unexpected error occurred");
+            alert("An unexpected system error occurred. Please check console.");
             setLoading(false);
-            return;
         }
-
-        // redirect to dashboard on success
-        const dashboardUrl = process.env.NEXT_PUBLIC_DASHBOARD_URL || "http://localhost:3001";
-        window.location.assign(dashboardUrl);
     };
 
     return (

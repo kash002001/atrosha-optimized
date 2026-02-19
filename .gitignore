@@ -7,3 +7,4 @@ target
 .DS_Store
 at_os_logs
 *.log
+.vercel

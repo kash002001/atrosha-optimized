@@ -86,6 +86,33 @@ a {
   flex-direction: column;
   padding: 20px 0;
   flex-shrink: 0;
+  height: 100vh;
+  transition: transform 0.3s ease;
+  z-index: 50;
+}
+
+/* Mobile Sidebar Overlay */
+@media (max-width: 768px) {
+  .sidebar {
+    position: fixed;
+    top: 0;
+    left: 0;
+    transform: translateX(-100%);
+    box-shadow: 20px 0 50px rgba(0,0,0,0.1);
+  }
+  
+  .sidebar.open {
+    transform: translateX(0);
+  }
+
+  .main-content {
+    padding: 20px 16px !important;
+  }
+  
+  /* Add padding for hamburger menu */
+  .app {
+    flex-direction: column;
+  }
 }
 
 .sidebar-brand {

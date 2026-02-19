@@ -1,0 +1,10 @@
+[
+    {
+        "id": "rl-001",
+        "nl": "Allow Stripe charges under $5,000 without approval",
+        "compiled": "{ \"agent\": \"stripe\", \"action\": \"charge\", \"max_amount\": 5000, \"require_approval\": false }",
+        "agent": "Stripe",
+        "status": "active",
+        "created": "Feb 10"
+    }
+]

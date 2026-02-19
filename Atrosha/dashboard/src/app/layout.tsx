@@ -5,6 +5,10 @@ import Sidebar from "./components/Sidebar";
 export const metadata: Metadata = {
   title: "Atrosha | Dashboard",
   description: "AI Agent Financial Security Control Center",
+  robots: {
+    index: false,
+    follow: false,
+  },
 };
 
 export default function RootLayout({

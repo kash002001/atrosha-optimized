@@ -4,6 +4,8 @@ import { Agents } from './resources/agents';
 
 export * from './resources/transactions';
 export * from './resources/agents';
+export * from './logic/circuit-breaker';
+export * from './logic/verification';
 
 export class Atrosha {
     private client: AxiosInstance;

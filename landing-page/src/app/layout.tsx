@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Inter, Playfair_Display, Roboto_Mono } from "next/font/google";
 import "./globals.css";
+import Analytics from "./components/Analytics";
 
 const inter = Inter({
   subsets: ["latin"],
@@ -24,10 +25,18 @@ export const metadata: Metadata = {
   title: "Atrosha — Autonomous Agent Security",
   description: "The security layer for the agentic economy. AI agents make financial decisions. Atrosha blocks the risky ones in real-time.",
   keywords: ["AI security", "agent safety", "financial AI", "autonomous agents", "spend limits"],
+  metadataBase: new URL("https://atrosha.bond"),
   openGraph: {
     title: "Atrosha — Code hallucinates. Capital shouldn't.",
     description: "The essential security layer for AI agents making financial decisions.",
     type: "website",
+    url: "https://atrosha.bond",
+    siteName: "Atrosha",
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "Atrosha — Autonomous Agent Security",
+    description: "The security layer for the agentic economy.",
   },
 };
 
@@ -61,6 +70,7 @@ export default function RootLayout({
       </head>
       <body className={`${inter.variable} ${playfair.variable} ${mono.variable} font-sans bg-background-light dark:bg-background-dark text-text-light dark:text-text-dark antialiased transition-colors duration-300`}>
         {children}
+        <Analytics />
       </body>
     </html>
   );

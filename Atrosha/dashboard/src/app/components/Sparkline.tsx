@@ -2,12 +2,14 @@
 
 import { AreaChart, Area, ResponsiveContainer, Tooltip } from "recharts";
 
-const data = [
-    { v: 10 }, { v: 15 }, { v: 12 }, { v: 20 }, { v: 18 }, { v: 25 }, { v: 22 },
-    { v: 30 }, { v: 28 }, { v: 25 }, { v: 35 }, { v: 40 }, { v: 38 }, { v: 45 },
-];
+interface SparklineProps {
+    color?: string;
+    data: { v: number }[];
+}
 
-export default function Sparkline({ color = "#059669" }: { color?: string }) {
+export default function Sparkline({ color = "#059669", data }: SparklineProps) {
+    // Fallback
+    if (!data || data.length === 0) return null;
     return (
         <div style={{ width: "100%", height: 40 }}>
             <ResponsiveContainer width="100%" height="100%">

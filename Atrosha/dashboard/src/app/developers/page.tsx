@@ -1,12 +1,13 @@
 "use client";
 
 import { useState } from "react";
-import { Copy, RefreshCw, Terminal, Eye, EyeOff } from "lucide-react";
+import { Copy, RefreshCw, Terminal, Eye, EyeOff, Check, Shield, Code, Server } from "lucide-react";
 
 export default function DevelopersPage() {
     const [apiKey, setApiKey] = useState<string | null>(null);
     const [loading, setLoading] = useState(false);
     const [showKey, setShowKey] = useState(false);
+    const [copied, setCopied] = useState(false);
 
     const regenerateKey = async () => {
         if (!confirm("Are you sure? This will INVALIDATE your old key immediately.")) return;
@@ -30,97 +31,168 @@ export default function DevelopersPage() {
 
     const copyToClipboard = (text: string) => {
         navigator.clipboard.writeText(text);
-        alert("Copied!");
+        setCopied(true);
+        setTimeout(() => setCopied(false), 2000);
     };
 
     return (
-        <div className="p-8 max-w-4xl animate-fade-in">
-            <header className="mb-8">
-                <h1 className="text-3xl font-bold mb-2">Developer Console</h1>
-                <p className="text-gray-400">Manage your API keys and integrate Atrosha into your agents.</p>
-            </header>
-
-            {/* API Key Section */}
-            <section className="bg-card-bg border border-white/10 rounded-xl p-6 mb-8 shadow-lg">
-                <div className="flex justify-between items-center mb-4">
-                    <h2 className="text-xl font-semibold flex items-center gap-2">
-                        <Terminal className="w-5 h-5 text-purple-400" />
-                        API Credentials
-                    </h2>
-                    <button
-                        onClick={regenerateKey}
-                        disabled={loading}
-                        className="flex items-center gap-2 text-sm bg-red-500/10 text-red-400 px-3 py-1.5 rounded hover:bg-red-500/20 transition-colors"
-                    >
-                        <RefreshCw className={`w-4 h-4 ${loading ? "animate-spin" : ""}`} />
-                        {loading ? "Generating..." : "Regenerate Key"}
-                    </button>
+        <div style={{ maxWidth: 1200, margin: "0 auto", paddingBottom: 40 }}>
+            <div className="page-header" style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-end" }}>
+                <div>
+                    <h2>Developer Console</h2>
+                    <p>Manage API keys and integration settings.</p>
                 </div>
 
-                <div className="bg-black/30 p-4 rounded-lg flex items-center justify-between border border-white/5">
-                    <div className="font-mono text-gray-300 overflow-hidden text-ellipsis mr-4">
-                        {apiKey ? (
-                            showKey ? apiKey : "•".repeat(40)
-                        ) : (
-                            <span className="text-gray-500 italic">Hidden (Click regenerate to view new key)</span>
-                        )}
+            </div>
+
+            <div style={{ display: "grid", gridTemplateColumns: "2fr 1fr", gap: 24 }}>
+                {/* Left Column */}
+                <div style={{ display: "flex", flexDirection: "column", gap: 24 }}>
+
+                    {/* API Credentials Card */}
+                    <div className="chart-card">
+                        <h3>
+                            API Authority
+                            <span>Root Credentials</span>
+                        </h3>
+
+                        <div style={{ background: "var(--bg-secondary)", padding: 20, borderRadius: "var(--radius-sm)", border: "1px solid var(--border)" }}>
+                            <label style={{ display: "block", fontSize: 11, fontWeight: 600, textTransform: "uppercase", color: "var(--text-muted)", marginBottom: 8, letterSpacing: "0.5px" }}>
+                                Secret Key
+                            </label>
+                            <div style={{ display: "flex", gap: 8 }}>
+                                <div style={{
+                                    flex: 1,
+                                    background: "#fff",
+                                    border: "1px solid var(--border)",
+                                    borderRadius: "var(--radius-sm)",
+                                    padding: "10px 12px",
+                                    fontFamily: "monospace",
+                                    fontSize: 13,
+                                    color: "var(--text)",
+                                    display: "flex",
+                                    justifyContent: "space-between",
+                                    alignItems: "center"
+                                }}>
+                                    <span style={{ color: !showKey && !apiKey ? "var(--text-dim)" : "var(--text)" }}>
+                                        {apiKey ? (
+                                            showKey ? apiKey : "sk_live_" + "•".repeat(24)
+                                        ) : (
+                                            "sk_live_••••••••••••••••••••••••••••••••"
+                                        )}
+                                    </span>
+                                    {apiKey && (
+                                        <div style={{ display: "flex", gap: 4 }}>
+                                            <button onClick={() => setShowKey(!showKey)} style={{ background: "none", border: "none", cursor: "pointer", color: "var(--text-muted)" }}>
+                                                {showKey ? <EyeOff size={14} /> : <Eye size={14} />}
+                                            </button>
+                                            <button onClick={() => copyToClipboard(apiKey)} style={{ background: "none", border: "none", cursor: "pointer", color: "var(--text-muted)" }}>
+                                                {copied ? <Check size={14} color="var(--green)" /> : <Copy size={14} />}
+                                            </button>
+                                        </div>
+                                    )}
+                                </div>
+                                <button
+                                    onClick={regenerateKey}
+                                    disabled={loading}
+                                    style={{
+                                        background: "var(--red-bg)",
+                                        color: "var(--red)",
+                                        border: "1px solid rgba(220, 38, 38, 0.1)",
+                                        borderRadius: "var(--radius-sm)",
+                                        padding: "0 16px",
+                                        fontSize: 12,
+                                        fontWeight: 600,
+                                        cursor: loading ? "wait" : "pointer",
+                                        display: "flex",
+                                        alignItems: "center",
+                                        gap: 6
+                                    }}
+                                >
+                                    <RefreshCw size={12} className={loading ? "animate-spin" : ""} />
+                                    {loading ? "Rolling..." : "Roll Key"}
+                                </button>
+                            </div>
+                            <p style={{ fontSize: 11, color: "var(--text-muted)", marginTop: 12, display: "flex", gap: 6 }}>
+                                <span style={{ color: "var(--yellow)" }}>⚠️</span>
+                                This key bypasses all policy checks. Never expose it in client-side code.
+                            </p>
+                        </div>
                     </div>
-                    <div className="flex gap-2">
-                        {apiKey && (
-                            <button
-                                onClick={() => setShowKey(!showKey)}
-                                className="p-2 hover:bg-white/10 rounded transition-colors text-gray-400"
-                                title={showKey ? "Hide" : "Show"}
-                            >
-                                {showKey ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
-                            </button>
-                        )}
-                        {apiKey && (
-                            <button
-                                onClick={() => copyToClipboard(apiKey)}
-                                className="p-2 hover:bg-white/10 rounded transition-colors text-gray-400"
-                                title="Copy"
-                            >
-                                <Copy className="w-4 h-4" />
-                            </button>
-                        )}
+
+                    {/* Integration Guide */}
+                    <div className="chart-card">
+                        <h3>Quick Integration</h3>
+                        <div style={{ display: "flex", border: "1px solid var(--border)", borderRadius: "var(--radius-sm)", overflow: "hidden" }}>
+                            <div style={{ width: "35%", background: "var(--bg-secondary)", padding: 20, borderRight: "1px solid var(--border)" }}>
+                                <div style={{ marginBottom: 16 }}>
+                                    <h4 style={{ fontSize: 13, fontWeight: 600, marginBottom: 4 }}>1. Authenticate</h4>
+                                    <p style={{ fontSize: 12, color: "var(--text-muted)", lineHeight: 1.4 }}>Use API Key as Bearer token. Add `X-Atrosha-Org-ID` header.</p>
+                                </div>
+                                <div>
+                                    <h4 style={{ fontSize: 13, fontWeight: 600, marginBottom: 4 }}>2. Proxy Request</h4>
+                                    <p style={{ fontSize: 12, color: "var(--text-muted)", lineHeight: 1.4 }}>Route LLM traffic through our proxy for instant auditing.</p>
+                                </div>
+                            </div>
+                            <div style={{ flex: 1, background: "#0F172A", padding: 20, position: "relative" }}>
+                                <button
+                                    onClick={() => copyToClipboard(`curl -X POST https://...`)}
+                                    style={{ position: "absolute", top: 12, right: 12, background: "rgba(255,255,255,0.1)", border: "none", padding: 6, borderRadius: 4, cursor: "pointer", color: "#fff" }}
+                                >
+                                    <Copy size={12} />
+                                </button>
+                                <pre style={{ fontFamily: "monospace", fontSize: 12, color: "#E2E8F0", lineHeight: 1.6, overflowX: "auto" }}>
+                                    <span style={{ color: "#C084FC" }}>curl</span> -X POST https://proxy.atrosha.com/v1/chat/completions \<br />
+                                    &nbsp;&nbsp;-H <span style={{ color: "#4ADE80" }}>"Authorization: Bearer sk_live_..."</span> \<br />
+                                    &nbsp;&nbsp;-H <span style={{ color: "#4ADE80" }}>"X-Atrosha-Org-ID: org_123abc"</span> \<br />
+                                    &nbsp;&nbsp;-d <span style={{ color: "#FCD34D" }}>{`'{ "model": "gpt-4", "messages": [...] }'`}</span>
+                                </pre>
+                            </div>
+                        </div>
                     </div>
                 </div>
-                <p className="mt-3 text-xs text-yellow-500/80">
-                    ⚠️ Your API Key provides full spending access. Keep it secure. We only show it once upon generation.
-                </p>
-            </section>
 
-            {/* Code Snippets */}
-            <section className="space-y-6">
-                <h2 className="text-xl font-semibold">Quick Start</h2>
+                {/* Right Column */}
+                <div style={{ display: "flex", flexDirection: "column", gap: 24 }}>
+                    <div className="stat-card">
+                        <div className="stat-label"><Code size={14} /> SDKs</div>
+                        <div style={{ display: "flex", flexDirection: "column", gap: 8, marginTop: 12 }}>
+                            <a href="#" style={{ display: "flex", alignItems: "center", gap: 10, padding: 8, borderRadius: 6, border: "1px solid var(--border)", textDecoration: "none" }}>
+                                <div style={{ width: 24, height: 24, background: "rgba(49, 120, 198, 0.1)", color: "#3178C6", borderRadius: 4, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 10, fontWeight: 700 }}>TS</div>
+                                <div>
+                                    <div style={{ fontSize: 13, fontWeight: 500, color: "var(--text)" }}>Node.js</div>
+                                    <div style={{ fontSize: 10, color: "var(--text-dim)" }}>@atrosha/sdk</div>
+                                </div>
+                            </a>
+                            <a href="#" style={{ display: "flex", alignItems: "center", gap: 10, padding: 8, borderRadius: 6, border: "1px solid var(--border)", textDecoration: "none" }}>
+                                <div style={{ width: 24, height: 24, background: "rgba(255, 232, 115, 0.2)", color: "#D6A00A", borderRadius: 4, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 10, fontWeight: 700 }}>PY</div>
+                                <div>
+                                    <div style={{ fontSize: 13, fontWeight: 500, color: "var(--text)" }}>Python</div>
+                                    <div style={{ fontSize: 10, color: "var(--text-dim)" }}>pip install atrosha</div>
+                                </div>
+                            </a>
+                        </div>
+                    </div>
 
-                <div className="bg-card-bg border border-white/10 rounded-xl p-6">
-                    <h3 className="font-medium mb-3 text-blue-400">1. Authenticate Request</h3>
-                    <p className="text-sm text-gray-400 mb-4">
-                        All requests to the Proxy must include your Organization ID and the specific Agent ID you are acting as.
-                    </p>
-                    <pre className="bg-black/50 p-4 rounded text-sm overflow-x-auto text-green-400/90 font-mono">
-                        {`curl -X POST https://proxy.atrosha.com/proxy/v1/chat/completions \\
-  -H "Authorization: Bearer YOUR_LLM_KEY" \\
-  -H "X-Atrosha-Org-ID: <your_org_id>" \\
-  -H "X-Atrosha-Agent-ID: <agent_id>" \\
-  -d '{ "model": "gpt-4", "messages": [...] }'`}
-                    </pre>
+                    <div className="stat-card">
+                        <div className="stat-label"><Server size={14} /> Environment</div>
+                        <div style={{ display: "flex", flexDirection: "column", gap: 12, marginTop: 12 }}>
+                            <div className="policy-field" style={{ borderTop: "none", padding: 0 }}>
+                                <label>Region</label>
+                                <span className="mono">us-east-1</span>
+                            </div>
+                            <div className="policy-field" style={{ padding: 0 }}>
+                                <label>Rate Limit</label>
+                                <span className="mono">100 req/s</span>
+                            </div>
+                            <div className="policy-field" style={{ padding: 0 }}>
+                                <label>Uptime</label>
+                                <span className="badge approved" style={{ padding: "2px 6px" }}>99.99%</span>
+                            </div>
+                        </div>
+                    </div>
                 </div>
-
-                <div className="bg-card-bg border border-white/10 rounded-xl p-6">
-                    <h3 className="font-medium mb-3 text-purple-400">2. Rotate Key</h3>
-                    <p className="text-sm text-gray-400 mb-4">
-                        Automated key rotation for security compliance.
-                    </p>
-                    <pre className="bg-black/50 p-4 rounded text-sm overflow-x-auto text-green-400/90 font-mono">
-                        {`curl -X POST https://proxy.atrosha.com/rotate-key \\
-  -H "X-Atrosha-Agent-ID: <agent_id>" \\
-  -d '{ "new_pub_hex": "..." }'`}
-                    </pre>
-                </div>
-            </section>
+            </div>
         </div>
     );
 }
