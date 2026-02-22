@@ -32,12 +32,12 @@ export function createClient(cookieStore: any) {
                     return cookieStore.get(name)?.value;
                 },
             },
-            // Shared options for localhost
+            // Shared options
             cookieOptions: {
-                domain: 'localhost',
+                domain: process.env.NODE_ENV === 'production' ? '.atrosha.bond' : undefined,
                 path: '/',
                 sameSite: 'lax',
-                secure: false,
+                secure: process.env.NODE_ENV === 'production',
             }
         }
     );

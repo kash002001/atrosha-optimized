@@ -30,7 +30,7 @@ export async function middleware(req: NextRequest) {
             },
             // Shared options for localhost
             cookieOptions: {
-                domain: process.env.NODE_ENV === 'production' ? '.atrosha.bond' : 'localhost',
+                domain: process.env.NODE_ENV === 'production' ? '.atrosha.bond' : undefined,
                 path: '/',
                 sameSite: 'lax',
                 secure: process.env.NODE_ENV === 'production',

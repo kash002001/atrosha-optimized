@@ -6,7 +6,7 @@ export function createClient() {
         process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
         {
             cookieOptions: {
-                domain: process.env.NODE_ENV === 'production' ? '.atrosha.bond' : 'localhost',
+                domain: process.env.NODE_ENV === 'production' ? '.atrosha.bond' : undefined,
                 path: '/',
                 sameSite: 'lax',
                 secure: process.env.NODE_ENV === 'production',

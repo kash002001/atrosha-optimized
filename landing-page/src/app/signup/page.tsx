@@ -18,26 +18,27 @@ function SignupForm() {
     const [loading, setLoading] = useState(false);
     const [done, setDone] = useState(false);
 
+
+    const hostname = typeof window !== 'undefined' ? window.location.hostname : 'localhost';
+    const cookieDomain = hostname.includes('atrosha.bond') ? '.atrosha.bond' : undefined;
+
+    const supabase = createBrowserClient(
+        process.env.NEXT_PUBLIC_SUPABASE_URL!,
+        process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+        {
+            cookieOptions: {
+                domain: cookieDomain,
+                path: '/',
+                sameSite: 'lax',
+                secure: typeof window !== 'undefined' && window.location.protocol === 'https:',
+            }
+        }
+    );
+
     const handleSignup = async (e: React.FormEvent) => {
         e.preventDefault();
         setLoading(true);
         setError("");
-
-        const hostname = window.location.hostname;
-        const cookieDomain = hostname.includes('atrosha.bond') ? '.atrosha.bond' : undefined;
-
-        const supabase = createBrowserClient(
-            process.env.NEXT_PUBLIC_SUPABASE_URL!,
-            process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
-            {
-                cookieOptions: {
-                    domain: cookieDomain,
-                    path: '/',
-                    sameSite: 'lax',
-                    secure: window.location.protocol === 'https:',
-                }
-            }
-        );
 
         // step 1: create auth user
         const { data, error: authErr } = await supabase.auth.signUp({
