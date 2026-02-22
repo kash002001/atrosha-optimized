@@ -110,7 +110,7 @@ export default async function Overview() {
   return (
     <div style={{ maxWidth: 1200, margin: "0 auto", paddingBottom: 40 }}>
       {/* Header */}
-      <div className="page-header" style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-end", marginBottom: 32 }}>
+      <div className="page-header" style={{ display: "flex", flexWrap: "wrap", gap: 16, justifyContent: "space-between", alignItems: "flex-end", marginBottom: 32 }}>
         <div>
           <h2 style={{ fontSize: 24, fontWeight: 700, color: "var(--text)", marginBottom: 4 }}>Overview</h2>
           <p style={{ fontSize: 14, color: "var(--text-muted)" }}>Financial performance for <span style={{ fontWeight: 600, color: "var(--text)" }}>{user.user_metadata?.org_name || "Atrosha Corp"}</span>.</p>

@@ -23,7 +23,7 @@ export default function CodeDemo() {
                             agent.py — Python
                         </div>
                     </div>
-                    <div className="p-6 text-gray-300">
+                    <div className="p-4 sm:p-6 text-gray-300 overflow-x-auto whitespace-nowrap min-w-full">
                         <div className="mb-4">
                             <span className="text-purple-400">from</span> atrosha_sdk.client <span className="text-purple-400">import</span> AtroshaProxy
                         </div>

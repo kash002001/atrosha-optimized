@@ -98,17 +98,17 @@ a {
     top: 0;
     left: 0;
     transform: translateX(-100%);
-    box-shadow: 20px 0 50px rgba(0,0,0,0.1);
+    box-shadow: 20px 0 50px rgba(0, 0, 0, 0.1);
   }
-  
+
   .sidebar.open {
     transform: translateX(0);
   }
 
   .main-content {
-    padding: 20px 16px !important;
+    padding: 60px 16px 20px !important;
   }
-  
+
   /* Add padding for hamburger menu */
   .app {
     flex-direction: column;
@@ -425,9 +425,11 @@ a {
   .stats-grid {
     grid-template-columns: repeat(2, 1fr);
   }
+
   .chart-section {
     grid-template-columns: 1fr;
   }
+
   .policies-grid {
     grid-template-columns: repeat(2, 1fr);
   }
@@ -437,9 +439,11 @@ a {
   .stats-grid {
     grid-template-columns: 1fr;
   }
+
   .policies-grid {
     grid-template-columns: 1fr;
   }
+
   .table-section .data-table {
     display: block;
     overflow-x: auto;
