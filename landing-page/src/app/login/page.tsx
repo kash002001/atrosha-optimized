@@ -15,13 +15,11 @@ export default function LoginPage() {
     const handleLogin = async (e: React.FormEvent) => {
         e.preventDefault();
         setLoading(true);
-        setError("");
-
         try {
             // Robust cookie domain logic
             const hostname = window.location.hostname;
-            const cookieDomain = hostname.includes('atrosha.bond') ? '.atrosha.bond' :
-                hostname === 'localhost' ? 'localhost' : undefined;
+            // Never explicitly set 'localhost' as a domain, as modern browsers silently reject it.
+            const cookieDomain = hostname.includes('atrosha.bond') ? '.atrosha.bond' : undefined;
 
             const supabase = createBrowserClient(
                 process.env.NEXT_PUBLIC_SUPABASE_URL!,
