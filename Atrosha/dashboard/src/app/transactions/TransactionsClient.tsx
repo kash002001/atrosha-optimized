@@ -19,8 +19,10 @@ export default function TransactionsClient({ initialData }: { initialData: Tx[] 
     const [filter, setFilter] = useState<string>("all");
     const [search, setSearch] = useState("");
     const [connected, setConnected] = useState(false);
+    const [mounted, setMounted] = useState(false);
 
     useEffect(() => {
+        setMounted(true);
         const supabase = createClient();
 
         const channel = supabase.channel('realtime:transactions')
@@ -51,13 +53,13 @@ export default function TransactionsClient({ initialData }: { initialData: Tx[] 
         };
     }, []);
 
-    const filtered = transactions.filter((tx) => {
+    const filtered = (transactions || []).filter((tx) => {
         if (filter !== "all" && tx.status !== filter) return false;
 
         const searchLower = search.toLowerCase();
-        const agent = (tx.agent_id || "").toLowerCase();
-        const target = (tx.destination || "").toLowerCase();
-        const id = (tx.id || "").toLowerCase();
+        const agent = String(tx.agent_id || "").toLowerCase();
+        const target = String(tx.destination || "").toLowerCase();
+        const id = String(tx.id || "").toLowerCase();
 
         if (search && !agent.includes(searchLower) && !id.includes(searchLower) && !target.includes(searchLower)) return false;
         return true;
@@ -131,13 +133,13 @@ export default function TransactionsClient({ initialData }: { initialData: Tx[] 
                     <tbody>
                         {filtered.map((tx) => (
                             <tr key={tx.id}>
-                                <td className="mono" style={{ fontSize: 11 }}>{tx.id.substring(0, 8)}...</td>
+                                <td className="mono" style={{ fontSize: 11 }}>{String(tx.id).substring(0, 8)}...</td>
                                 <td>{tx.agent_id}</td>
                                 <td style={{ fontWeight: 600 }}>
-                                    {new Intl.NumberFormat('en-US', { style: 'currency', currency: tx.currency || 'USD' }).format(tx.amount / 100)}
+                                    {new Intl.NumberFormat('en-US', { style: 'currency', currency: tx.currency || 'USD' }).format((tx.amount || 0) / 100)}
                                 </td>
                                 <td className="mono" style={{ color: "var(--text-muted)", maxWidth: 200, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
-                                    {tx.destination}
+                                    {tx.destination || "N/A"}
                                 </td>
                                 <td>
                                     <span className={`badge`} style={{
@@ -145,11 +147,11 @@ export default function TransactionsClient({ initialData }: { initialData: Tx[] 
                                         background: tx.status === 'approved' ? 'var(--green-bg)' : 'var(--red-bg)',
                                         padding: '2px 8px', borderRadius: 4, fontSize: 12, textTransform: 'capitalize'
                                     }}>
-                                        {tx.status}
+                                        {tx.status || 'unknown'}
                                     </span>
                                 </td>
                                 <td style={{ color: "var(--text-muted)", fontSize: 12 }}>
-                                    {new Date(tx.created_at).toLocaleString()}
+                                    {mounted && tx.created_at ? new Date(tx.created_at).toLocaleString() : ''}
                                 </td>
                             </tr>
                         ))}
