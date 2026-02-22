@@ -8,7 +8,8 @@ import jwt
 
 app = FastAPI()
 
-r = redis.Redis(host=os.getenv("redis_host", "localhost"), port=6379, db=0, decode_responses=True)
+redis_url = os.getenv("REDIS_URL", "redis://localhost:6379/0")
+r = redis.from_url(redis_url, decode_responses=True)
 
 class permitreq(BaseModel):
     agent_id: str
@@ -69,4 +70,5 @@ def health():
 
 if __name__ == "__main__":
     import uvicorn
-    uvicorn.run(app, host="0.0.0.0", port=8001)
+    port = int(os.getenv("PORT", 8001))
+    uvicorn.run(app, host="0.0.0.0", port=port)
