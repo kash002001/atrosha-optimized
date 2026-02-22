@@ -20,43 +20,33 @@ export default function CodeDemo() {
                             <div className="w-3 h-3 rounded-full bg-green-500"></div>
                         </div>
                         <div className="flex-1 text-center text-gray-500 text-xs">
-                            bash — 80x24
+                            agent.py — Python
                         </div>
                     </div>
                     <div className="p-6 text-gray-300">
                         <div className="mb-4">
-                            <span className="text-accent-green">$</span> curl -sL
-                            https://atrosha.sh/install | bash
+                            <span className="text-purple-400">from</span> atrosha_sdk.client <span className="text-purple-400">import</span> AtroshaProxy
                         </div>
-                        <div className="text-gray-500 mb-6">
-                            &gt; Downloading Atrosha v2.4.0...
-                            <br />
-                            &gt; Verifying signatures...
-                            <br />
-                            &gt; Installed to /usr/local/bin/atrosha
+                        <div className="mb-4">
+                            <span className="text-gray-500"># 1. Initialize with your agent's cryptographic identity</span><br />
+                            proxy = AtroshaProxy(<br />
+                            &nbsp;&nbsp;&nbsp;&nbsp;agent_id=<span className="text-green-300">"agt_123xyz"</span>,<br />
+                            &nbsp;&nbsp;&nbsp;&nbsp;private_key_hex=<span className="text-green-300">"7b8f2c...a91e"</span><br />
+                            )
                         </div>
-                        <div className="mb-2">
-                            <span className="text-accent-green">$</span> atrosha init
-                            --mode=strict
+                        <div className="mb-4 mt-6">
+                            <span className="text-gray-500"># 2. Route the financial request through the Secure Proxy</span><br />
+                            response = proxy.execute_request(<br />
+                            &nbsp;&nbsp;&nbsp;&nbsp;method=<span className="text-green-300">"POST"</span>,<br />
+                            &nbsp;&nbsp;&nbsp;&nbsp;target_url=<span className="text-green-300">"https://api.stripe.com/v1/refunds"</span>,<br />
+                            &nbsp;&nbsp;&nbsp;&nbsp;amount=<span className="text-yellow-300">5000</span>, <span className="text-gray-500"># 50.00 USD</span><br />
+                            &nbsp;&nbsp;&nbsp;&nbsp;body=<span className="text-green-300">"charge=ch_1abc123"</span><br />
+                            )
                         </div>
                         <div className="mt-6 bg-[#252526] p-4 rounded border border-gray-700/50">
-                            <span className="text-purple-400">fn</span>{" "}
-                            <span className="text-blue-400">main</span>() {"{"}
-                            <br />
-                            &nbsp;&nbsp;
-                            <span className="text-purple-400">let</span> proxy ={" "}
-                            <span className="text-yellow-300">Atrosha</span>::
-                            <span className="text-blue-300">new</span>();
-                            <br />
-                            &nbsp;&nbsp;proxy.
-                            <span className="text-blue-300">set_policy</span>
-                            (Policy::FinancialSafe);
-                            <br />
-                            &nbsp;&nbsp;proxy.
-                            <span className="text-blue-300">listen</span>(
-                            <span className="text-green-400">":8080"</span>);
-                            <br />
-                            {"}"}
+                            <span className="text-gray-500">&gt; Proxy validating Ed25519 signature... [OK]</span><br />
+                            <span className="text-gray-500">&gt; Checking global spend limits... [OK]</span><br />
+                            <span className="text-accent-green">&gt; Transaction Approved & Forwarded!</span>
                         </div>
                         <div className="mt-4 animate-pulse">
                             <span className="text-accent-green">$</span>{" "}

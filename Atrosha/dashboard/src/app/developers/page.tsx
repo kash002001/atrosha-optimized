@@ -127,25 +127,26 @@ export default function DevelopersPage() {
                             <div style={{ width: "35%", background: "var(--bg-secondary)", padding: 20, borderRight: "1px solid var(--border)" }}>
                                 <div style={{ marginBottom: 16 }}>
                                     <h4 style={{ fontSize: 13, fontWeight: 600, marginBottom: 4 }}>1. Authenticate</h4>
-                                    <p style={{ fontSize: 12, color: "var(--text-muted)", lineHeight: 1.4 }}>Use API Key as Bearer token. Add `X-Atrosha-Org-ID` header.</p>
+                                    <p style={{ fontSize: 12, color: "var(--text-muted)", lineHeight: 1.4 }}>Sign payloads with your Agent's Ed25519 Private Key. Provide the `X-Atrosha-Agent-ID` header.</p>
                                 </div>
                                 <div>
                                     <h4 style={{ fontSize: 13, fontWeight: 600, marginBottom: 4 }}>2. Proxy Request</h4>
-                                    <p style={{ fontSize: 12, color: "var(--text-muted)", lineHeight: 1.4 }}>Route LLM traffic through our proxy for instant auditing.</p>
+                                    <p style={{ fontSize: 12, color: "var(--text-muted)", lineHeight: 1.4 }}>Route LLM / API traffic through our high-speed Rust Edge Proxy.</p>
                                 </div>
                             </div>
                             <div style={{ flex: 1, background: "#0F172A", padding: 20, position: "relative" }}>
                                 <button
-                                    onClick={() => copyToClipboard(`curl -X POST https://...`)}
+                                    onClick={() => copyToClipboard(`curl -X POST https://proxy.atrosha.com/v1/chat/completions ...`)}
                                     style={{ position: "absolute", top: 12, right: 12, background: "rgba(255,255,255,0.1)", border: "none", padding: 6, borderRadius: 4, cursor: "pointer", color: "#fff" }}
                                 >
                                     <Copy size={12} />
                                 </button>
                                 <pre style={{ fontFamily: "monospace", fontSize: 12, color: "#E2E8F0", lineHeight: 1.6, overflowX: "auto" }}>
-                                    <span style={{ color: "#C084FC" }}>curl</span> -X POST https://proxy.atrosha.com/v1/chat/completions \<br />
-                                    &nbsp;&nbsp;-H <span style={{ color: "#4ADE80" }}>"Authorization: Bearer sk_live_..."</span> \<br />
-                                    &nbsp;&nbsp;-H <span style={{ color: "#4ADE80" }}>"X-Atrosha-Org-ID: org_123abc"</span> \<br />
-                                    &nbsp;&nbsp;-d <span style={{ color: "#FCD34D" }}>{`'{ "model": "gpt-4", "messages": [...] }'`}</span>
+                                    <span style={{ color: "#C084FC" }}>curl</span> -X POST https://atrosha.onrender.com/proxy/ \ <br />
+                                    &nbsp;&nbsp;-H <span style={{ color: "#4ADE80" }}>"X-Atrosha-Agent-ID: agent_123"</span> \ <br />
+                                    &nbsp;&nbsp;-H <span style={{ color: "#4ADE80" }}>"X-Atrosha-Target: https://api.stripe.com/v1/refunds"</span> \ <br />
+                                    &nbsp;&nbsp;-H <span style={{ color: "#4ADE80" }}>"X-Atrosha-Signature: 7b8f2c...a91e"</span> \ <br />
+                                    &nbsp;&nbsp;-d <span style={{ color: "#FCD34D" }}>{`'{ "charge": "ch_1Oz", "amount": 5000 }'`}</span>
                                 </pre>
                             </div>
                         </div>
@@ -155,20 +156,20 @@ export default function DevelopersPage() {
                 {/* Right Column */}
                 <div style={{ display: "flex", flexDirection: "column", gap: 24 }}>
                     <div className="stat-card">
-                        <div className="stat-label"><Code size={14} /> SDKs</div>
+                        <div className="stat-label"><Code size={14} /> Official SDKs</div>
                         <div style={{ display: "flex", flexDirection: "column", gap: 8, marginTop: 12 }}>
+                            <a href="#" style={{ display: "flex", alignItems: "center", gap: 10, padding: 8, borderRadius: 6, border: "1px solid var(--border)", textDecoration: "none" }}>
+                                <div style={{ width: 24, height: 24, background: "rgba(255, 232, 115, 0.2)", color: "#D6A00A", borderRadius: 4, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 10, fontWeight: 700 }}>PY</div>
+                                <div>
+                                    <div style={{ fontSize: 13, fontWeight: 500, color: "var(--text)" }}>Python (Recommended)</div>
+                                    <div style={{ fontSize: 10, color: "var(--text-dim)" }}>pip install atrosha-sdk</div>
+                                </div>
+                            </a>
                             <a href="#" style={{ display: "flex", alignItems: "center", gap: 10, padding: 8, borderRadius: 6, border: "1px solid var(--border)", textDecoration: "none" }}>
                                 <div style={{ width: 24, height: 24, background: "rgba(49, 120, 198, 0.1)", color: "#3178C6", borderRadius: 4, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 10, fontWeight: 700 }}>TS</div>
                                 <div>
                                     <div style={{ fontSize: 13, fontWeight: 500, color: "var(--text)" }}>Node.js</div>
-                                    <div style={{ fontSize: 10, color: "var(--text-dim)" }}>@atrosha/sdk</div>
-                                </div>
-                            </a>
-                            <a href="#" style={{ display: "flex", alignItems: "center", gap: 10, padding: 8, borderRadius: 6, border: "1px solid var(--border)", textDecoration: "none" }}>
-                                <div style={{ width: 24, height: 24, background: "rgba(255, 232, 115, 0.2)", color: "#D6A00A", borderRadius: 4, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 10, fontWeight: 700 }}>PY</div>
-                                <div>
-                                    <div style={{ fontSize: 13, fontWeight: 500, color: "var(--text)" }}>Python</div>
-                                    <div style={{ fontSize: 10, color: "var(--text-dim)" }}>pip install atrosha</div>
+                                    <div style={{ fontSize: 10, color: "var(--text-dim)" }}>npm install @atrosha/sdk</div>
                                 </div>
                             </a>
                         </div>
