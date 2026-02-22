@@ -12,8 +12,17 @@ export async function createAgent(name: string, limit: number) {
 
         if (!user) return { error: "Unauthorized: User session missing" };
 
-        const orgId = user.user_metadata?.org_id;
-        if (!orgId) return { error: "Missing organization_id in user metadata" };
+        let orgId = user.user_metadata?.org_id;
+
+        // Fallback: If metadata is missing org_id, fetch the first available organization
+        if (!orgId) {
+            const { data: orgs } = await supabase.from('organizations').select('id').limit(1);
+            if (orgs && orgs.length > 0) {
+                orgId = orgs[0].id;
+            } else {
+                return { error: "No organization found in database. Please complete onboarding first." };
+            }
+        }
 
         // Generate Ed25519 Keypair using Web Crypto API (Vercel Edge Compatible)
         const keyPair = await crypto.subtle.generateKey(
