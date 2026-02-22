@@ -4,6 +4,8 @@ import { createClient } from "@/lib/supabase-server";
 import { revalidatePath } from "next/cache";
 import nacl from "tweetnacl";
 
+const toHex = (arr: Uint8Array) => Array.from(arr).map(b => b.toString(16).padStart(2, '0')).join('');
+
 export async function createAgent(name: string, limit: number) {
     const supabase = await createClient();
     const { data: { user } } = await supabase.auth.getUser();
@@ -14,8 +16,8 @@ export async function createAgent(name: string, limit: number) {
 
     // Generate Ed25519 Keypair for the bot
     const keyPair = nacl.sign.keyPair();
-    const pubHex = Buffer.from(keyPair.publicKey).toString('hex');
-    const privHex = Buffer.from(keyPair.secretKey).toString('hex');
+    const pubHex = toHex(keyPair.publicKey);
+    const privHex = toHex(keyPair.secretKey);
 
     const { data, error } = await supabase.from('agents').insert({
         name,
@@ -32,5 +34,7 @@ export async function createAgent(name: string, limit: number) {
     revalidatePath("/agents");
 
     // We only return the private key once. It is never stored in our DB.
-    return { ...data, _privateKey: privHex };
+    // JSON parse/stringify ensures we don't return complex objects across the Server Action boundary
+    const plainData = JSON.parse(JSON.stringify(data));
+    return { ...plainData, _privateKey: privHex };
 }
