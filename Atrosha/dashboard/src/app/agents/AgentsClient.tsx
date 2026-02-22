@@ -21,6 +21,8 @@ export default function AgentsClient({ agents }: AgentsClientProps) {
     const [newName, setNewName] = useState("");
     const [creating, setCreating] = useState(false);
 
+    const [newAgentKey, setNewAgentKey] = useState<{ name: string, priv: string } | null>(null);
+
     // Mock global stats for now as they might be config-based or aggregates
     // Renamed "Global Policies" to "Global Limits" for clarity
     const global = [
@@ -36,11 +38,12 @@ export default function AgentsClient({ agents }: AgentsClientProps) {
         try {
             // Dynamic import to avoid SSR issues with server actions in client components if not perfectly set up
             const { createAgent } = await import("./actions");
-            await createAgent(newName, 500000); // Default $5k
+            const newAgent = await createAgent(newName, 500000); // Default $5k
+            setNewAgentKey({ name: newName, priv: newAgent._privateKey });
             setShowNewAgent(false);
             setNewName("");
-        } catch (e) {
-            alert("Failed to create agent: " + e);
+        } catch (e: any) {
+            alert("Failed to create agent: " + e.message);
         } finally {
             setCreating(false);
         }
@@ -76,6 +79,29 @@ export default function AgentsClient({ agents }: AgentsClientProps) {
                     + New Agent
                 </button>
             </div>
+
+            {newAgentKey && (
+                <div className="chart-card" style={{ marginBottom: 20, border: "1px solid var(--accent)", background: "rgba(16, 185, 129, 0.05)" }}>
+                    <h4 style={{ marginTop: 0, color: "var(--accent)" }}>Agent Created Successfully</h4>
+                    <p style={{ fontSize: 13, marginBottom: 12 }}>
+                        Here is the Ed25519 Private Key for <strong>{newAgentKey.name}</strong>.
+                        Copy it now. Put it in your bot's environment variables.
+                        <strong> You will never be able to see this again.</strong>
+                    </p>
+                    <div style={{
+                        background: "#000", padding: 12, borderRadius: 4, fontFamily: "monospace",
+                        fontSize: 12, border: "1px solid #333", color: "#0f0", wordBreak: "break-all", marginBottom: 12
+                    }}>
+                        {newAgentKey.priv}
+                    </div>
+                    <button
+                        onClick={() => setNewAgentKey(null)}
+                        style={{ background: "transparent", color: "var(--text-muted)", border: "1px solid var(--border)", padding: "4px 12px", borderRadius: 4, cursor: "pointer", fontSize: 12 }}
+                    >
+                        I have copied the key
+                    </button>
+                </div>
+            )}
 
             {showNewAgent && (
                 <div className="chart-card" style={{ marginBottom: 20, border: "1px solid var(--primary)" }}>

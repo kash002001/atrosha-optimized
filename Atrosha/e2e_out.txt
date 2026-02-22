@@ -1,0 +1,14 @@
+=== Atrosha E2E Production Test ===
+
+1. Requesting SpendPermit from Validator...
+PASS: Permit acquired! Token length: 231
+
+2. Sending transaction through Rust Proxy...
+Proxy Status: 201
+Proxy Error Body: '{
+  "title": "test",
+  "body": "payload",
+  "userId": 1,
+  "id": 101
+}'
+PASS: Proxy successfully authenticated and routed the request!

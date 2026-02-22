@@ -1,0 +1,16 @@
+[?] Verifying SDK Agent Identity Support...
+
+--- Test 1: Authenticated Agent (agent-007) ---
+Identity: agent-007
+[+] Permit Acquired
+[+] Execution Status: 201 (Expected 201)
+[+] Response Body: {
+  "title": "sdk_test",
+  "body": "works",
+  "id": 101
+}
+
+--- Test 2: Unregistered Agent (unknown-bot-v1) ---
+Identity: unknown-bot-v1
+[!] Permit Acquired (Validator is permissive in demo)
+[+] Security Check Passed: Proxy returned 401 Unauthorized (Unknown Key)

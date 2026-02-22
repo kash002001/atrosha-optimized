@@ -2,6 +2,7 @@
 
 import { createClient } from "@/lib/supabase-server";
 import { revalidatePath } from "next/cache";
+import nacl from "tweetnacl";
 
 export async function createAgent(name: string, limit: number) {
     const supabase = await createClient();
@@ -9,17 +10,17 @@ export async function createAgent(name: string, limit: number) {
 
     if (!user) throw new Error("Unauthorized");
 
-    // Since we don't have an 'organizations' table fully wired with RLS in previous steps (we used mocks or partials),
-    // we'll assume the user has an 'org_id' in metadata, OR we just insert without it if nullable.
-    // Ideally we should have it.
-    const orgId = user.user_metadata.org_id;
+    const orgId = user.user_metadata?.org_id;
+
+    // Generate Ed25519 Keypair for the bot
+    const keyPair = nacl.sign.keyPair();
+    const pubHex = Buffer.from(keyPair.publicKey).toString('hex');
+    const privHex = Buffer.from(keyPair.secretKey).toString('hex');
 
     const { data, error } = await supabase.from('agents').insert({
         name,
-        // org_id: orgId, // Commented out in case it's not set up, relying on default or nullable. 
-        // Un-comment if you know it's strict. 
-        // Safe bet: if schema requires it, this will fail. Let's try to include if present.
         ...(orgId && { organization_id: orgId }),
+        pubkey: pubHex,
         daily_limit_cents: limit,
         is_active: true
     }).select().single();
@@ -29,5 +30,7 @@ export async function createAgent(name: string, limit: number) {
     }
 
     revalidatePath("/agents");
-    return data;
+
+    // We only return the private key once. It is never stored in our DB.
+    return { ...data, _privateKey: privHex };
 }
