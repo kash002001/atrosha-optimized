@@ -421,6 +421,32 @@ a {
   gap: 16px;
 }
 
+@media (max-width: 1024px) {
+  .stats-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+  .chart-section {
+    grid-template-columns: 1fr;
+  }
+  .policies-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (max-width: 768px) {
+  .stats-grid {
+    grid-template-columns: 1fr;
+  }
+  .policies-grid {
+    grid-template-columns: 1fr;
+  }
+  .table-section .data-table {
+    display: block;
+    overflow-x: auto;
+    white-space: nowrap;
+  }
+}
+
 .policy-card {
   background: var(--bg-card);
   border: 1px solid var(--border);
