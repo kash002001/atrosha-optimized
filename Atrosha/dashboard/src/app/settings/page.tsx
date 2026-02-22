@@ -34,7 +34,7 @@ export default async function SettingsPage() {
                 {/* Profile Section */}
                 <div className="chart-card">
                     <h3>Personal Profile</h3>
-                    <div style={{ display: "flex", gap: 24, alignItems: "flex-start" }}>
+                    <div className="profile-card-layout">
                         <div style={{
                             width: 64, height: 64,
                             background: "var(--primary)",
@@ -47,7 +47,7 @@ export default async function SettingsPage() {
                             {initials}
                         </div>
                         <div style={{ flex: 1, display: "grid", gap: 16 }}>
-                            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16 }}>
+                            <div className="profile-details-grid">
                                 <div>
                                     <label style={{ fontSize: 11, fontWeight: 600, color: "var(--text-muted)", textTransform: "uppercase", letterSpacing: "0.5px", marginBottom: 6, display: "block" }}>Email</label>
                                     <div style={{ display: "flex", alignItems: "center", gap: 8, fontSize: 13, color: "var(--text)", padding: "8px 0", borderBottom: "1px solid var(--border)" }}>

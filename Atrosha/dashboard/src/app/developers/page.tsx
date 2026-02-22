@@ -45,7 +45,7 @@ export default function DevelopersPage() {
 
             </div>
 
-            <div style={{ display: "grid", gridTemplateColumns: "2fr 1fr", gap: 24 }}>
+            <div className="dev-grid">
                 {/* Left Column */}
                 <div style={{ display: "flex", flexDirection: "column", gap: 24 }}>
 
@@ -123,8 +123,8 @@ export default function DevelopersPage() {
                     {/* Integration Guide */}
                     <div className="chart-card">
                         <h3>Quick Integration</h3>
-                        <div style={{ display: "flex", border: "1px solid var(--border)", borderRadius: "var(--radius-sm)", overflow: "hidden" }}>
-                            <div style={{ width: "35%", background: "var(--bg-secondary)", padding: 20, borderRight: "1px solid var(--border)" }}>
+                        <div className="quick-integration-card">
+                            <div className="quick-integration-left">
                                 <div style={{ marginBottom: 16 }}>
                                     <h4 style={{ fontSize: 13, fontWeight: 600, marginBottom: 4 }}>1. Authenticate</h4>
                                     <p style={{ fontSize: 12, color: "var(--text-muted)", lineHeight: 1.4 }}>Sign payloads with your Agent's Ed25519 Private Key. Provide the `X-Atrosha-Agent-ID` header.</p>
@@ -134,7 +134,7 @@ export default function DevelopersPage() {
                                     <p style={{ fontSize: 12, color: "var(--text-muted)", lineHeight: 1.4 }}>Route LLM / API traffic through our high-speed Rust Edge Proxy.</p>
                                 </div>
                             </div>
-                            <div style={{ flex: 1, background: "#0F172A", padding: 20, position: "relative" }}>
+                            <div className="quick-integration-right">
                                 <button
                                     onClick={() => copyToClipboard(`curl -X POST https://proxy.atrosha.com/v1/chat/completions ...`)}
                                     style={{ position: "absolute", top: 12, right: 12, background: "rgba(255,255,255,0.1)", border: "none", padding: 6, borderRadius: 4, cursor: "pointer", color: "#fff" }}

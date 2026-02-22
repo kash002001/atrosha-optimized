@@ -94,7 +94,7 @@ export default function RulesClient({ rules }: RulesClientProps) {
                     <Sparkles size={16} style={{ color: "var(--primary)" }} />
                     Rule Composer
                 </h3>
-                <div style={{ display: "flex", gap: 12, marginBottom: preview ? 16 : 0 }}>
+                <div style={{ display: "flex", flexWrap: "wrap", gap: 12, marginBottom: preview ? 16 : 0 }}>
                     <textarea
                         value={input}
                         onChange={(e) => setInput(e.target.value)}
@@ -129,7 +129,7 @@ export default function RulesClient({ rules }: RulesClientProps) {
                 </div>
 
                 {preview && (
-                    <div style={{ display: "flex", gap: 12, alignItems: "flex-start" }}>
+                    <div style={{ display: "flex", flexWrap: "wrap", gap: 12, alignItems: "flex-start" }}>
                         <pre style={{
                             flex: 1,
                             background: "var(--bg)",

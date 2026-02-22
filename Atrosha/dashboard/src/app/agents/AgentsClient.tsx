@@ -113,7 +113,7 @@ export default function AgentsClient({ agents }: AgentsClientProps) {
             {showNewAgent && (
                 <div className="chart-card" style={{ marginBottom: 20, border: "1px solid var(--primary)" }}>
                     <h4 style={{ marginTop: 0 }}>Register New Agent</h4>
-                    <div style={{ display: "flex", gap: 10 }}>
+                    <div style={{ display: "flex", flexWrap: "wrap", gap: 10 }}>
                         <input
                             value={newName}
                             onChange={e => setNewName(e.target.value)}
