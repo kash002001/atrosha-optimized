@@ -38,12 +38,19 @@ export default function AgentsClient({ agents }: AgentsClientProps) {
         try {
             // Dynamic import to avoid SSR issues with server actions in client components if not perfectly set up
             const { createAgent } = await import("./actions");
-            const newAgent = await createAgent(newName, 500000); // Default $5k
+            const result = await createAgent(newName, 500000); // Default $5k
+
+            if (result.error) {
+                alert("Failed to create agent: " + result.error);
+                return;
+            }
+
+            const newAgent = result.data;
             setNewAgentKey({ name: newName, priv: newAgent._privateKey });
             setShowNewAgent(false);
             setNewName("");
         } catch (e: any) {
-            alert("Failed to create agent: " + e.message);
+            alert("Crash during agent creation: " + e.message);
         } finally {
             setCreating(false);
         }
