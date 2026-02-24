@@ -26,7 +26,8 @@ export default function Hero({ onCta }: { onCta: () => void }) {
                     className="text-lg md:text-xl text-muted-light dark:text-muted-dark max-w-2xl mx-auto mb-10 leading-relaxed"
                 >
                     AI agents are now making financial decisions. Atrosha provides the
-                    essential security layer. Our 7M-parameter Semantic Firewall analyzes every payload's intent in real-time, blocking hallucinations and prompt injections before the money leaves your network.
+                    essential security layer, approving safe transactions and blocking risky
+                    ones in real-time to protect your capital.
                 </motion.p>
                 <div className="flex flex-col sm:flex-row justify-center items-center gap-4 mb-12">
                     <Link
