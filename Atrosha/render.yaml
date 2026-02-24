@@ -2,7 +2,8 @@ services:
   - type: web
     name: atrosha-proxy
     runtime: docker
-    dockerfilePath: ./proxy/Dockerfile
+    dockerfilePath: ./Atrosha/proxy/Dockerfile
+    dockerContext: ./Atrosha/proxy
     plan: free
     healthCheckPath: /health
     envVars:
@@ -16,7 +17,8 @@ services:
   - type: web
     name: atrosha-semantic
     runtime: docker
-    dockerfilePath: ./semantic_engine/Dockerfile
+    dockerfilePath: ./Atrosha/semantic_engine/Dockerfile
+    dockerContext: ./Atrosha/semantic_engine
     plan: free
     healthCheckPath: /health
     envVars:
@@ -26,3 +28,4 @@ services:
         value: /app/export/atrosha_engine.onnx
       - key: ATROSHA_TOKENIZER_PATH
         value: /app/tokenizer/tokenizer.json
+
