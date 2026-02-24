@@ -187,6 +187,10 @@ export default function DevelopersPage() {
                                 <span className="mono">100 req/s</span>
                             </div>
                             <div className="policy-field" style={{ padding: 0 }}>
+                                <label>Semantic ML</label>
+                                <span className="badge approved" style={{ padding: "2px 6px" }}>Enabled</span>
+                            </div>
+                            <div className="policy-field" style={{ padding: 0 }}>
                                 <label>Uptime</label>
                                 <span className="badge approved" style={{ padding: "2px 6px" }}>99.99%</span>
                             </div>

@@ -45,7 +45,8 @@ export default function CodeDemo() {
                         </div>
                         <div className="mt-6 bg-[#252526] p-4 rounded border border-gray-700/50">
                             <span className="text-gray-500">&gt; Proxy validating Ed25519 signature... [OK]</span><br />
-                            <span className="text-gray-500">&gt; Checking global spend limits... [OK]</span><br />
+                            <span className="text-gray-500">&gt; Semantic intent analysis (conf: 0.98)... [OK]</span><br />
+                            <span className="text-gray-500">&gt; Evaluating spend policies... [OK]</span><br />
                             <span className="text-accent-green">&gt; Transaction Approved & Forwarded!</span>
                         </div>
                         <div className="mt-4 animate-pulse">
