@@ -1,0 +1,3 @@
+Vercel CLI 50.22.1
+Retrieving projectΓÇª
+Error: The provided path ΓÇ£C:\Python\Project Atrosha\Atrosha\dashboard\Atrosha\dashboardΓÇ¥ does not exist. To change your Project Settings, go to https://vercel.com/kashs-projects-002834e5/atrosha-dashboard/settings

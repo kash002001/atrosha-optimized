@@ -1,0 +1,28 @@
+services:
+  - type: web
+    name: atrosha-proxy
+    runtime: docker
+    dockerfilePath: ./proxy/Dockerfile
+    plan: free
+    healthCheckPath: /health
+    envVars:
+      - key: RUST_LOG
+        value: atrosha_proxy=info
+      - key: PORT
+        value: "10000"
+      - key: SEMANTIC_ENGINE_URL
+        value: https://atrosha-semantic.onrender.com
+
+  - type: web
+    name: atrosha-semantic
+    runtime: docker
+    dockerfilePath: ./semantic_engine/Dockerfile
+    plan: free
+    healthCheckPath: /health
+    envVars:
+      - key: PORT
+        value: "8002"
+      - key: ATROSHA_MODEL_PATH
+        value: /app/export/atrosha_engine.onnx
+      - key: ATROSHA_TOKENIZER_PATH
+        value: /app/tokenizer/tokenizer.json

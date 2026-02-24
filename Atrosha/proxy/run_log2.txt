@@ -1,0 +1,23 @@
+    Finished `dev` profile [unoptimized + debuginfo] target(s) in 1.37s
+warning: the following packages contain code that will be rejected by a future version of Rust: redis v0.24.0
+note: to see what the problems were, use the option `--future-incompat-report`, or run `cargo report future-incompatibilities --id 1`
+     Running `target\debug\atrosha-proxy.exe`
+[2m2026-02-24T04:51:08.452093Z[0m [32m INFO[0m [2matrosha_proxy[0m[2m:[0m Atrosha Proxy v2.1 (PATCHED) starting...
+[2m2026-02-24T04:51:08.452494Z[0m [32m INFO[0m [2matrosha_proxy[0m[2m:[0m connecting to redis [3mredis[0m[2m=[0mredis://127.0.0.1:6379/
+[2m2026-02-24T04:51:08.459865Z[0m [32m INFO[0m [2matrosha_proxy[0m[2m:[0m redis connection verified
+[2m2026-02-24T04:51:08.461407Z[0m [32m INFO[0m [2matrosha_proxy[0m[2m:[0m semantic firewall sidecar configured [3msemantic_url[0m[2m=[0mhttp://127.0.0.1:8002
+[2m2026-02-24T04:51:08.461688Z[0m [32m INFO[0m [2matrosha_proxy[0m[2m:[0m Loaded 1 custom JSON policies
+[2m2026-02-24T04:51:10.507975Z[0m [33m WARN[0m [2matrosha_proxy::adapters[0m[2m:[0m EVM provider unreachable (error sending request for url (http://127.0.0.1:8545/): error trying to connect: tcp connect error: No connection could be made because the target machine actively refused it. (os error 10061)), defaulting chain_id to 31337
+[2m2026-02-24T04:51:10.511639Z[0m [32m INFO[0m [2matrosha_proxy[0m[2m:[0m listening [3maddr[0m[2m=[0m0.0.0.0:8000
+[2m2026-02-24T04:51:23.573243Z[0m [34mDEBUG[0m [2matrosha_proxy::middleware[0m[2m:[0m Bypassing signature for agent-007
+[2m2026-02-24T04:51:23.719308Z[0m [32m INFO[0m [2matrosha_proxy::semantic[0m[2m:[0m semantic firewall verdict [3mverdict[0m[2m=[0mALLOW [3mconfidence[0m[2m=[0m0.8369 [3mengine_latency_ms[0m[2m=[0m65.43 [3mtotal_latency_ms[0m[2m=[0m70
+[2m2026-02-24T04:51:23.719758Z[0m [34mDEBUG[0m [2matrosha_proxy[0m[2m:[0m semantic firewall: ALLOW [3magent_id[0m[2m=[0magent-007 [3mconfidence[0m[2m=[0m0.8369 [3mlatency_ms[0m[2m=[0m65.43
+[2m2026-02-24T04:51:23.719836Z[0m [33m WARN[0m [2matrosha_proxy::json_policy[0m[2m:[0m Matched JSON policy: JsonPolicy { agent: "Global", action: "*", threshold: None, min_semantic_confidence: Some(0.95), match_verdict: None, effect: "deny", require: Some("2fa") }
+[2m2026-02-24T04:51:23.719915Z[0m [33m WARN[0m [2matrosha_proxy[0m[2m:[0m blocked by json policy [3mreason[0m[2m=[0mPolicy violation: Requires 2fa. Matched rule constraints.
+[2m2026-02-24T04:51:25.839149Z[0m [34mDEBUG[0m [2matrosha_proxy::middleware[0m[2m:[0m Bypassing signature for agent-007
+[2m2026-02-24T04:51:25.899384Z[0m [32m INFO[0m [2matrosha_proxy::semantic[0m[2m:[0m semantic firewall verdict [3mverdict[0m[2m=[0mALLOW [3mconfidence[0m[2m=[0m1 [3mengine_latency_ms[0m[2m=[0m44.3 [3mtotal_latency_ms[0m[2m=[0m47
+[2m2026-02-24T04:51:25.899551Z[0m [34mDEBUG[0m [2matrosha_proxy[0m[2m:[0m semantic firewall: ALLOW [3magent_id[0m[2m=[0magent-007 [3mconfidence[0m[2m=[0m1 [3mlatency_ms[0m[2m=[0m44.3
+[2m2026-02-24T04:51:25.899640Z[0m [33m WARN[0m [2matrosha_proxy::permit[0m[2m:[0m permit decode failed [3merror[0m[2m=[0mInvalidToken
+[2m2026-02-24T04:51:25.899669Z[0m [33m WARN[0m [2matrosha_proxy[0m[2m:[0m permit verification failed [3merror[0m[2m=[0minvalid token format
+[2m2026-02-24T04:51:26.563439Z[0m [31mERROR[0m [2matrosha_proxy::audit[0m[2m:[0m failed to flush audit batch [3merror[0m[2m=[0mclickhouse error: error sending request for url (http://127.0.0.1:8123/)
+[2m2026-02-24T04:51:28.595767Z[0m [31mERROR[0m [2matrosha_proxy::audit[0m[2m:[0m failed to flush audit batch [3merror[0m[2m=[0mclickhouse error: error sending request for url (http://127.0.0.1:8123/)

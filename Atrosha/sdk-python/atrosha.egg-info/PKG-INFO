@@ -1,0 +1,9 @@
+Metadata-Version: 2.4
+Name: atrosha
+Version: 0.1.0
+Summary: Official Python SDK for Atrosha API
+Requires-Python: >=3.7
+Requires-Dist: requests>=2.25.0
+Dynamic: requires-dist
+Dynamic: requires-python
+Dynamic: summary

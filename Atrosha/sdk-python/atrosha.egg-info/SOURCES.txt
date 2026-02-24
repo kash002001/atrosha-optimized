@@ -1,0 +1,9 @@
+setup.py
+atrosha/__init__.py
+atrosha/client.py
+atrosha.egg-info/PKG-INFO
+atrosha.egg-info/SOURCES.txt
+atrosha.egg-info/dependency_links.txt
+atrosha.egg-info/requires.txt
+atrosha.egg-info/top_level.txt
+atrosha/resources/__init__.py

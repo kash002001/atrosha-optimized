@@ -92,6 +92,9 @@ create table if not exists transactions (
   currency text default 'USD',
   status text, -- approved/denied
   destination text,
+  sim_score real,
+  latency_ms real,
+  denial_reason text,
   created_at timestamptz default now()
 );
 
@@ -106,9 +109,9 @@ create policy "Enable read access for all users" on transactions for select usin
 -- ==========================================
 -- 5. Dummy Data (Safe Insert)
 -- ==========================================
-insert into transactions (id, agent_id, amount, status, destination, created_at)
+insert into transactions (id, agent_id, amount, status, destination, sim_score, latency_ms, denial_reason, created_at)
 values 
-('tx-demo-001', 'Stripe', 4500, 'approved', 'stripe.com/charges', now()),
-('tx-demo-002', 'OpenAI', 250, 'approved', 'api.openai.com/v1', now() - interval '2 minutes'),
-('tx-demo-003', 'Wise', 120000, 'denied', 'transfer.wise.com', now() - interval '1 hour')
+('tx-demo-001', 'Stripe', 4500, 'approved', 'stripe.com/charges', 1.0, 13.06, null, now()),
+('tx-demo-002', 'OpenAI', 250, 'approved', 'api.openai.com/v1', 0.99, 12.8, null, now() - interval '2 minutes'),
+('tx-demo-003', 'Wise', 120000, 'denied', 'transfer.wise.com', 1.0, 14.2, 'semantic firewall DENIED request', now() - interval '1 hour')
 on conflict (id) do nothing;

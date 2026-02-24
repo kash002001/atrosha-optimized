@@ -73,8 +73,23 @@ async function simulateTraffic() {
         const createdAt = new Date(now.getTime() - timeOffset).toISOString();
 
         const isApproved = Math.random() > 0.15; // 85% approved
+        const isSemanticDenial = !isApproved && Math.random() > 0.5; // Half of denials are from the ML
+
         const amount = Math.floor(Math.random() * 12000) + 500; // $5.00 - $120.00
         const dest = destinations[Math.floor(Math.random() * destinations.length)];
+
+        let simScore = 0.9 + Math.random() * 0.1; // 0.9 to 1.0 confidence mostly
+        let latencyMs = 12 + Math.random() * 5; // 12-17ms latency
+
+        let status = isApproved ? 'approved' : 'denied';
+        let denialReason = null;
+
+        if (isSemanticDenial) {
+            denialReason = 'semantic firewall DENIED request';
+            simScore = 0.95 + Math.random() * 0.05; // High confidence for explicit blocks
+        } else if (!isApproved) {
+            denialReason = 'budget exceeded';
+        }
 
         transactions.push({
             id: crypto.randomUUID(),
@@ -82,9 +97,12 @@ async function simulateTraffic() {
             agent_id: agentId,
             amount: amount,
             currency: 'USD',
-            status: isApproved ? 'approved' : 'denied',
+            status: status,
             created_at: createdAt,
             destination: dest, // Matches schema
+            sim_score: simScore,
+            latency_ms: latencyMs,
+            denial_reason: denialReason
         });
     }
 

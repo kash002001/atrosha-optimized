@@ -1,5 +1,5 @@
 # Builder stage
-FROM rust:1.75-slim-bookworm AS builder
+FROM rust:slim-bookworm AS builder
 
 WORKDIR /app
 
@@ -10,16 +10,16 @@ RUN apt-get update && apt-get install -y \
     && rm -rf /var/lib/apt/lists/*
 
 # Cache dependencies
-COPY Cargo.toml Cargo.lock ./
+COPY Cargo.toml Cargo.lock* ./
 # Create dummy src to build dependencies
 RUN mkdir src && echo "fn main() {println!(\"dummy\")}" > src/main.rs
-RUN cargo build --release --locked
+RUN cargo build --release
 
 # Build actual source
 COPY src ./src
 # Touch main.rs to force rebuild
 RUN touch src/main.rs
-RUN cargo build --release --locked
+RUN cargo build --release
 
 # Runtime stage
 FROM debian:bookworm-slim
