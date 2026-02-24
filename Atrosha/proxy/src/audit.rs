@@ -65,6 +65,8 @@ pub struct AuditWorker {
     clickhouse_url: String,
     batch_size: usize,
     flush_interval_ms: u64,
+    healthy: bool,
+    fail_count: u32,
 }
 
 impl AuditWorker {
@@ -79,6 +81,8 @@ impl AuditWorker {
             clickhouse_url,
             batch_size,
             flush_interval_ms,
+            healthy: true,
+            fail_count: 0,
         }
     }
 
@@ -104,19 +108,45 @@ impl AuditWorker {
         }
     }
 
-    async fn flush_batch(&self, batch: &mut Vec<AuditRecord>) {
+    async fn flush_batch(&mut self, batch: &mut Vec<AuditRecord>) {
         if batch.is_empty() {
             return;
         }
 
-        if let Err(e) = self.insert_records(batch).await {
-            tracing::error!(error = %e, "failed to flush audit batch");
+        // circuit breaker: skip writes after repeated failures, retry every ~60 flushes
+        if !self.healthy {
+            self.fail_count += 1;
+            if self.fail_count % 60 != 0 {
+                batch.clear();
+                return;
+            }
+            tracing::info!("audit: retrying clickhouse connection...");
+        }
+
+        match self.insert_records(batch).await {
+            Ok(_) => {
+                if !self.healthy {
+                    tracing::info!("audit: clickhouse connection restored");
+                    self.healthy = true;
+                    self.fail_count = 0;
+                }
+            }
+            Err(e) => {
+                if self.healthy {
+                    tracing::warn!(error = %e, "audit: clickhouse unreachable, entering degraded mode (records will be dropped)");
+                    self.healthy = false;
+                }
+                self.fail_count += 1;
+            }
         }
         batch.clear();
     }
 
-    async fn ensure_schema(&self) -> Result<(), AuditError> {
-        let client = reqwest::Client::new();
+    async fn ensure_schema(&mut self) -> Result<(), AuditError> {
+        let client = reqwest::Client::builder()
+            .timeout(std::time::Duration::from_secs(5))
+            .build()
+            .unwrap_or_default();
         // create transaction_logs if it doesn't exist; idempotent
         let ddl = r#"CREATE TABLE IF NOT EXISTS transaction_logs (
             ts DateTime64(3) DEFAULT now64(3),
@@ -141,8 +171,14 @@ impl AuditWorker {
         ORDER BY (org_id, agent_id, ts)
         TTL ts + INTERVAL 365 DAY
         SETTINGS index_granularity = 8192"#;
-        let _ = client.post(&self.clickhouse_url).body(ddl).send().await;
-        Ok(())
+        match client.post(&self.clickhouse_url).body(ddl).send().await {
+            Ok(_) => Ok(()),
+            Err(e) => {
+                tracing::warn!(error = %e, "audit: clickhouse unavailable at startup, running in degraded mode");
+                self.healthy = false;
+                Ok(()) // non-fatal
+            }
+        }
     }
 
     async fn insert_records(&self, records: &[AuditRecord]) -> Result<(), AuditError> {
