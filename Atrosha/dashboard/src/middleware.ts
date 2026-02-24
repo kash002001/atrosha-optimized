@@ -17,19 +17,15 @@ export async function middleware(req: NextRequest) {
                         req.cookies.set(name, value)
                     );
                     res = NextResponse.next({ request: req });
-                    cookiesToSet.forEach(({ name, value, options }) =>
-                        res.cookies.set(name, value, options)
-                    );
+                    cookiesToSet.forEach(({ name, value, options }) => {
+                        // Apply cross-domain cookie logic dynamically here for the server client
+                        const customOptions = { ...options };
+                        if (req.nextUrl.hostname.endsWith('.atrosha.bond')) {
+                            customOptions.domain = '.atrosha.bond';
+                        }
+                        res.cookies.set(name, value, customOptions);
+                    });
                 },
-            },
-            // Shared options for localhost and production
-            cookieOptions: {
-                // If on atrosha.bond or app.atrosha.bond, share cookies.
-                // Otherwise (vercel.app), restrict to current host (undefined).
-                domain: req.nextUrl.hostname.endsWith('.atrosha.bond') ? '.atrosha.bond' : undefined,
-                path: '/',
-                sameSite: 'lax',
-                secure: process.env.NODE_ENV === 'production',
             }
         }
     );
@@ -57,7 +53,6 @@ export async function middleware(req: NextRequest) {
 
 export const config = {
     matcher: [
-        // gate everything except static assets and api routes
         "/((?!_next/static|_next/image|favicon.ico|api).*)",
     ],
 };
