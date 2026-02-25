@@ -329,6 +329,13 @@ async fn proxy_handler(
                             confidence = %verdict.confidence,
                             "VIOLATION: semantic firewall would DENY [shadow bypass]"
                         );
+                        log_audit(
+                            &state, &org_id, agent_id, &req_id, amount, target_url,
+                            AuditDecision::ShadowDenied, start, shadow_mode, None,
+                            SignatureStatus::Missing,
+                            Some(format!("Semantic Firewall (SHADOW): DENY (conf={:.3})", verdict.confidence)),
+                            0.0, None,
+                        );
                     }
                 }
                 "QUARANTINE" => {
@@ -383,6 +390,22 @@ async fn proxy_handler(
             return Err(StatusCode::FORBIDDEN.into_response());
         } else {
             tracing::warn!(reason = %policy_err, "VIOLATION: JSON policy blocked [shadow bypass]");
+            log_audit(
+                &state,
+                &org_id,
+                agent_id,
+                &req_id,
+                amount,
+                target_url,
+                AuditDecision::ShadowDenied,
+                start,
+                shadow_mode,
+                None,
+                SignatureStatus::Missing,
+                Some(format!("JSON Policy (SHADOW): {}", policy_err)),
+                0.0,
+                None,
+            );
         }
     }
 
@@ -408,6 +431,22 @@ async fn proxy_handler(
             return Err(StatusCode::PAYMENT_REQUIRED.into_response());
         } else {
             tracing::warn!(amount = %amount, agent_id = %agent_id, "VIOLATION:large transaction requires HITL [shadow bypass]");
+            log_audit(
+                &state,
+                &org_id,
+                agent_id,
+                &req_id,
+                amount,
+                target_url,
+                AuditDecision::ShadowDenied,
+                start,
+                shadow_mode,
+                None,
+                SignatureStatus::Missing,
+                Some("Transaction > $10k requires Human-in-the-Loop MFA (SHADOW)".to_string()),
+                0.0,
+                None,
+            );
         }
     }
 
@@ -435,6 +474,22 @@ async fn proxy_handler(
                 return Err(StatusCode::FORBIDDEN.into_response());
             } else {
                 tracing::warn!(amount = %amount, agent_id = %agent_id, "VIOLATION:missing supervisor sig for >5k [shadow bypass]");
+                log_audit(
+                    &state,
+                    &org_id,
+                    agent_id,
+                    &req_id,
+                    amount,
+                    target_url,
+                    AuditDecision::ShadowDenied,
+                    start,
+                    shadow_mode,
+                    None,
+                    SignatureStatus::Missing,
+                    Some("Transaction > $5k requires Supervisor-Signature (SHADOW)".to_string()),
+                    0.0,
+                    None,
+                );
             }
         }
     }
@@ -599,16 +654,16 @@ async fn proxy_handler(
     ).await;
 
     let (status, resp_bytes, header_map) = match execution_result {
-        Ok(Ok((status, text))) => {
-             (status, text.into_bytes(), HeaderMap::new())
+        Ok(Ok((status, text, h_map))) => {
+             (status, text.into_bytes(), h_map)
         }
         Ok(Err(e)) => {
             tracing::error!(error = %e, "adapter execution failed");
-            (StatusCode::BAD_GATEWAY, format!("Adapter Error: {}", e).into_bytes(), HeaderMap::new())
+            (StatusCode::BAD_GATEWAY, format!("Adapter Error: {}", e).into_bytes(), reqwest::header::HeaderMap::new())
         }
         Err(_) => {
             tracing::error!("adapter execution timed out");
-            (StatusCode::GATEWAY_TIMEOUT, b"Gateway Timeout".to_vec(), HeaderMap::new())
+            (StatusCode::GATEWAY_TIMEOUT, b"Gateway Timeout".to_vec(), reqwest::header::HeaderMap::new())
         }
     };
 

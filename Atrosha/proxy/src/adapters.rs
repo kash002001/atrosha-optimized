@@ -12,7 +12,7 @@ pub trait RailAdapter: Send + Sync {
         url: &str,
         headers: &reqwest::header::HeaderMap,
         body: &[u8],
-    ) -> Result<(StatusCode, String), Box<dyn Error + Send + Sync>>;
+    ) -> Result<(StatusCode, String, reqwest::header::HeaderMap), Box<dyn Error + Send + Sync>>;
 }
 
 pub struct HttpAdapter {
@@ -33,7 +33,7 @@ impl RailAdapter for HttpAdapter {
         url: &str,
         headers: &reqwest::header::HeaderMap,
         body: &[u8],
-    ) -> Result<(StatusCode, String), Box<dyn Error + Send + Sync>> {
+    ) -> Result<(StatusCode, String, reqwest::header::HeaderMap), Box<dyn Error + Send + Sync>> {
         let mut req = self.client.request(method.clone(), url);
         
         for (k, v) in headers.iter() {
@@ -50,8 +50,9 @@ impl RailAdapter for HttpAdapter {
 
         let resp = req.send().await?;
         let status = resp.status();
+        let headers = resp.headers().clone();
         let text = resp.text().await?;
-        Ok((status, text))
+        Ok((status, text, headers))
     }
 }
 
@@ -103,12 +104,12 @@ impl RailAdapter for EvmAdapter {
         url: &str,
         _headers: &reqwest::header::HeaderMap,
         body: &[u8],
-    ) -> Result<(StatusCode, String), Box<dyn Error + Send + Sync>> {
+    ) -> Result<(StatusCode, String, reqwest::header::HeaderMap), Box<dyn Error + Send + Sync>> {
         info!(url = %url, "executing evm transaction");
         println!("DEBUG: EVM ADAPTER CALLED with url {}", url);
 
         if method != Method::POST {
-             return Ok((StatusCode::METHOD_NOT_ALLOWED, "EVM actions must be POST".to_string()));
+             return Ok((StatusCode::METHOD_NOT_ALLOWED, "EVM actions must be POST".to_string(), reqwest::header::HeaderMap::new()));
         }
 
         let body_json: serde_json::Value = serde_json::from_slice(body).map_err(|_| "Invalid JSON")?;
@@ -132,7 +133,7 @@ impl RailAdapter for EvmAdapter {
             "explorer": format!("https://explorer.testnet/tx/{}", tx_hash)
         });
         
-        Ok((StatusCode::OK, res.to_string()))
+        Ok((StatusCode::OK, res.to_string(), reqwest::header::HeaderMap::new()))
     }
 }
 
@@ -152,9 +153,9 @@ impl RailAdapter for AchAdapter {
         _url: &str,
         _headers: &reqwest::header::HeaderMap,
         _body: &[u8],
-    ) -> Result<(StatusCode, String), Box<dyn Error + Send + Sync>> {
+    ) -> Result<(StatusCode, String, reqwest::header::HeaderMap), Box<dyn Error + Send + Sync>> {
         // Simulate ACH processing delay
         std::thread::sleep(std::time::Duration::from_millis(50));
-        Ok((StatusCode::ACCEPTED, json!({"status": "pending_batch", "settlement": "T+1"}).to_string()))
+        Ok((StatusCode::ACCEPTED, json!({"status": "pending_batch", "settlement": "T+1"}).to_string(), reqwest::header::HeaderMap::new()))
     }
 }

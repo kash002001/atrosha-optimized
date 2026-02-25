@@ -68,7 +68,7 @@ impl AgentRegistry {
             Ok(mut conn) => {
                 let key = format!("atrosha:{}:role:{}", org_id, agent_id);
                 // Default to "agent" if not specified
-                let role: String = conn.get(&key).await.unwrap_or(None).unwrap_or("agent".to_string());
+                let role = conn.get::<_, Option<String>>(&key).await.unwrap_or(None).unwrap_or_else(|| "agent".to_string());
                 return Ok(role);
             }
             Err(e) => {
