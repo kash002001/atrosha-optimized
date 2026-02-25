@@ -25,10 +25,12 @@ export default function Features() {
                         <span className="material-symbols-outlined">shield</span>
                     </div>
                     <h3 className="text-xl font-bold text-text-light dark:text-white mb-3">
-                        Semantic Firewall
+                        Intercept
                     </h3>
                     <p className="text-muted-light dark:text-muted-dark text-sm leading-relaxed">
-                        Sit between your LLM and external APIs. Our custom, on-premise Transformer model analyzes transaction intent at line-rate, instantly blocking hallucinations and hidden prompt injections.
+                        Sit between your LLM and external APIs. We monitor intent in
+                        real-time, blocking unauthorized financial actions before the request
+                        ever leaves your network.
                     </p>
                 </div>
                 <div className="bg-background-light dark:bg-background-dark p-8 rounded-2xl border border-gray-100 dark:border-gray-800 hover:shadow-soft transition-shadow">

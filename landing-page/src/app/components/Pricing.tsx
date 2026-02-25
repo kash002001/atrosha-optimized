@@ -91,12 +91,6 @@ export default function Pricing({ onCta }: { onCta: () => void }) {
                                 <span className="material-symbols-outlined text-primary text-lg">
                                     check
                                 </span>
-                                Semantic Firewall
-                            </li>
-                            <li className="flex items-start gap-2">
-                                <span className="material-symbols-outlined text-primary text-lg">
-                                    check
-                                </span>
                                 Audit Trails
                             </li>
                         </ul>

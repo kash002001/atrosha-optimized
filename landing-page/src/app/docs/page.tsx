@@ -40,7 +40,7 @@ export default function DocsPage() {
                             <p className="text-lg text-gray-400 leading-relaxed mb-4">
                                 Atrosha provides a zero-trust cryptographic proxy to secure your AI Agents' financial capabilities.
                                 By routing your agent's API calls through our Rust Proxy, you cryptographically enforce spending limits,
-                                budgets, and real-time ML-powered semantic policies.
+                                budgets, and policy rules in real-time.
                             </p>
                         </section>
 
@@ -72,7 +72,7 @@ export default function DocsPage() {
                             <h2 className="text-2xl font-bold text-white mb-4">Transactions & Permits</h2>
                             <p className="text-gray-400 leading-relaxed mb-4">
                                 If a transaction breaks a static limit (like $5,000 per request), the proxy will block it. For complex natural language rules,
-                                our 7M-parameter Semantic Firewall analyzes your payload's intent. If it violates your NLP security policies, the SDK natively raises a <code>SemanticFirewallError</code>.
+                                your agent must first request an ephemeral <strong>Spend Permit</strong> from our Python Validator Engine, then attach that JWT to the proxied request.
                             </p>
                         </section>
                     </div>
@@ -117,20 +117,18 @@ export default function DocsPage() {
                                 <div className="bg-[#1a1a1a] rounded-lg p-4 border border-white/5 font-mono text-sm overflow-x-auto">
                                     <pre className="text-blue-300">
                                         <span className="text-gray-500"># Send money via Stripe via the proxy</span><br />
-                                        <span className="text-purple-300">try</span>:<br />
-                                        &nbsp;&nbsp;&nbsp;&nbsp;response = proxy.execute_request(<br />
-                                        &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;method=<span className="text-green-300">"POST"</span>,<br />
-                                        &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;target_url=<span className="text-green-300">"https://api.stripe.com/v1/refunds"</span>,<br />
-                                        &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;amount=<span className="text-yellow-300">5000</span>,<br />
-                                        &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;body=<span className="text-green-300">"charge=ch_1abc123"</span>,<br />
-                                        &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;headers={"{"}<span className="text-green-300">"Authorization"</span>: <span className="text-green-300">f"Bearer {'{'}STRIPE_KEY{'}'}"</span>{"}"}<br />
-                                        &nbsp;&nbsp;&nbsp;&nbsp;)<br />
+                                        response = proxy.execute_request(<br />
+                                        &nbsp;&nbsp;&nbsp;&nbsp;method=<span className="text-green-300">"POST"</span>,<br />
+                                        &nbsp;&nbsp;&nbsp;&nbsp;target_url=<span className="text-green-300">"https://api.stripe.com/v1/refunds"</span>,<br />
+                                        &nbsp;&nbsp;&nbsp;&nbsp;amount=<span className="text-yellow-300">5000</span>,<br />
+                                        &nbsp;&nbsp;&nbsp;&nbsp;body=<span className="text-green-300">"charge=ch_1abc123"</span>,<br />
+                                        &nbsp;&nbsp;&nbsp;&nbsp;headers={"{"}<span className="text-green-300">"Authorization"</span>: <span className="text-green-300">f"Bearer {'{'}STRIPE_KEY{'}'}"</span>{"}"}<br />
+                                        )<br />
+                                        <br />
+                                        <span className="text-purple-300">if</span> response.status_code == <span className="text-yellow-300">200</span>:<br />
                                         &nbsp;&nbsp;&nbsp;&nbsp;<span className="text-blue-400">print</span>(<span className="text-green-300">"Refund Approved!"</span>)<br />
-                                        <span className="text-purple-300">except</span> Exception <span className="text-purple-300">as</span> e:<br />
-                                        &nbsp;&nbsp;&nbsp;&nbsp;<span className="text-purple-300">if</span> <span className="text-blue-400">getattr</span>(e, <span className="text-green-300">"is_semantic_block"</span>, <span className="text-yellow-300">False</span>):<br />
-                                        &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span className="text-blue-400">print</span>(<span className="text-green-300">f"Blocked by ML Firewall: {'{'}e{'}'}"</span>)<br />
-                                        &nbsp;&nbsp;&nbsp;&nbsp;<span className="text-purple-300">else</span>:<br />
-                                        &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span className="text-blue-400">print</span>(<span className="text-green-300">f"Proxy Blocked: {'{'}e{'}'}"</span>)
+                                        <span className="text-purple-300">else</span>:<br />
+                                        &nbsp;&nbsp;&nbsp;&nbsp;<span className="text-blue-400">print</span>(<span className="text-green-300">f"Proxy Blocked: {'{'}response.text{'}'}"</span>)
                                     </pre>
                                 </div>
                             </div>
