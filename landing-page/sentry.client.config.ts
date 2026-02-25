@@ -2,16 +2,13 @@ import * as Sentry from "@sentry/nextjs";
 
 Sentry.init({
     dsn: process.env.NEXT_PUBLIC_SENTRY_DSN,
-    // Replay may only be enabled for the client-side
-    integrations: [Sentry.replayIntegration()],
 
-    // Set tracesSampleRate to 1.0 to capture 100%
-    // of transactions for tracing.
-    // We recommend adjusting this value in production
-    tracesSampleRate: 1.0,
+    // only trace 20% of sessions in prod — was 100%, way too heavy
+    tracesSampleRate: 0.2,
 
-    // Capture Replay for 10% of all sessions,
-    // plus for 100% of sessions with an error
-    replaysSessionSampleRate: 0.1,
+    // lazy-load replay to keep initial bundle small
+    integrations: [Sentry.replayIntegration({ maskAllText: false, blockAllMedia: false })],
+
+    replaysSessionSampleRate: 0.05,
     replaysOnErrorSampleRate: 1.0,
 });

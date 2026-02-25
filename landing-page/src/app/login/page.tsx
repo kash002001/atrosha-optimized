@@ -1,59 +1,56 @@
 "use client";
 
-import { useState } from "react";
-import { createBrowserClient } from "@supabase/ssr";
+import { useState, useRef } from "react";
 import Link from "next/link";
+import { loginAction } from "../auth-actions";
 
 export default function LoginPage() {
     const [email, setEmail] = useState("");
     const [password, setPassword] = useState("");
     const [error, setError] = useState("");
     const [loading, setLoading] = useState(false);
-
-    // console.log("LoginPage mounted");
+    const abortRef = useRef<AbortController | null>(null);
 
     const handleLogin = async (e: React.FormEvent) => {
         e.preventDefault();
         setLoading(true);
         setError("");
 
+        // cancel any stale in-flight request
+        abortRef.current?.abort();
+        abortRef.current = new AbortController();
+
+        const timeout = setTimeout(() => {
+            setLoading(false);
+            setError("Login request timed out. Please try again.");
+            abortRef.current?.abort();
+        }, 10000);
+
         try {
-            // Robust cookie domain logic
-            const hostname = window.location.hostname;
-            const cookieDomain = hostname.includes('atrosha.bond') ? '.atrosha.bond' : undefined;
+            // Use server action for reliable cookie setting in incognito
+            const result = await loginAction(email, password);
+            clearTimeout(timeout);
 
-            const supabase = createBrowserClient(
-                process.env.NEXT_PUBLIC_SUPABASE_URL!,
-                process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
-                {
-                    cookieOptions: {
-                        domain: cookieDomain,
-                        path: '/',
-                        sameSite: 'lax',
-                        secure: window.location.protocol === 'https:',
-                    }
-                }
-            );
-
-            const { error: signInError } = await supabase.auth.signInWithPassword({ email, password });
-
-            if (signInError) {
-                console.error("Login Error:", signInError);
-                setError(signInError.message);
-                alert(`Login Failed: ${signInError.message}`); // Explicit feedback
+            if (result.error) {
+                setError(result.error);
                 setLoading(false);
                 return;
             }
 
-            // Success - Redirect
-            const dashboardUrl = process.env.NEXT_PUBLIC_DASHBOARD_URL || "https://app.atrosha.bond";
-            // Use replace to avoid back-button loops
-            window.location.replace(dashboardUrl);
+            // session is now set via Set-Cookie header. Proceed to dashboard.
+            const hostname = typeof window !== 'undefined' ? window.location.hostname : 'localhost';
+            const isProd = hostname.includes('atrosha.bond');
+            let dashUrl = process.env.NEXT_PUBLIC_DASHBOARD_URL || "https://app.atrosha.bond";
 
+            if (isProd && dashUrl.includes('localhost')) {
+                dashUrl = "https://app.atrosha.bond";
+            }
+
+            window.location.replace(dashUrl);
         } catch (err: any) {
-            console.error("Unexpected Error:", err);
-            setError(err.message || "An unexpected error occurred");
-            alert("An unexpected system error occurred. Please check console.");
+            clearTimeout(timeout);
+            if (err?.name === 'AbortError') return;
+            setError(err.message || "Something went wrong");
             setLoading(false);
         }
     };
@@ -89,6 +86,7 @@ export default function LoginPage() {
                             onChange={(e) => setEmail(e.target.value)}
                             placeholder="you@company.com"
                             required
+                            autoComplete="email"
                             className="w-full px-4 py-2.5 rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-surface-dark text-text-light dark:text-white placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-primary/50 text-sm transition-all"
                         />
                     </div>
@@ -102,6 +100,7 @@ export default function LoginPage() {
                             onChange={(e) => setPassword(e.target.value)}
                             placeholder="••••••••"
                             required
+                            autoComplete="current-password"
                             className="w-full px-4 py-2.5 rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-surface-dark text-text-light dark:text-white placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-primary/50 text-sm transition-all"
                         />
                     </div>
@@ -120,7 +119,7 @@ export default function LoginPage() {
                 </form>
 
                 <p className="text-center text-sm text-muted-light dark:text-muted-dark mt-6">
-                    Don't have an account?{" "}
+                    {"Don't have an account? "}
                     <Link href="/signup" className="text-primary hover:underline font-medium">
                         Sign up
                     </Link>

@@ -76,7 +76,7 @@ impl PolicyEngine {
     pub async fn reset_usage(&self, agent_id: &str) -> Result<(), PolicyError> {
         let mut conn = self.client.get_async_connection().await?;
         let usage_key = format!("atrosha:usage:{}", agent_id);
-        let _: () = conn.set(&usage_key, 0.0).await?;
+        let _: () = conn.set::<_, _, ()>(&usage_key, 0.0).await?;
         tracing::info!(agent_id = %agent_id, "usage reset");
         Ok(())
     }
@@ -84,7 +84,7 @@ impl PolicyEngine {
     pub async fn set_limit(&self, agent_id: &str, limit: f64) -> Result<(), PolicyError> {
         let mut conn = self.client.get_async_connection().await?;
         let limit_key = format!("atrosha:limit:{}", agent_id);
-        let _: () = conn.set(&limit_key, limit).await?;
+        let _: () = conn.set::<_, _, ()>(&limit_key, limit).await?;
         tracing::info!(agent_id = %agent_id, limit = limit, "limit configured");
         Ok(())
     }

@@ -1,0 +1,14 @@
+  dpl_AhTo95yBaRK5oAHMkLCZv6tHTfUF  state=QUEUED  sha=db17ece  msg=chore: rebuild landing-page with node 20.x
+  dpl_B8JD6cKdmr9nTmxtXx6abprSypy5  state=ERROR  sha=d12d501  msg=chore: trigger landing-page first build with git integration
+    ERROR: No Next.js version detected. Make sure your package.json has "next" in either "dependencies" or "devDependencies". Also check your Root Directory setting matches the directory of your package.json file.
+  dpl_57VNCRsre2yGU6WogHipcDjGBgyT  state=ERROR  sha=?  msg=?
+    ERROR: Command "npm run build" exited with 1
+  dpl_Bh5Z1qcSd9BJ1XRMa6Mhayd4TZbx  state=ERROR  sha=?  msg=?
+    ERROR: Command "npm run build" exited with 1
+  dpl_9mbvgAUm3dnmJc1ssAKKZYpK8wtz  state=ERROR  sha=?  msg=?
+    ERROR: Command "npm run build" exited with 1
+
+--- Environment Variables ---
+  NEXT_PUBLIC_DASHBOARD_URL  target=['production', 'preview', 'development']  type=plain
+  NEXT_PUBLIC_SUPABASE_ANON_KEY  target=['production', 'preview', 'development']  type=plain
+  NEXT_PUBLIC_SUPABASE_URL  target=['production', 'preview', 'development']  type=plain

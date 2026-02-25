@@ -1,0 +1,11 @@
+  dpl_57VNCRsre2yGU6WogHipcDjGBgyT  state=ERROR  sha=?  msg=?
+    ERROR: Command "npm run build" exited with 1
+  dpl_Bh5Z1qcSd9BJ1XRMa6Mhayd4TZbx  state=ERROR  sha=?  msg=?
+    ERROR: Command "npm run build" exited with 1
+  dpl_9mbvgAUm3dnmJc1ssAKKZYpK8wtz  state=ERROR  sha=?  msg=?
+    ERROR: Command "npm run build" exited with 1
+  dpl_AdyrtVJ3dN8RLhBZLhLNYBa296fn  state=ERROR  sha=?  msg=?
+    ERROR: Command "npm run build" exited with 1
+  dpl_9kwsjUb6KrmsFB1jPDjFby4bUvwX  state=READY  sha=?  msg=?
+
+--- Environment Variables ---

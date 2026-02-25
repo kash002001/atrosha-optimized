@@ -1,0 +1,6 @@
+rootDirectory: landing-page
+framework: nextjs
+buildCommand: None
+outputDirectory: None
+installCommand: None
+nodeVersion: 24.x

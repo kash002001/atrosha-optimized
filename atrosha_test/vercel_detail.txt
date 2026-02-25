@@ -1,0 +1,95 @@
+{
+  "name": "app.atrosha.bond",
+  "apexName": "atrosha.bond",
+  "projectId": "prj_MTjPoR5b7wBWkM8M22KXzhX7yV9P",
+  "redirect": null,
+  "redirectStatusCode": null,
+  "gitBranch": null,
+  "customEnvironmentId": null,
+  "updatedAt": 1771943566544,
+  "createdAt": 1771943566544,
+  "verified": true
+}
+
+--- Project Info ---
+Name: atrosha-vyc1
+Targets: {
+  "production": {
+    "alias": [
+      "app.atrosha.bond",
+      "atrosha-vyc1-kashs-projects-002834e5.vercel.app",
+      "atrosha-vyc1-git-main-kashs-projects-002834e5.vercel.app"
+    ],
+    "aliasAssigned": 1771941257531,
+    "aliasError": null,
+    "automaticAliases": [
+      "atrosha-vyc1-kashs-projects-002834e5.vercel.app",
+      "atrosha-vyc1-git-main-kashs-projects-002834e5.vercel.app"
+    ],
+    "builds": [],
+    "createdAt": 1771941237787,
+    "createdIn": "sfo1",
+    "creator": {
+      "uid": "XftFo4EHLjCHP5FGgxDdRUWD",
+      "email": "kashabhi440@gmail.com",
+      "username": "kashabhi440-5637",
+      "githubLogin": "kash002001"
+    },
+    "deploymentHostname": "atrosha-vyc1-gjqrsg9dj-kashs-projects-002834e5",
+    "forced": false,
+    "id": "dpl_6ZymbneRostJUp78nZy4TdktrP6o",
+    "meta": {
+      "githubCommitAuthorName": "kash002100",
+      "githubCommitAuthorEmail": "kashabhi440@gmail.com",
+      "githubCommitMessage": "fix(landing): revert hero sub-heading paragraph",
+      "githubCommitOrg": "kash002001",
+      "githubCommitRef": "main",
+      "githubCommitRepo": "atrosha",
+      "githubCommitSha": "d0a77f28d522d04e8cd27918d612e14990eb3cd4",
+      "githubDeployment": "1",
+      "githubOrg": "kash002001",
+      "githubRepo": "atrosha",
+      "githubRepoOwnerType": "User",
+      "githubCommitRepoId": "1157149701",
+      "githubRepoId": "1157149701",
+      "githubRepoVisibility": "private",
+      "githubHost": "github.com",
+      "githubCommitAuthorLogin": "kash002001",
+      "repoPushedAt": "1771941234000",
+      "branchAlias": "atrosha-vyc1-git-main-kashs-projects-002834e5.vercel.app",
+      "lambdaRuntimeStats": "{\"nodejs\":2}",
+      "bundler": "turbopack"
+    },
+    "name": "atrosha-vyc1",
+    "plan": "hobby",
+    "private": true,
+    "readyState": "READY",
+    "readySubstate": "PROMOTED",
+    "target": "production",
+    "teamId": "team_a7rEFIIsmiDO6gGjxiFT39vu",
+    "type": "LAMBDAS",
+    "url": "atrosha-vyc1-gjqrsg9dj-kashs-projects-002834e5.vercel.app",
+    "userId": "XftFo4EHLjCHP5FGgxDdRUWD",
+    "withCache": false,
+    "buildingAt": 1771941239314,
+    "readyAt": 1771941256902,
+    "previewCommentsEnabled": true,
+    "oidcTokenClaims": {
+      "sub": "owner:kashs-projects-002834e5:project:atrosha-vyc1:environment:production",
+      "iss": "https://oidc.vercel.com/kashs-projects-002834e5",
+      "scope": "owner:kashs-projects-002834e5:project:atrosha-vyc1:environment:production",
+      "aud": "https://vercel.com/kashs-projects-002834e5",
+      "owner": "kashs-projects-002834e5",
+      "owner_id": "team_a7rEFIIsmiDO6gGjxiFT39vu",
+      "project": "atrosha-vyc1",
+      "project_id": "prj_MTjPoR5b7wBWkM8M22KXzhX7yV9P",
+      "environment": "production",
+      "plan": "hobby"
+    }
+  }
+}
+Aliases: []
+Latest prod deployment: dpl_6ZymbneRostJUp78nZy4TdktrP6o url=atrosha-vyc1-gjqrsg9dj-kashs-projects-002834e5.vercel.app state=READY
+  aliases: ['app.atrosha.bond', 'atrosha-vyc1-kashs-projects-002834e5.vercel.app', 'atrosha-vyc1-git-main-kashs-projects-002834e5.vercel.app']
+Latest prod deployment: dpl_BxokFnuXk86uDNXE4a4dF99HHvsm url=atrosha-vyc1-o3277y5rj-kashs-projects-002834e5.vercel.app state=READY
+  aliases: ['app.atrosha.bond', 'atrosha-vyc1-kashs-projects-002834e5.vercel.app', 'atrosha-vyc1-git-main-kashs-projects-002834e5.vercel.app']

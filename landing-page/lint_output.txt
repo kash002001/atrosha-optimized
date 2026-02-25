@@ -1,0 +1,157 @@
+
+> landing-page@0.1.0 lint
+> eslint
+
+
+C:\Python\Project Atrosha\landing-page\.vercel\output\functions\api\billing\checkout.func\___next_launcher.cjs
+  11:26  error  A `require()` style import is forbidden  @typescript-eslint/no-require-imports
+  46:18  error  A `require()` style import is forbidden  @typescript-eslint/no-require-imports
+
+C:\Python\Project Atrosha\landing-page\src\app\api\billing\checkout\route.ts
+  44:19  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+C:\Python\Project Atrosha\landing-page\src\app\api\billing\webhook\route.ts
+  26:19  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  36:54  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  59:54  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  69:59  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  86:21  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+C:\Python\Project Atrosha\landing-page\src\app\api\diagnose\route.ts
+  16:24  warning  'cookiesToSet' is defined but never used    @typescript-eslint/no-unused-vars
+  21:29  warning  'error' is assigned a value but never used  @typescript-eslint/no-unused-vars
+
+C:\Python\Project Atrosha\landing-page\src\app\api\onboard\route.ts
+  111:19  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+C:\Python\Project Atrosha\landing-page\src\app\changelog\page.tsx
+  20:44  error  `"` can be escaped with `&quot;`, `&ldquo;`, `&#34;`, `&rdquo;`  react/no-unescaped-entities
+  20:56  error  `"` can be escaped with `&quot;`, `&ldquo;`, `&#34;`, `&rdquo;`  react/no-unescaped-entities
+
+C:\Python\Project Atrosha\landing-page\src\app\components\CodeDemo.tsx
+  31:92   error  `'` can be escaped with `&apos;`, `&lsquo;`, `&#39;`, `&rsquo;`  react/no-unescaped-entities
+  33:95   error  `"` can be escaped with `&quot;`, `&ldquo;`, `&#34;`, `&rdquo;`  react/no-unescaped-entities
+  33:106  error  `"` can be escaped with `&quot;`, `&ldquo;`, `&#34;`, `&rdquo;`  react/no-unescaped-entities
+  34:102  error  `"` can be escaped with `&quot;`, `&ldquo;`, `&#34;`, `&rdquo;`  react/no-unescaped-entities
+  34:116  error  `"` can be escaped with `&quot;`, `&ldquo;`, `&#34;`, `&rdquo;`  react/no-unescaped-entities
+  40:93   error  `"` can be escaped with `&quot;`, `&ldquo;`, `&#34;`, `&rdquo;`  react/no-unescaped-entities
+  40:98   error  `"` can be escaped with `&quot;`, `&ldquo;`, `&#34;`, `&rdquo;`  react/no-unescaped-entities
+  41:97   error  `"` can be escaped with `&quot;`, `&ldquo;`, `&#34;`, `&rdquo;`  react/no-unescaped-entities
+  41:131  error  `"` can be escaped with `&quot;`, `&ldquo;`, `&#34;`, `&rdquo;`  react/no-unescaped-entities
+  43:91   error  `"` can be escaped with `&quot;`, `&ldquo;`, `&#34;`, `&rdquo;`  react/no-unescaped-entities
+  43:109  error  `"` can be escaped with `&quot;`, `&ldquo;`, `&#34;`, `&rdquo;`  react/no-unescaped-entities
+
+C:\Python\Project Atrosha\landing-page\src\app\components\Features.tsx
+  45:52  error  `'` can be escaped with `&apos;`, `&lsquo;`, `&#39;`, `&rsquo;`  react/no-unescaped-entities
+
+C:\Python\Project Atrosha\landing-page\src\app\components\Footer.tsx
+  51:37  error  Do not use an `<a>` element to navigate to `/`. Use `<Link />` from `next/link` instead. See: https://nextjs.org/docs/messages/no-html-link-for-pages  @next/next/no-html-link-for-pages
+  67:37  error  Do not use an `<a>` element to navigate to `/`. Use `<Link />` from `next/link` instead. See: https://nextjs.org/docs/messages/no-html-link-for-pages  @next/next/no-html-link-for-pages
+
+C:\Python\Project Atrosha\landing-page\src\app\components\Hero.tsx
+  6:32  warning  'onCta' is defined but never used  @typescript-eslint/no-unused-vars
+
+C:\Python\Project Atrosha\landing-page\src\app\components\Navbar.tsx
+   3:20  warning  'useEffect' is defined but never used                                                                                                                  @typescript-eslint/no-unused-vars
+  30:25  error    Do not use an `<a>` element to navigate to `/`. Use `<Link />` from `next/link` instead. See: https://nextjs.org/docs/messages/no-html-link-for-pages  @next/next/no-html-link-for-pages
+  36:25  error    Do not use an `<a>` element to navigate to `/`. Use `<Link />` from `next/link` instead. See: https://nextjs.org/docs/messages/no-html-link-for-pages  @next/next/no-html-link-for-pages
+  72:25  error    Do not use an `<a>` element to navigate to `/`. Use `<Link />` from `next/link` instead. See: https://nextjs.org/docs/messages/no-html-link-for-pages  @next/next/no-html-link-for-pages
+  74:25  error    Do not use an `<a>` element to navigate to `/`. Use `<Link />` from `next/link` instead. See: https://nextjs.org/docs/messages/no-html-link-for-pages  @next/next/no-html-link-for-pages
+
+C:\Python\Project Atrosha\landing-page\src\app\components\Pricing.tsx
+  3:35  warning  'onCta' is defined but never used  @typescript-eslint/no-unused-vars
+
+C:\Python\Project Atrosha\landing-page\src\app\components\WaitlistModal.tsx
+   13:13   error  Error: Calling setState synchronously within an effect can trigger cascading renders
+
+Effects are intended to synchronize state between React and external systems such as manually updating the DOM, state management libraries, or other platform APIs. In general, the body of an effect should do one or both of the following:
+* Update external systems with the latest state from React.
+* Subscribe for updates from some external system, calling setState in a callback function when external state changes.
+
+Calling setState synchronously within an effect body causes cascading renders that can hurt performance, and is not recommended. (https://react.dev/learn/you-might-not-need-an-effect).
+
+C:\Python\Project Atrosha\landing-page\src\app\components\WaitlistModal.tsx:13:13
+  11 |     useEffect(() => {
+  12 |         if (open) {
+> 13 |             setStatus("idle");
+     |             ^^^^^^^^^ Avoid calling setState() directly within an effect
+  14 |             setEmail("");
+  15 |             setMsg("");
+  16 |             setTimeout(() => inputRef.current?.focus(), 100);  react-hooks/set-state-in-effect
+   71:103  error  `'` can be escaped with `&apos;`, `&lsquo;`, `&#39;`, `&rsquo;`                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                          react/no-unescaped-entities
+  108:40   error  `'` can be escaped with `&apos;`, `&lsquo;`, `&#39;`, `&rsquo;`                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                          react/no-unescaped-entities
+  108:66   error  `'` can be escaped with `&apos;`, `&lsquo;`, `&#39;`, `&rsquo;`                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                          react/no-unescaped-entities
+
+C:\Python\Project Atrosha\landing-page\src\app\contact\page.tsx
+  38:23  error  `'` can be escaped with `&apos;`, `&lsquo;`, `&#39;`, `&rsquo;`  react/no-unescaped-entities
+  44:30  error  `'` can be escaped with `&apos;`, `&lsquo;`, `&#39;`, `&rsquo;`  react/no-unescaped-entities
+
+C:\Python\Project Atrosha\landing-page\src\app\docs\page.tsx
+    3:10   warning  'Terminal' is defined but never used                             @typescript-eslint/no-unused-vars
+   41:107  error    `'` can be escaped with `&apos;`, `&lsquo;`, `&#39;`, `&rsquo;`  react/no-unescaped-entities
+   42:54   error    `'` can be escaped with `&apos;`, `&lsquo;`, `&#39;`, `&rsquo;`  react/no-unescaped-entities
+   75:89   error    `'` can be escaped with `&apos;`, `&lsquo;`, `&#39;`, `&rsquo;`  react/no-unescaped-entities
+  107:121  error    `"` can be escaped with `&quot;`, `&ldquo;`, `&#34;`, `&rdquo;`  react/no-unescaped-entities
+  107:134  error    `"` can be escaped with `&quot;`, `&ldquo;`, `&#34;`, `&rdquo;`  react/no-unescaped-entities
+  108:117  error    `"` can be escaped with `&quot;`, `&ldquo;`, `&#34;`, `&rdquo;`  react/no-unescaped-entities
+  108:134  error    `"` can be escaped with `&quot;`, `&ldquo;`, `&#34;`, `&rdquo;`  react/no-unescaped-entities
+  109:124  error    `"` can be escaped with `&quot;`, `&ldquo;`, `&#34;`, `&rdquo;`  react/no-unescaped-entities
+  109:144  error    `"` can be escaped with `&quot;`, `&ldquo;`, `&#34;`, `&rdquo;`  react/no-unescaped-entities
+  122:129  error    `"` can be escaped with `&quot;`, `&ldquo;`, `&#34;`, `&rdquo;`  react/no-unescaped-entities
+  122:134  error    `"` can be escaped with `&quot;`, `&ldquo;`, `&#34;`, `&rdquo;`  react/no-unescaped-entities
+  123:133  error    `"` can be escaped with `&quot;`, `&ldquo;`, `&#34;`, `&rdquo;`  react/no-unescaped-entities
+  123:167  error    `"` can be escaped with `&quot;`, `&ldquo;`, `&#34;`, `&rdquo;`  react/no-unescaped-entities
+  125:127  error    `"` can be escaped with `&quot;`, `&ldquo;`, `&#34;`, `&rdquo;`  react/no-unescaped-entities
+  125:145  error    `"` can be escaped with `&quot;`, `&ldquo;`, `&#34;`, `&rdquo;`  react/no-unescaped-entities
+  126:135  error    `"` can be escaped with `&quot;`, `&ldquo;`, `&#34;`, `&rdquo;`  react/no-unescaped-entities
+  126:149  error    `"` can be escaped with `&quot;`, `&ldquo;`, `&#34;`, `&rdquo;`  react/no-unescaped-entities
+  126:193  error    `"` can be escaped with `&quot;`, `&ldquo;`, `&#34;`, `&rdquo;`  react/no-unescaped-entities
+  126:221  error    `"` can be escaped with `&quot;`, `&ldquo;`, `&#34;`, `&rdquo;`  react/no-unescaped-entities
+  128:143  error    `"` can be escaped with `&quot;`, `&ldquo;`, `&#34;`, `&rdquo;`  react/no-unescaped-entities
+  128:160  error    `"` can be escaped with `&quot;`, `&ldquo;`, `&#34;`, `&rdquo;`  react/no-unescaped-entities
+  130:192  error    `"` can be escaped with `&quot;`, `&ldquo;`, `&#34;`, `&rdquo;`  react/no-unescaped-entities
+  130:210  error    `"` can be escaped with `&quot;`, `&ldquo;`, `&#34;`, `&rdquo;`  react/no-unescaped-entities
+  131:168  error    `"` can be escaped with `&quot;`, `&ldquo;`, `&#34;`, `&rdquo;`  react/no-unescaped-entities
+  131:204  error    `"` can be escaped with `&quot;`, `&ldquo;`, `&#34;`, `&rdquo;`  react/no-unescaped-entities
+  133:168  error    `"` can be escaped with `&quot;`, `&ldquo;`, `&#34;`, `&rdquo;`  react/no-unescaped-entities
+  133:195  error    `"` can be escaped with `&quot;`, `&ldquo;`, `&#34;`, `&rdquo;`  react/no-unescaped-entities
+
+C:\Python\Project Atrosha\landing-page\src\app\layout.tsx
+  51:9  warning  Custom fonts not added in `pages/_document.js` will only load for a single page. This is discouraged. See: https://nextjs.org/docs/messages/no-page-custom-font  @next/next/no-page-custom-font
+
+C:\Python\Project Atrosha\landing-page\src\app\login\page.tsx
+   68:23  error  Unexpected any. Specify a different type                         @typescript-eslint/no-explicit-any
+  137:24  error  `'` can be escaped with `&apos;`, `&lsquo;`, `&#39;`, `&rsquo;`  react/no-unescaped-entities
+
+C:\Python\Project Atrosha\landing-page\src\app\page.tsx
+   3:10  warning  'useState' is defined but never used       @typescript-eslint/no-unused-vars
+  10:8   warning  'WaitlistModal' is defined but never used  @typescript-eslint/no-unused-vars
+
+C:\Python\Project Atrosha\landing-page\src\app\signup\page.tsx
+   15:18  warning  'setDone' is assigned a value but never used                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                           @typescript-eslint/no-unused-vars
+   22:30  error    Error: Calling setState synchronously within an effect can trigger cascading renders
+
+Effects are intended to synchronize state between React and external systems such as manually updating the DOM, state management libraries, or other platform APIs. In general, the body of an effect should do one or both of the following:
+* Update external systems with the latest state from React.
+* Subscribe for updates from some external system, calling setState in a callback function when external state changes.
+
+Calling setState synchronously within an effect body causes cascading renders that can hurt performance, and is not recommended. (https://react.dev/learn/you-might-not-need-an-effect).
+
+C:\Python\Project Atrosha\landing-page\src\app\signup\page.tsx:22:30
+  20 |             const params = new URLSearchParams(window.location.search);
+  21 |             const planFromUrl = params.get("plan");
+> 22 |             if (planFromUrl) setPlan(planFromUrl);
+     |                              ^^^^^^^ Avoid calling setState() directly within an effect
+  23 |         }
+  24 |     }, []);
+  25 |  react-hooks/set-state-in-effect
+  115:23  error    Unexpected any. Specify a different type                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                               @typescript-eslint/no-explicit-any
+
+C:\Python\Project Atrosha\landing-page\src\lib\supabase.ts
+   2:35  warning  'CookieOptions' is defined but never used  @typescript-eslint/no-unused-vars
+   3:10  warning  'cookies' is defined but never used        @typescript-eslint/no-unused-vars
+  21:34  error    Unexpected any. Specify a different type   @typescript-eslint/no-explicit-any
+  25:43  error    Unexpected any. Specify a different type   @typescript-eslint/no-explicit-any
+
+Γ£û 80 problems (68 errors, 12 warnings)
+

@@ -1,0 +1,6 @@
+Name: landing-page
+rootDirectory: None
+framework: nextjs
+  dpl_9kwsjUb6KrmsFB1jPDjFby4bUvwX  state=READY  sha=?  msg=?
+  dpl_8xPVnjudnBrhtH84pJ3qok6qDJEV  state=ERROR  sha=?  msg=?
+  dpl_5TkzbmmDEgjqQtabsvJ8QZoJqtt5  state=ERROR  sha=?  msg=?

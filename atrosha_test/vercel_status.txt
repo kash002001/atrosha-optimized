@@ -1,0 +1,8 @@
+  dpl_6ZymbneRostJUp78nZy4TdktrP6o  state=READY  target=production  url=atrosha-vyc1-gjqrsg9dj-kashs-projects-002834e5.vercel.app  created=1771941237787
+  dpl_BxokFnuXk86uDNXE4a4dF99HHvsm  state=READY  target=production  url=atrosha-vyc1-o3277y5rj-kashs-projects-002834e5.vercel.app  created=1771937707767
+  dpl_BAJ9hjfGe72LFNDqXEi26Ju1HmQe  state=ERROR  target=production  url=atrosha-vyc1-jq6jtxjhf-kashs-projects-002834e5.vercel.app  created=1771937575939
+  dpl_F1M6iCzQKhGqLQtxy3Q1Bdx2TLDP  state=ERROR  target=production  url=atrosha-vyc1-7tb5p6sxf-kashs-projects-002834e5.vercel.app  created=1771928155552
+  dpl_FduDKTUBxvXEqwqqFqFqZHGzRBEt  state=READY  target=production  url=atrosha-vyc1-kw061pfnw-kashs-projects-002834e5.vercel.app  created=1771917389202
+
+Domains:
+  app.atrosha.bond  verified=True  configured=None

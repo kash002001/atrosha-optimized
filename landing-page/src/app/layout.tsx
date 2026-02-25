@@ -49,19 +49,36 @@ export default function RootLayout({
     <html lang="en" suppressHydrationWarning>
       <head>
         <link
+          rel="preload"
           href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap"
-          rel="stylesheet"
+          as="style"
+        />
+        <script
+          dangerouslySetInnerHTML={{
+            __html: `
+              // async-load material symbols to avoid render block
+              var l = document.createElement('link');
+              l.rel = 'stylesheet';
+              l.href = 'https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap';
+              document.head.appendChild(l);
+            `,
+          }}
         />
         <script
           dangerouslySetInnerHTML={{
             __html: `
               // default to light mode. only go dark if user explicitly toggled it.
               (function() {
-                var theme = localStorage.getItem('theme');
-                if (theme === 'dark') {
-                  document.documentElement.classList.add('dark');
-                } else {
-                  document.documentElement.classList.remove('dark');
+                try {
+                  var theme = localStorage.getItem('theme');
+                  if (theme === 'dark') {
+                    document.documentElement.classList.add('dark');
+                  } else {
+                    document.documentElement.classList.remove('dark');
+                  }
+                } catch (e) {
+                  // silent fail for incognito/private modes where localStorage is restricted
+                  console.debug('Theme storage restricted');
                 }
               })();
             `,

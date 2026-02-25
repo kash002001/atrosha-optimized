@@ -1,0 +1,5 @@
+[kashs-projects] atrosha-vyc1 (prj_MTjPoR5b7wBWkM8M22KXzhX7yV9P): rootDir=Atrosha/dashboard domains=['app.atrosha.bond']
+[kashs-projects] atrosha-dashboard (prj_XtByzfPdRfy9sOyCvvZbnzXCUlCf): rootDir=Atrosha/dashboard domains=['atrosha-dashboard.vercel.app']
+[kashs-projects] landing-page (prj_PASPxogPDlfKrXDPg5xw6aorxZSJ): rootDir=None domains=['atrosha.bond', 'landing-page-beta-six-42.vercel.app']
+[kashs-projects] atrosha-dashboard-v2 (prj_C1WjbKwxxCrjrtxnxEwfR1C8Usag): rootDir=None domains=['atrosha-dashboard-v2.vercel.app']
+Error on personal: HTTP Error 403: Forbidden
