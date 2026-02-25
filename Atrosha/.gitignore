@@ -1,6 +1,6 @@
 .vercel
 semantic_engine/data/*.jsonl
-semantic_engine/tokenizer/tokenizer.json
+# semantic_engine/tokenizer/tokenizer.json
 semantic_engine/tokenizer/_tok_train_tmp.txt
 semantic_engine/training/checkpoints/
-semantic_engine/export/*.onnx
+# semantic_engine/export/*.onnx

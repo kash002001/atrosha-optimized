@@ -12,9 +12,6 @@ export interface Tx {
     status: string;
     created_at: string;
     currency: string;
-    sim_score?: number;
-    latency_ms?: number;
-    denial_reason?: string;
 }
 
 export default function TransactionsClient({ initialData }: { initialData: Tx[] }) {
@@ -129,7 +126,6 @@ export default function TransactionsClient({ initialData }: { initialData: Tx[] 
                             <th>Agent</th>
                             <th>Amount</th>
                             <th>Target</th>
-                            <th>ML Verdict</th>
                             <th>Status</th>
                             <th>Time</th>
                         </tr>
@@ -144,32 +140,6 @@ export default function TransactionsClient({ initialData }: { initialData: Tx[] 
                                 </td>
                                 <td className="mono" style={{ color: "var(--text-muted)", maxWidth: 200, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
                                     {tx.destination || "N/A"}
-                                </td>
-                                <td>
-                                    {tx.sim_score ? (
-                                        <div style={{ display: "flex", flexDirection: "column", gap: 2 }}>
-                                            <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
-                                                {tx.denial_reason === 'semantic firewall DENIED request' ? (
-                                                    <span style={{ color: "var(--red)", fontSize: 12, fontWeight: 600, display: "flex", alignItems: "center", gap: 4 }}>
-                                                        <div style={{ width: 6, height: 6, borderRadius: "50%", background: "var(--red)", boxShadow: "0 0 4px var(--red)" }}></div>
-                                                        Blocked Check
-                                                    </span>
-                                                ) : (
-                                                    <span style={{ color: "var(--green)", fontSize: 12, fontWeight: 600, display: "flex", alignItems: "center", gap: 4 }}>
-                                                        <div style={{ width: 6, height: 6, borderRadius: "50%", background: "var(--green)", boxShadow: "0 0 4px var(--green)" }}></div>
-                                                        Safe
-                                                    </span>
-                                                )}
-                                            </div>
-                                            <div style={{ fontSize: 10, color: "var(--text-dim)", fontFamily: "monospace" }}>
-                                                conf: {(tx.sim_score * 100).toFixed(1)}% {tx.latency_ms && `• ${tx.latency_ms.toFixed(1)}ms`}
-                                            </div>
-                                        </div>
-                                    ) : (
-                                        <span style={{ color: "var(--text-dim)", fontSize: 11, fontStyle: "italic" }}>
-                                            N/A
-                                        </span>
-                                    )}
                                 </td>
                                 <td>
                                     <span className={`badge`} style={{

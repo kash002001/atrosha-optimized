@@ -11,7 +11,6 @@ mod registry;
 mod rbac;
 mod adapters;
 mod validation;
-mod json_policy;
 
 use std::net::SocketAddr;
 use std::sync::Arc;
@@ -22,7 +21,7 @@ use axum::{
     extract::{Path, State},
     http::{HeaderMap, Method, StatusCode},
     middleware as axum_middleware,
-    response::{Response, IntoResponse},
+    response::Response,
     routing::{any, get, post},
     Router,
 };
@@ -49,7 +48,6 @@ pub struct AppState {
     pub evm_adapter: Arc<EvmAdapter>,
     pub ach_adapter: Arc<AchAdapter>,
     pub semantic: Arc<SemanticClient>,
-    pub json_policies: Arc<Vec<json_policy::JsonPolicy>>,
 }
 
 #[tokio::main]
@@ -100,14 +98,6 @@ async fn main() -> anyhow::Result<()> {
         .unwrap_or_else(|_| "http://127.0.0.1:8002".into());
     tracing::info!(semantic_url = %semantic_url, "semantic firewall sidecar configured");
 
-    let policies_json = std::env::var("ATROSHA_POLICIES_JSON").unwrap_or_else(|_| "[]".into());
-    let parsed_policies: Vec<json_policy::JsonPolicy> = serde_json::from_str(&policies_json)
-        .unwrap_or_else(|e| {
-            tracing::warn!("Failed to parse JSON policies: {}", e);
-            vec![]
-        });
-    tracing::info!("Loaded {} custom JSON policies", parsed_policies.len());
-
     let state = AppState {
         policy_engine,
         registry,
@@ -124,7 +114,6 @@ async fn main() -> anyhow::Result<()> {
         }),
         ach_adapter: Arc::new(AchAdapter::new()),
         semantic: Arc::new(SemanticClient::new(&semantic_url)),
-        json_policies: Arc::new(parsed_policies),
     };
 
     let proxy_routes = Router::new()
@@ -235,7 +224,7 @@ async fn proxy_handler(
     Path(path): Path<String>,
     headers: HeaderMap,
     body: axum::body::Body,
-) -> Result<Response, Response> {
+) -> Result<Response, StatusCode> {
     let start = Instant::now();
     let req_id = Uuid::new_v4().to_string();
     
@@ -250,13 +239,13 @@ async fn proxy_handler(
         .and_then(|v| v.to_str().ok())
         .ok_or_else(|| {
             tracing::warn!("missing X-Atrosha-Agent-ID header");
-            StatusCode::BAD_REQUEST.into_response()
+            StatusCode::BAD_REQUEST
         })?;
 
     // circuit breaker: auto-kill agents with 5+ consecutive denials
     if circuit::CircuitBreaker::is_open(&state, agent_id).await {
         tracing::warn!(agent_id = %agent_id, "circuit breaker OPEN — agent auto-killed");
-        return Err(StatusCode::SERVICE_UNAVAILABLE.into_response());
+        return Err(StatusCode::SERVICE_UNAVAILABLE);
     }
 
     let amount: f64 = headers
@@ -270,7 +259,7 @@ async fn proxy_handler(
         .and_then(|v| v.to_str().ok())
         .ok_or_else(|| {
             tracing::warn!("missing X-Atrosha-Target header");
-            StatusCode::BAD_REQUEST.into_response()
+            StatusCode::BAD_REQUEST
         })?;
 
     let shadow_mode = headers
@@ -286,20 +275,13 @@ async fn proxy_handler(
 
     let body_bytes = axum::body::to_bytes(body, 10 * 1024 * 1024)
         .await
-        .map_err(|_| StatusCode::PAYLOAD_TOO_LARGE.into_response())?;
+        .map_err(|_| StatusCode::PAYLOAD_TOO_LARGE)?;
     let body_vec = body_bytes.to_vec();
 
     // ── semantic firewall ──────────────────────────────────────
-    let mut ml_header_val = None;
-    let mut current_confidence = 1.0;
-    let mut current_verdict = "ALLOW".to_string();
-
+    // call the ML engine before any static checks
     match state.semantic.classify(method.as_str(), target_url, &headers, &body_vec).await {
         Ok(verdict) => {
-            current_confidence = verdict.confidence;
-            current_verdict = verdict.verdict.clone();
-            let header_str = format!("verdict={}; confidence={:.3}", verdict.verdict, verdict.confidence);
-            ml_header_val = Some(header_str.clone());
             match verdict.verdict.as_str() {
                 "DENY" => {
                     if !shadow_mode {
@@ -316,25 +298,12 @@ async fn proxy_handler(
                             0.0, None,
                         );
                         circuit::CircuitBreaker::record_denial(&state, agent_id).await;
-                        
-                        let mut resp = StatusCode::FORBIDDEN.into_response();
-                        resp.headers_mut().insert(
-                            axum::http::header::HeaderName::from_static("x-atrosha-semantic-verdict"),
-                            axum::http::header::HeaderValue::from_str(&header_str).unwrap(),
-                        );
-                        return Err(resp);
+                        return Err(StatusCode::FORBIDDEN);
                     } else {
                         tracing::warn!(
                             agent_id = %agent_id,
                             confidence = %verdict.confidence,
                             "VIOLATION: semantic firewall would DENY [shadow bypass]"
-                        );
-                        log_audit(
-                            &state, &org_id, agent_id, &req_id, amount, target_url,
-                            AuditDecision::ShadowDenied, start, shadow_mode, None,
-                            SignatureStatus::Missing,
-                            Some(format!("Semantic Firewall (SHADOW): DENY (conf={:.3})", verdict.confidence)),
-                            0.0, None,
                         );
                     }
                 }
@@ -344,6 +313,7 @@ async fn proxy_handler(
                         confidence = %verdict.confidence,
                         "semantic firewall QUARANTINED request — flagged for review"
                     );
+                    // quarantine logs but doesn't block (yet)
                 }
                 _ => {
                     tracing::debug!(
@@ -356,56 +326,8 @@ async fn proxy_handler(
             }
         }
         Err(_) => {
+            // fail-open: if the semantic engine is down, don't block traffic
             tracing::warn!("semantic engine unavailable — fail-open");
-        }
-    }
-
-    // ── Dynamic JSON Policies ──────────────────────────────────
-    if let Err(policy_err) = json_policy::evaluate_json_policies(
-        &state.json_policies,
-        agent_id,
-        amount,
-        &current_verdict,
-        current_confidence as f32,
-        headers.get("X-Atrosha-Supervisor-Signature").is_some() || headers.get("X-Atrosha-2FA").is_some()
-    ) {
-        if !shadow_mode {
-            tracing::warn!(reason = %policy_err, "blocked by json policy");
-            log_audit(
-                &state,
-                &org_id,
-                agent_id,
-                &req_id,
-                amount,
-                target_url,
-                AuditDecision::Denied,
-                start,
-                shadow_mode,
-                None,
-                SignatureStatus::Missing,
-                Some(policy_err.clone()),
-                0.0,
-                None,
-            );
-            return Err(StatusCode::FORBIDDEN.into_response());
-        } else {
-            tracing::warn!(reason = %policy_err, "VIOLATION: JSON policy blocked [shadow bypass]");
-            log_audit(
-                &state,
-                &org_id,
-                agent_id,
-                &req_id,
-                amount,
-                target_url,
-                AuditDecision::ShadowDenied,
-                start,
-                shadow_mode,
-                None,
-                SignatureStatus::Missing,
-                Some(format!("JSON Policy (SHADOW): {}", policy_err)),
-                0.0,
-                None,
-            );
         }
     }
 
@@ -428,25 +350,9 @@ async fn proxy_handler(
                 0.0,
                 None,
             );
-            return Err(StatusCode::PAYMENT_REQUIRED.into_response());
+            return Err(StatusCode::PAYMENT_REQUIRED);
         } else {
             tracing::warn!(amount = %amount, agent_id = %agent_id, "VIOLATION:large transaction requires HITL [shadow bypass]");
-            log_audit(
-                &state,
-                &org_id,
-                agent_id,
-                &req_id,
-                amount,
-                target_url,
-                AuditDecision::ShadowDenied,
-                start,
-                shadow_mode,
-                None,
-                SignatureStatus::Missing,
-                Some("Transaction > $10k requires Human-in-the-Loop MFA (SHADOW)".to_string()),
-                0.0,
-                None,
-            );
         }
     }
 
@@ -471,25 +377,9 @@ async fn proxy_handler(
                     0.0,
                     None,
                 );
-                return Err(StatusCode::FORBIDDEN.into_response());
+                return Err(StatusCode::FORBIDDEN);
             } else {
                 tracing::warn!(amount = %amount, agent_id = %agent_id, "VIOLATION:missing supervisor sig for >5k [shadow bypass]");
-                log_audit(
-                    &state,
-                    &org_id,
-                    agent_id,
-                    &req_id,
-                    amount,
-                    target_url,
-                    AuditDecision::ShadowDenied,
-                    start,
-                    shadow_mode,
-                    None,
-                    SignatureStatus::Missing,
-                    Some("Transaction > $5k requires Supervisor-Signature (SHADOW)".to_string()),
-                    0.0,
-                    None,
-                );
             }
         }
     }
@@ -525,7 +415,7 @@ async fn proxy_handler(
                     0.0,
                     None,
                 );
-                return Err(status.into_response());
+                return Err(status);
             }
             (None, None, sig)
         }
@@ -581,7 +471,7 @@ async fn proxy_handler(
                     matched_policy_id,
                 );
                 circuit::CircuitBreaker::record_denial(&state, agent_id).await;
-                return Err(StatusCode::FORBIDDEN.into_response());
+                return Err(StatusCode::FORBIDDEN);
             }
         }
         Err(policy::PolicyError::BudgetExceeded) => {
@@ -607,12 +497,12 @@ async fn proxy_handler(
                     matched_policy_id,
                 );
                 circuit::CircuitBreaker::record_denial(&state, agent_id).await;
-                return Err(StatusCode::PAYMENT_REQUIRED.into_response());
+                return Err(StatusCode::PAYMENT_REQUIRED);
             }
         }
         Err(e) => {
             tracing::error!(error = %e, "redis error");
-            return Err(StatusCode::INTERNAL_SERVER_ERROR.into_response());
+            return Err(StatusCode::INTERNAL_SERVER_ERROR);
         }
     };
 
@@ -654,16 +544,16 @@ async fn proxy_handler(
     ).await;
 
     let (status, resp_bytes, header_map) = match execution_result {
-        Ok(Ok((status, text, h_map))) => {
-             (status, text.into_bytes(), h_map)
+        Ok(Ok((status, text))) => {
+             (status, text.into_bytes(), HeaderMap::new())
         }
         Ok(Err(e)) => {
             tracing::error!(error = %e, "adapter execution failed");
-            (StatusCode::BAD_GATEWAY, format!("Adapter Error: {}", e).into_bytes(), reqwest::header::HeaderMap::new())
+            (StatusCode::BAD_GATEWAY, format!("Adapter Error: {}", e).into_bytes(), HeaderMap::new())
         }
         Err(_) => {
             tracing::error!("adapter execution timed out");
-            (StatusCode::GATEWAY_TIMEOUT, b"Gateway Timeout".to_vec(), reqwest::header::HeaderMap::new())
+            (StatusCode::GATEWAY_TIMEOUT, b"Gateway Timeout".to_vec(), HeaderMap::new())
         }
     };
 
@@ -688,15 +578,10 @@ async fn proxy_handler(
     for (k, v) in header_map.iter() {
         builder = builder.header(k, v);
     }
-    if let Some(ml_val) = ml_header_val {
-        builder = builder.header("X-Atrosha-Semantic-Verdict", ml_val);
-    }
     
-    let res = builder
+    builder
         .body(Body::from(resp_bytes))
-        .map_err(|_| StatusCode::INTERNAL_SERVER_ERROR.into_response())?;
-        
-    Ok(res)
+        .map_err(|_| StatusCode::INTERNAL_SERVER_ERROR)
 }
 
 fn verify_permit_and_intent(

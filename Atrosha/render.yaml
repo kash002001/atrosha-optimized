@@ -1,26 +1,34 @@
 services:
+  # 1. Atrosha Proxy (Public)
   - type: web
     name: atrosha-proxy
     runtime: docker
     dockerfilePath: ./Atrosha/proxy/Dockerfile
     dockerContext: ./Atrosha/proxy
-    plan: free
+    plan: starter
     healthCheckPath: /health
     envVars:
-      - key: RUST_LOG
-        value: atrosha_proxy=info
       - key: PORT
         value: "10000"
+      - key: REDIS_URL
+        fromService:
+          type: redis
+          name: atrosha-cache
+          property: connectionString
       - key: SEMANTIC_ENGINE_URL
-        value: https://atrosha-semantic.onrender.com
+        value: http://atrosha-semantic:8002
+      - key: RUST_LOG
+        value: atrosha_proxy=info
+      - key: PERMIT_SECRET
+        generateValue: true
 
-  - type: web
+  # 2. Semantic Engine sidecar (Private)
+  - type: worker
     name: atrosha-semantic
     runtime: docker
     dockerfilePath: ./Atrosha/semantic_engine/Dockerfile
     dockerContext: ./Atrosha/semantic_engine
-    plan: free
-    healthCheckPath: /health
+    plan: starter
     envVars:
       - key: PORT
         value: "8002"
@@ -29,3 +37,9 @@ services:
       - key: ATROSHA_TOKENIZER_PATH
         value: /app/tokenizer/tokenizer.json
 
+# 3. Managed Redis for Rate Limiting
+databases:
+  - name: atrosha-cache
+    type: redis
+    plan: starter
+    ipAllowList: [] # internal only

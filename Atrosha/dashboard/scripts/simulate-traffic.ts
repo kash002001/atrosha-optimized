@@ -19,53 +19,80 @@ const supabase = createClient(supabaseUrl, supabaseServiceKey);
 async function simulateTraffic() {
     console.log('🚀 Simulating traffic...');
 
-    const agentNames = ['stripe-agent', 'openai-agent', 'aws-agent', 'paypal-agent', 'wise-agent'];
-    const destinations = ['api.stripe.com/v1/charges', 'api.openai.com/v1/chat', 'ec2.amazonaws.com', 'api.paypal.com/v2/payments', 'api.wise.com/v3/transfers', 'api.anthropic.com/v1/messages', 'api.notion.so', 'api.figma.com'];
+    // 1. Get or Create Organization
+    let { data: orgs } = await supabase.from('organizations').select('id').limit(1);
+    let orgId = orgs?.[0]?.id;
 
+    if (!orgId) {
+        console.log('Creating demo organization...');
+        const { data: newOrg, error } = await supabase.from('organizations').insert({
+            name: 'Demo Corp',
+            slug: 'demo-corp-' + Date.now(),
+            plan_tier: 'growth',
+            subscription_status: 'active'
+        }).select().single();
+        if (error) {
+            console.error('Error creating org:', error);
+            return;
+        }
+        orgId = newOrg.id;
+    }
+
+    // 2. Get or Create Agent
+    let { data: agents } = await supabase.from('agents').select('id').eq('organization_id', orgId).limit(1);
+    let agentId = agents?.[0]?.id;
+
+    if (!agentId) {
+        console.log('Creating demo agent via agents...');
+        const { data: newAgent, error } = await supabase.from('agents').insert({
+            organization_id: orgId,
+            name: 'Finance Assistant',
+            pubkey: 'dummy-pubkey-' + Date.now(), // Required field
+            // type: 'finance_assistant', // Might not exist in policies
+            // status: 'active' // might be is_active
+        }).select().single();
+        if (error) {
+            console.error('Error creating agent:', error);
+            return;
+        }
+        agentId = newAgent.id;
+    }
+
+    console.log(`Target Org: ${orgId}`);
+    console.log(`Target Agent: ${agentId}`);
+
+    // 3. Generate Transactions
     const transactions = [];
     const now = new Date();
+    const destinations = ['AWS', 'Stripe', 'Google Cloud', 'Slack', 'Zoom', 'Notion', 'Figma', 'OpenAI', 'Anthropic', 'Vercel'];
 
+    // Spread over last 24 hours
     for (let i = 0; i < 50; i++) {
-        const timeOffset = Math.random() * 48 * 60 * 60 * 1000; // last 48h
+        // Random time in last 24h
+        const timeOffset = Math.random() * 24 * 60 * 60 * 1000;
         const createdAt = new Date(now.getTime() - timeOffset).toISOString();
 
-        const isApproved = Math.random() > 0.18;
-        const isSemanticDenial = !isApproved && Math.random() > 0.4;
-
-        const amount = Math.floor(Math.random() * 25000) + 100;
+        const isApproved = Math.random() > 0.15; // 85% approved
+        const amount = Math.floor(Math.random() * 12000) + 500; // $5.00 - $120.00
         const dest = destinations[Math.floor(Math.random() * destinations.length)];
-        const agent = agentNames[Math.floor(Math.random() * agentNames.length)];
-
-        let simScore = parseFloat((0.88 + Math.random() * 0.12).toFixed(4));
-        let latencyMs = parseFloat((11 + Math.random() * 6).toFixed(2));
-
-        let status = isApproved ? 'approved' : 'denied';
-        let denialReason: string | null = null;
-
-        if (isSemanticDenial) {
-            denialReason = 'semantic firewall DENIED request';
-            simScore = parseFloat((0.96 + Math.random() * 0.04).toFixed(4));
-        } else if (!isApproved) {
-            denialReason = 'budget exceeded';
-        }
 
         transactions.push({
-            id: `tx-sim-${Date.now()}-${i}`,
-            agent_id: agent,
-            amount,
+            id: crypto.randomUUID(),
+            organization_id: orgId,
+            agent_id: agentId,
+            amount: amount,
             currency: 'USD',
-            status,
-            destination: dest,
-            sim_score: simScore,
-            latency_ms: latencyMs,
-            denial_reason: denialReason,
-            created_at: createdAt
+            status: isApproved ? 'approved' : 'denied',
+            created_at: createdAt,
+            destination: dest, // Matches schema
         });
     }
 
     const { error } = await supabase.from('transactions').insert(transactions);
     if (error) {
-        console.error('Insert error:', JSON.stringify(error, null, 2));
+        const fs = require('fs');
+        fs.writeFileSync('error.log', JSON.stringify(error, null, 2));
+        console.error('Error logged to error.log');
     } else {
         console.log(`✅ Inserted ${transactions.length} transactions.`);
     }

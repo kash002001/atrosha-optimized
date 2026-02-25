@@ -16,7 +16,7 @@ export async function middleware(req: NextRequest) {
                     cookiesToSet.forEach(({ name, value }) =>
                         req.cookies.set(name, value)
                     );
-                    // Update res instead of creating a new one to preserve existing headers
+                    res = NextResponse.next({ request: req });
                     cookiesToSet.forEach(({ name, value, options }) =>
                         res.cookies.set(name, value, options)
                     );
@@ -24,8 +24,9 @@ export async function middleware(req: NextRequest) {
             },
             // Shared options for localhost and production
             cookieOptions: {
-                // If on atrosha.bond or any subdomain, share cookies.
-                domain: req.nextUrl.hostname.includes('atrosha.bond') ? '.atrosha.bond' : undefined,
+                // If on atrosha.bond or app.atrosha.bond, share cookies.
+                // Otherwise (vercel.app), restrict to current host (undefined).
+                domain: req.nextUrl.hostname.endsWith('.atrosha.bond') ? '.atrosha.bond' : undefined,
                 path: '/',
                 sameSite: 'lax',
                 secure: process.env.NODE_ENV === 'production',
@@ -41,12 +42,7 @@ export async function middleware(req: NextRequest) {
     // no session → bounce to landing page login
     const loginUrl = process.env.NEXT_PUBLIC_LOGIN_URL || "https://atrosha.bond/login";
     if (!user) {
-        // preserve cookies set by supabase client during getUser()
-        const redirectRes = NextResponse.redirect(loginUrl);
-        res.cookies.getAll().forEach(cookie => {
-            redirectRes.cookies.set(cookie.name, cookie.value);
-        });
-        return redirectRes;
+        return NextResponse.redirect(loginUrl);
     }
 
     // Security Headers
@@ -61,7 +57,7 @@ export async function middleware(req: NextRequest) {
 
 export const config = {
     matcher: [
-        // gate everything except static assets; allow /api routes to be gated for session verification
-        "/((?!_next/static|_next/image|favicon.ico).*)",
+        // gate everything except static assets and api routes
+        "/((?!_next/static|_next/image|favicon.ico|api).*)",
     ],
 };

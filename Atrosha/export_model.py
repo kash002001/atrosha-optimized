@@ -17,7 +17,8 @@ dummy_mask = torch.ones(1, 256, dtype=torch.long)
 
 print('Exporting to ONNX...')
 torch.onnx.export(
-    model, (dummy_ids, dummy_mask), onnx_path,
+    model.cpu(), (dummy_ids, dummy_mask), onnx_path,
+    export_params=True,
     input_names=['input_ids', 'attention_mask'],
     output_names=['logits'],
     dynamic_axes={
@@ -25,7 +26,8 @@ torch.onnx.export(
         'attention_mask': {0: 'batch', 1: 'seq_len'},
         'logits': {0: 'batch'},
     },
-    opset_version=17,
+    opset_version=15,
+    do_constant_folding=True,
 )
 
 size_mb = os.path.getsize(onnx_path) / (1024 * 1024)

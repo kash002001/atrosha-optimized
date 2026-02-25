@@ -32,19 +32,12 @@ function compileRule(nl: string): string {
     const amount = amountMatch ? parseInt(amountMatch[1].replace(",", "")) : 0;
 
     const isDeny = lower.includes("block") || lower.includes("deny") || lower.includes("reject");
-    const needsApproval = lower.includes("require") || lower.includes("approval") || lower.includes("supervisor") || lower.includes("2fa");
-
-    // Semantic Firewall parsing
-    const confMatch = lower.match(/confidence.?<.?(\d+)/) || lower.match(/confidence (?:under|below) (\d+)/);
-    const minConfidence = confMatch ? parseInt(confMatch[1]) / 100 : undefined;
-    const isQuarantineOnly = lower.includes("quarantine");
+    const needsApproval = lower.includes("require") || lower.includes("approval") || lower.includes("supervisor");
 
     return JSON.stringify({
         agent,
         action: "*",
         ...(amount > 0 && { threshold: amount }),
-        ...(minConfidence !== undefined && { min_semantic_confidence: minConfidence }),
-        ...(isQuarantineOnly && { match_verdict: "QUARANTINE" }),
         effect: isDeny ? "deny" : "allow",
         ...(needsApproval && { require: "supervisor_sig" }),
     }, null, 2);
