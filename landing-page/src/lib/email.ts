@@ -11,7 +11,7 @@ export async function sendWelcomeEmail(email: string, orgName: string) {
 
     try {
         const { data, error } = await resend.emails.send({
-            from: 'Atrosha <hello@atrosha.bond>', // Ensure this domain is verified in Resend
+            from: 'Atrosha <hello@kash.atrosha.bond>', // Updated to verified subdomain
             to: email,
             subject: 'Welcome to Atrosha',
             html: `
@@ -26,7 +26,7 @@ export async function sendWelcomeEmail(email: string, orgName: string) {
             </style>
         </head>
         <body>
-            <div className="container">
+            <div class="container">
                 <h1>Welcome to Atrosha, ${orgName}!</h1>
                 <p>Your organization has been successfully created. You are now ready to secure your autonomous agents.</p>
                 
@@ -38,12 +38,12 @@ export async function sendWelcomeEmail(email: string, orgName: string) {
                 </ul>
 
                 <p style="text-align: center; margin: 30px 0;">
-                    <a href="${process.env.NEXT_PUBLIC_DASHBOARD_URL}" className="btn">Go to Dashboard</a>
+                    <a href="${process.env.NEXT_PUBLIC_DASHBOARD_URL}" class="btn">Go to Dashboard</a>
                 </p>
 
                 <p>If you have any questions, reply to this email.</p>
 
-                <div className="footer">
+                <div class="footer">
                     &copy; ${new Date().getFullYear()} Atrosha Inc.
                 </div>
             </div>

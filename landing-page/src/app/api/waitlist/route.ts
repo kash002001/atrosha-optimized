@@ -1,16 +1,20 @@
 import { NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
+import { checkOrigin } from "@/lib/csrf";
 
 export const dynamic = "force-dynamic";
 
 function getSupabase() {
     return createClient(
         process.env.NEXT_PUBLIC_SUPABASE_URL!,
-        process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+        process.env.SUPABASE_SERVICE_ROLE_KEY!
     );
 }
 
 export async function POST(req: Request) {
+    const blocked = checkOrigin(req);
+    if (blocked) return blocked;
+
     try {
         const { email } = await req.json();
 

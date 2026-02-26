@@ -3,12 +3,15 @@
 import { useState, useRef } from "react";
 import Link from "next/link";
 import { loginAction } from "../auth-actions";
+import { createBrowserClient } from "@supabase/ssr";
 
 export default function LoginPage() {
     const [email, setEmail] = useState("");
     const [password, setPassword] = useState("");
     const [error, setError] = useState("");
     const [loading, setLoading] = useState(false);
+    const [forgotMode, setForgotMode] = useState(false);
+    const [resetSent, setResetSent] = useState(false);
     const abortRef = useRef<AbortController | null>(null);
 
     const handleLogin = async (e: React.FormEvent) => {
@@ -55,6 +58,29 @@ export default function LoginPage() {
         }
     };
 
+    const handleForgotPassword = async (e: React.FormEvent) => {
+        e.preventDefault();
+        if (!email) { setError("Enter your email first."); return; }
+        setLoading(true);
+        setError("");
+
+        const supabase = createBrowserClient(
+            process.env.NEXT_PUBLIC_SUPABASE_URL!,
+            process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+        );
+
+        const { error: resetErr } = await supabase.auth.resetPasswordForEmail(email, {
+            redirectTo: `${window.location.origin}/auth/callback`,
+        });
+
+        if (resetErr) {
+            setError(resetErr.message);
+        } else {
+            setResetSent(true);
+        }
+        setLoading(false);
+    };
+
     return (
         <div className="min-h-screen flex items-center justify-center bg-background-light dark:bg-background-dark px-4">
             <div className="w-full max-w-sm">
@@ -75,7 +101,7 @@ export default function LoginPage() {
                     </p>
                 </div>
 
-                <form onSubmit={handleLogin} className="flex flex-col gap-4">
+                <form onSubmit={forgotMode ? handleForgotPassword : handleLogin} className="flex flex-col gap-4">
                     <div>
                         <label className="block text-xs font-medium text-muted-light dark:text-muted-dark mb-1.5 uppercase tracking-wider">
                             Email
@@ -90,23 +116,29 @@ export default function LoginPage() {
                             className="w-full px-4 py-2.5 rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-surface-dark text-text-light dark:text-white placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-primary/50 text-sm transition-all"
                         />
                     </div>
-                    <div>
-                        <label className="block text-xs font-medium text-muted-light dark:text-muted-dark mb-1.5 uppercase tracking-wider">
-                            Password
-                        </label>
-                        <input
-                            type="password"
-                            value={password}
-                            onChange={(e) => setPassword(e.target.value)}
-                            placeholder="••••••••"
-                            required
-                            autoComplete="current-password"
-                            className="w-full px-4 py-2.5 rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-surface-dark text-text-light dark:text-white placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-primary/50 text-sm transition-all"
-                        />
-                    </div>
+                    {!forgotMode && (
+                        <div>
+                            <label className="block text-xs font-medium text-muted-light dark:text-muted-dark mb-1.5 uppercase tracking-wider">
+                                Password
+                            </label>
+                            <input
+                                type="password"
+                                value={password}
+                                onChange={(e) => setPassword(e.target.value)}
+                                placeholder="••••••••"
+                                required
+                                autoComplete="current-password"
+                                className="w-full px-4 py-2.5 rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-surface-dark text-text-light dark:text-white placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-primary/50 text-sm transition-all"
+                            />
+                        </div>
+                    )}
 
                     {error && (
                         <p className="text-red-500 text-xs bg-red-50 dark:bg-red-900/20 p-2 rounded">{error}</p>
+                    )}
+
+                    {resetSent && (
+                        <p className="text-green-600 text-xs bg-green-50 dark:bg-green-900/20 p-2 rounded">Reset link sent! Check your inbox.</p>
                     )}
 
                     <button
@@ -114,7 +146,15 @@ export default function LoginPage() {
                         disabled={loading}
                         className="bg-primary hover:bg-primary-hover disabled:opacity-60 text-white px-6 py-2.5 rounded-lg text-sm font-medium transition-all shadow-glow mt-2"
                     >
-                        {loading ? "Signing in..." : "Sign in"}
+                        {loading ? (forgotMode ? "Sending..." : "Signing in...") : (forgotMode ? "Send reset link" : "Sign in")}
+                    </button>
+
+                    <button
+                        type="button"
+                        onClick={() => { setForgotMode(!forgotMode); setError(""); setResetSent(false); }}
+                        className="text-xs text-primary hover:underline self-center"
+                    >
+                        {forgotMode ? "Back to login" : "Forgot password?"}
                     </button>
                 </form>
 

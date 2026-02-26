@@ -22,10 +22,10 @@ export default function DocsPage() {
                         <li><a href="#sdk" className="text-gray-400 hover:text-white">Node.js SDK</a></li>
                     </ul>
 
-                    <h4 className="text-xs font-bold text-gray-500 uppercase tracking-wider mt-8 mb-4">Core Resources</h4>
+                    <h4 className="text-xs font-bold text-gray-500 uppercase tracking-wider mt-8 mb-4">Integrations</h4>
                     <ul className="space-y-3 text-sm">
                         <li><a href="#transactions" className="text-gray-400 hover:text-white">Transactions</a></li>
-                        <li><a href="#agents" className="text-gray-400 hover:text-white">Agents</a></li>
+                        <li><a href="#webhooks" className="text-gray-400 hover:text-white">Billing Webhooks</a></li>
                         <li><a href="#errors" className="text-gray-400 hover:text-white">Errors</a></li>
                     </ul>
                 </nav>
@@ -75,6 +75,16 @@ export default function DocsPage() {
                                 your agent must first request an ephemeral <strong>Spend Permit</strong> from our Python Validator Engine, then attach that JWT to the proxied request.
                             </p>
                         </section>
+
+                        <section id="webhooks" className="mb-20">
+                            <h2 className="text-2xl font-bold text-white mb-4">Billing & Webhooks</h2>
+                            <p className="text-gray-400 leading-relaxed mb-4">
+                                Atrosha uses asynchronous webhooks to sync your subscription status. When a payment is successful on Stripe, a secure message is sent to our servers to activate your organization.
+                            </p>
+                            <p className="text-gray-400 leading-relaxed mb-4">
+                                Ensure your <code>STRIPE_WEBHOOK_SECRET</code> is correctly set in your environment variables to verify authentic messages from Stripe.
+                            </p>
+                        </section>
                     </div>
 
                     {/* Code Column (Sticky) */}
@@ -111,25 +121,19 @@ export default function DocsPage() {
                                 </div>
                             </div>
 
-                            {/* Proxy Request Block */}
+                            {/* Webhook Block */}
                             <div>
-                                <h5 className="text-xs font-mono text-gray-500 mb-2 uppercase tracking-widest">PROXY A SECURE REQUEST</h5>
+                                <h5 className="text-xs font-mono text-gray-500 mb-2 uppercase tracking-widest">CONFIGURE STRIPE WEBHOOK</h5>
                                 <div className="bg-[#1a1a1a] rounded-lg p-4 border border-white/5 font-mono text-sm overflow-x-auto">
-                                    <pre className="text-blue-300">
-                                        <span className="text-gray-500"># Send money via Stripe via the proxy</span><br />
-                                        response = proxy.execute_request(<br />
-                                        &nbsp;&nbsp;&nbsp;&nbsp;method=<span className="text-green-300">"POST"</span>,<br />
-                                        &nbsp;&nbsp;&nbsp;&nbsp;target_url=<span className="text-green-300">"https://api.stripe.com/v1/refunds"</span>,<br />
-                                        &nbsp;&nbsp;&nbsp;&nbsp;amount=<span className="text-yellow-300">5000</span>,<br />
-                                        &nbsp;&nbsp;&nbsp;&nbsp;body=<span className="text-green-300">"charge=ch_1abc123"</span>,<br />
-                                        &nbsp;&nbsp;&nbsp;&nbsp;headers={"{"}<span className="text-green-300">"Authorization"</span>: <span className="text-green-300">f"Bearer {'{'}STRIPE_KEY{'}'}"</span>{"}"}<br />
-                                        )<br />
-                                        <br />
-                                        <span className="text-purple-300">if</span> response.status_code == <span className="text-yellow-300">200</span>:<br />
-                                        &nbsp;&nbsp;&nbsp;&nbsp;<span className="text-blue-400">print</span>(<span className="text-green-300">"Refund Approved!"</span>)<br />
-                                        <span className="text-purple-300">else</span>:<br />
-                                        &nbsp;&nbsp;&nbsp;&nbsp;<span className="text-blue-400">print</span>(<span className="text-green-300">f"Proxy Blocked: {'{'}response.text{'}'}"</span>)
-                                    </pre>
+                                    <div className="text-[10px] text-gray-500 mb-2 font-bold uppercase">Required Events</div>
+                                    <ul className="text-xs space-y-1 mb-4">
+                                        <li className="text-green-400">✓ checkout.session.completed</li>
+                                        <li className="text-green-400">✓ invoice.payment_succeeded</li>
+                                        <li className="text-green-400">✓ customer.subscription.deleted</li>
+                                    </ul>
+                                    <div className="p-2 bg-black rounded border border-white/5 text-[10px] text-gray-400">
+                                        URL: https://kash.atrosha.bond/api/billing/webhook
+                                    </div>
                                 </div>
                             </div>
 

@@ -1,6 +1,6 @@
 import type { MetadataRoute } from "next";
 
-const base = "https://atrosha.bond";
+const base = "https://kash.atrosha.bond";
 
 export default function sitemap(): MetadataRoute.Sitemap {
     const routes = [

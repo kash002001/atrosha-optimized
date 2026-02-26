@@ -25,12 +25,12 @@ export const metadata: Metadata = {
   title: "Atrosha — Autonomous Agent Security",
   description: "The security layer for the agentic economy. AI agents make financial decisions. Atrosha blocks the risky ones in real-time.",
   keywords: ["AI security", "agent safety", "financial AI", "autonomous agents", "spend limits"],
-  metadataBase: new URL("https://atrosha.bond"),
+  metadataBase: new URL("https://kash.atrosha.bond"),
   openGraph: {
     title: "Atrosha — Code hallucinates. Capital shouldn't.",
     description: "The essential security layer for AI agents making financial decisions.",
     type: "website",
-    url: "https://atrosha.bond",
+    url: "https://kash.atrosha.bond",
     siteName: "Atrosha",
   },
   twitter: {

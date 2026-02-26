@@ -3,6 +3,7 @@ import { createClient } from "@supabase/supabase-js";
 import { randomBytes, createHash } from "crypto";
 import { sendWelcomeEmail } from "@/lib/email";
 import { stripe } from "@/lib/stripe";
+import { checkOrigin } from "@/lib/csrf";
 
 export const dynamic = "force-dynamic";
 
@@ -21,6 +22,9 @@ const PLAN_PRICE_IDS: Record<string, string> = {
 };
 
 export async function POST(req: Request) {
+    const blocked = checkOrigin(req);
+    if (blocked) return blocked;
+
     try {
         const { user_id, org_name, slug, email, plan_tier } = await req.json();
 
@@ -105,7 +109,7 @@ export async function POST(req: Request) {
             org_id: orgId,
             api_key: rawKey,
             checkout_url: checkoutUrl,
-            message: "Organization created",
+            message: "Organization successfully created and linked.",
         });
 
     } catch (err: any) {

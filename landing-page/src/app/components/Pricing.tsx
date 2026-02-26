@@ -61,11 +61,8 @@ export default function Pricing({ onCta }: { onCta: () => void }) {
                             Growth
                         </h3>
                         <div className="mb-6 flex items-baseline">
-                            <span className="font-serif text-4xl text-text-light dark:text-white">
-                                $49
-                            </span>
-                            <span className="text-sm text-muted-light dark:text-muted-dark">
-                                /mo
+                            <span className="font-serif text-3xl text-text-light dark:text-white">
+                                Contact Us
                             </span>
                         </div>
                         <ul className="space-y-3 mb-8 flex-1 text-sm text-muted-light dark:text-muted-dark">
@@ -98,7 +95,7 @@ export default function Pricing({ onCta }: { onCta: () => void }) {
                             className="w-full block text-center py-2.5 rounded-lg bg-primary hover:bg-primary-hover text-white text-sm font-medium transition-colors"
                             href="/signup?plan=growth"
                         >
-                            Start Trial
+                            Contact Sales
                         </a>
                     </div>
                     <div className="p-6 rounded-xl border border-gray-200 dark:border-gray-700 flex flex-col h-full hover:border-primary/50 transition-colors">
@@ -106,11 +103,8 @@ export default function Pricing({ onCta }: { onCta: () => void }) {
                             Scale
                         </h3>
                         <div className="mb-6 flex items-baseline">
-                            <span className="font-serif text-4xl text-text-light dark:text-white">
-                                $199
-                            </span>
-                            <span className="text-sm text-muted-light dark:text-muted-dark">
-                                /mo
+                            <span className="font-serif text-3xl text-text-light dark:text-white">
+                                Contact Us
                             </span>
                         </div>
                         <ul className="space-y-3 mb-8 flex-1 text-sm text-muted-light dark:text-muted-dark">
