@@ -3,17 +3,13 @@
 import { useState } from "react";
 import { createBrowserClient } from "@supabase/ssr";
 import Link from "next/link";
-import { useSearchParams } from "next/navigation";
 import { Suspense } from "react";
 
 function SignupForm() {
-    const params = useSearchParams();
-    const planFromUrl = params.get("plan") || "explorer";
 
     const [email, setEmail] = useState("");
     const [password, setPassword] = useState("");
     const [orgName, setOrgName] = useState("");
-    const [plan, setPlan] = useState(planFromUrl);
     const [error, setError] = useState("");
     const [loading, setLoading] = useState(false);
     const [done, setDone] = useState(false);
@@ -41,12 +37,11 @@ function SignupForm() {
         setLoading(true);
         setError("");
 
-        // step 1: create auth user
         const { data, error: authErr } = await supabase.auth.signUp({
             email,
             password,
             options: {
-                data: { org_name: orgName, plan_tier: plan },
+                data: { org_name: orgName, plan_tier: "explorer" },
             },
         });
 
@@ -69,7 +64,7 @@ function SignupForm() {
                         org_name: orgName,
                         slug,
                         email, // passing email for Stripe/Resend
-                        plan_tier: plan,
+                        plan_tier: "explorer",
                     }),
                 });
 
@@ -190,25 +185,6 @@ function SignupForm() {
                         </div>
                     );
                 })()}
-            </div>
-            <div>
-                <label className="block text-xs font-medium text-muted-light dark:text-muted-dark mb-1.5 uppercase tracking-wider">
-                    Plan
-                </label>
-                <div className="grid grid-cols-2 gap-2">
-                    {plans.map((p) => (
-                        <div
-                            key={p.id}
-                            onClick={() => setPlan(p.id)}
-                            className={`text-xs p-2 rounded-lg border text-center cursor-pointer transition-all ${plan === p.id
-                                ? "border-primary bg-primary/5 text-primary font-semibold"
-                                : "border-gray-200 dark:border-gray-700 text-muted-light dark:text-muted-dark"
-                                }`}
-                        >
-                            {p.label}
-                        </div>
-                    ))}
-                </div>
             </div>
 
             {error && (
