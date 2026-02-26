@@ -11,7 +11,7 @@ export async function sendWelcomeEmail(email: string, orgName: string) {
 
     try {
         const { data, error } = await resend.emails.send({
-            from: 'Atrosha <hello@kash.atrosha.bond>', // Updated to verified subdomain
+            from: 'Atrosha <kash@atrosha.bond>', // Updated to verified subdomain
             to: email,
             subject: 'Welcome to Atrosha',
             html: `

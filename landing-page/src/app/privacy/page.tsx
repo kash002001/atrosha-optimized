@@ -17,7 +17,7 @@ export default function PrivacyPage() {
                     <h2>3. Data Usage</h2>
                     <p>We use data to provide the Atrosha service, improve our fraud detection algorithms, and communicate with you.</p>
                     <h2>4. Contact</h2>
-                    <p>Questions? Identifying suspicious activity? Contact us at support@kash.atrosha.bond.</p>
+                    <p>Questions? Identifying suspicious activity? Contact us at support@atrosha.bond.</p>
                 </div>
             </main>
             <Footer />

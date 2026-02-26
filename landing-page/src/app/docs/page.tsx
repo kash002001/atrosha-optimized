@@ -132,7 +132,7 @@ export default function DocsPage() {
                                         <li className="text-green-400">✓ customer.subscription.deleted</li>
                                     </ul>
                                     <div className="p-2 bg-black rounded border border-white/5 text-[10px] text-gray-400">
-                                        URL: https://kash.atrosha.bond/api/billing/webhook
+                                        URL: https://atrosha.bond/api/billing/webhook
                                     </div>
                                 </div>
                             </div>

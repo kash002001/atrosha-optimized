@@ -1,9 +1,8 @@
 import { NextResponse, NextRequest } from "next/server";
 
 const ALLOWED_ORIGINS = [
-    "https://kash.atrosha.bond",
-    "https://app.atrosha.bond",
     "https://atrosha.bond",
+    "https://app.atrosha.bond",
     "http://localhost:3000",
     "http://localhost:3001",
 ];
