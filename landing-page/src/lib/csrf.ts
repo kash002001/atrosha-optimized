@@ -1,21 +1,34 @@
 import { NextResponse, NextRequest } from "next/server";
 
-const ALLOWED_ORIGINS = [
-    "https://atrosha.bond",
-    "https://app.atrosha.bond",
-    "http://localhost:3000",
-    "http://localhost:3001",
-];
-
 export function checkOrigin(req: Request): NextResponse | null {
     const origin = req.headers.get("origin") || req.headers.get("referer") || "";
-    const allowed = ALLOWED_ORIGINS.some(o => origin.startsWith(o));
 
-    if (!allowed && origin) {
+    // If no origin/referer, let it pass (same-origin request without headers)
+    if (!origin) return null;
+
+    try {
+        const originUrl = new URL(origin);
+        const host = originUrl.hostname;
+
+        // Allow any atrosha.bond subdomain (including apex and www), localhost, and vercel.app
+        const isAllowed =
+            host.endsWith("atrosha.bond") ||
+            host === "localhost" ||
+            host.endsWith("vercel.app");
+
+        if (!isAllowed) {
+            console.error(`Blocked CORS request from: ${origin} (Host: ${host})`);
+            return NextResponse.json(
+                { error: "Forbidden: invalid origin" },
+                { status: 403 }
+            );
+        }
+    } catch (e) {
         return NextResponse.json(
-            { error: "Forbidden: invalid origin" },
+            { error: "Forbidden: invalid origin format" },
             { status: 403 }
         );
     }
+
     return null;
 }
