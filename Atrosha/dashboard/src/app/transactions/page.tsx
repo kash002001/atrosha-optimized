@@ -12,9 +12,12 @@ export default async function TransactionsPage() {
         redirect(process.env.NEXT_PUBLIC_LOGIN_URL || "/login");
     }
 
+    const orgId = user.user_metadata?.org_id;
+
     const { data: transactions, error } = await supabase
         .from('transactions')
         .select('*')
+        .eq('organization_id', orgId)
         .order('created_at', { ascending: false })
         .limit(500);
 

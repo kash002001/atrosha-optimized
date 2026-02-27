@@ -11,6 +11,7 @@ export default async function RulesPage() {
     if (!user) {
         redirect(process.env.NEXT_PUBLIC_LOGIN_URL || "/login");
     }
+    const orgId = user.user_metadata?.org_id;
 
     const { data: rules, error } = await supabase
         .from('rules')
@@ -18,6 +19,7 @@ export default async function RulesPage() {
             *,
             agent:agents(name)
         `)
+        .eq('organization_id', orgId)
         .order('created_at', { ascending: false });
 
     if (error) {

@@ -1,0 +1,81 @@
+
+==================================================
+ANALYZING: Benign Corpus
+==================================================
+Total Samples: 50000
+
+[Labels]
+  ALLOW          : 50000
+
+[Methods]
+  POST           : 50000
+
+[Top Domains]
+  api.stripe.com                : 20010
+  ce.us-east-1.amazonaws.com    : 10152
+  api.paypal.com                : 10013
+  api.wise.com                  : 9825
+
+[Top Headers]
+  X-Atrosha-Agent-ID            : 50000
+  X-Atrosha-Signature           : 50000
+  Content-Type                  : 50000
+
+[Top Body Keys]
+  amount                        : 20010
+  TimePeriod                    : 10152
+  Granularity                   : 10152
+  Metrics                       : 10152
+  charge                        : 10040
+
+[Payload Statistics]
+  Avg Length: 422.63
+  Max Length: 516
+  Min Length: 322
+==================================================
+
+==================================================
+ANALYZING: Attack Corpus
+==================================================
+Total Samples: 50000
+
+[Labels]
+  DENY           : 37370
+  QUARANTINE     : 12630
+
+[Methods]
+  POST           : 46301
+  GET            : 1216
+  PUT            : 1185
+  DELETE         : 1298
+
+[Top Domains]
+  api.stripe.com                : 30812
+  api.wise.com                  : 5047
+  api.paypal.com                : 3757
+  api.kucoin.com                : 1548
+  api.kraken.com                : 1548
+  api.binance.com               : 1517
+  api.coinbase.com              : 1516
+  api.huobi.pro                 : 1509
+  management.azure.com          : 584
+  admin.internal.corp           : 560
+
+[Top Headers]
+  X-Atrosha-Agent-ID            : 50000
+  X-Atrosha-Signature           : 50000
+  Content-Type                  : 50000
+  X-Atrosha-Burst-Count         : 7583
+
+[Top Body Keys]
+  amount                        : 40011
+  currency                      : 40011
+  description                   : 36845
+  metadata                      : 14440
+  customer                      : 8053
+
+[Payload Statistics]
+  Avg Length: 394.75
+  Max Length: 528
+  Min Length: 258
+==================================================

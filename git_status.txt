@@ -1,0 +1,24 @@
+On branch main
+Your branch is up to date with 'origin/main'.
+
+Changes not staged for commit:
+  (use "git add/rm <file>..." to update what will be committed)
+  (use "git restore <file>..." to discard changes in working directory)
+	modified:   .gitignore
+	deleted:    .vercelignore
+	modified:   landing-page/src/app/components/CodeDemo.tsx
+	modified:   landing-page/src/app/components/Features.tsx
+	modified:   landing-page/src/app/components/Hero.tsx
+	modified:   landing-page/src/app/components/Pricing.tsx
+	modified:   landing-page/src/app/docs/page.tsx
+
+Untracked files:
+  (use "git add <file>..." to include in what will be committed)
+	git_status.txt
+	vercel_dashboard_info.txt
+	vercel_projects.txt
+	vercel_projects_ids.txt
+	vercel_projects_list.txt
+	vercel_vyc1_info.txt
+
+no changes added to commit (use "git add" and/or "git commit -a")

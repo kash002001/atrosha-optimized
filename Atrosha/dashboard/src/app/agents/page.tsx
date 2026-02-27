@@ -22,9 +22,12 @@ export default async function AgentsPage() {
         created_at timestamptz
       )
     */
+    const orgId = user.user_metadata?.org_id;
+
     const { data: agents, error } = await supabase
         .from('agents')
         .select('*')
+        .eq('organization_id', orgId)
         .limit(50);
 
     if (error) {

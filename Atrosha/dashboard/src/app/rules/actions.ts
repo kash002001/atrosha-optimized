@@ -14,11 +14,14 @@ export async function addRule(nl: string, compiled: string, agentName: string) {
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) throw new Error("Unauthorized");
 
+    let orgId = user.user_metadata?.org_id;
+
     let agentId = null;
     if (agentName && agentName !== "Global") {
         const { data: agent } = await supabase
             .from("agents")
             .select("id")
+            .eq("organization_id", orgId)
             .ilike("name", agentName)
             .single();
         if (agent) agentId = agent.id;
@@ -59,7 +62,12 @@ export async function addRule(nl: string, compiled: string, agentName: string) {
 
 export async function deleteRule(id: string) {
     const supabase = await createClient();
-    const { error } = await supabase.from("rules").delete().eq("id", id);
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) throw new Error("Unauthorized");
+
+    const orgId = user.user_metadata?.org_id;
+
+    const { error } = await supabase.from("rules").delete().eq("id", id).eq("organization_id", orgId);
     if (error) throw new Error(error.message);
     revalidatePath("/rules");
 }

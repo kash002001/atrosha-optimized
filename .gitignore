@@ -8,3 +8,4 @@ target
 at_os_logs
 *.log
 .vercel
+.env*.local

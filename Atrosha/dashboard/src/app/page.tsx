@@ -17,11 +17,13 @@ export default async function Overview() {
   if (!user) {
     redirect(process.env.NEXT_PUBLIC_LOGIN_URL || "/login");
   }
+  const orgId = user.user_metadata?.org_id;
 
   // Fetch Transactions
   const { data: transactions, error } = await supabase
     .from('transactions')
     .select('id, amount, status, created_at, currency')
+    .eq('organization_id', orgId)
     .order('created_at', { ascending: false })
     .limit(1000); // Reasonable limit for overview
 
@@ -43,7 +45,10 @@ export default async function Overview() {
     .reduce((sum, t) => sum + (t.amount || 0), 0);
 
   // 3. Active Agents
-  const { count: agentCount } = await supabase.from('agents').select('*', { count: 'exact', head: true });
+  const { count: agentCount } = await supabase
+    .from('agents')
+    .select('*', { count: 'exact', head: true })
+    .eq('organization_id', orgId);
   const activeAgents = agentCount || 0;
 
   // 4. Volume Chart Data (Group by hour for last 24h)

@@ -1,0 +1,19 @@
+Vercel CLI 50.23.2
+> Found Project kashs-projects-002834e5/atrosha-vyc1 [3s]
+
+  General
+
+    ID				prj_MTjPoR5b7wBWkM8M22KXzhX7yV9P
+    Name			atrosha-vyc1
+    Owner			kash's projects
+    Created At			14 February 2026 18:47:28 [11d ago]
+    Root Directory		Atrosha/dashboard
+    Node.js Version		24.x
+
+  Framework Settings
+
+    Framework Preset		Next.js
+    Build Command		`npm run build` or `next build`
+    Output Directory		Next.js default
+    Install Command		`yarn install`, `pnpm install`, `npm install`, or `bun install`
+
