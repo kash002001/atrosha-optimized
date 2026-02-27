@@ -1,4 +1,4 @@
-import { NextResponse, NextRequest } from "next/server";
+import { NextResponse } from "next/server";
 
 export function checkOrigin(req: Request): NextResponse | null {
     const origin = req.headers.get("origin") || req.headers.get("referer") || "";
@@ -23,7 +23,7 @@ export function checkOrigin(req: Request): NextResponse | null {
                 { status: 403 }
             );
         }
-    } catch (e) {
+    } catch {
         return NextResponse.json(
             { error: "Forbidden: invalid origin format" },
             { status: 403 }

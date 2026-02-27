@@ -50,10 +50,10 @@ export default function LoginPage() {
             }
 
             window.location.replace(dashUrl);
-        } catch (err: any) {
+        } catch (err: unknown) {
             clearTimeout(timeout);
-            if (err?.name === 'AbortError') return;
-            setError(err.message || "Something went wrong");
+            if (err instanceof Error && err.name === 'AbortError') return;
+            setError(err instanceof Error ? err.message : "Something went wrong");
             setLoading(false);
         }
     };

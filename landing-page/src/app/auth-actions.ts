@@ -8,7 +8,7 @@ async function getIsProd() {
         const headerList = await headers();
         const host = headerList.get("host") || "";
         return host.includes("atrosha.bond");
-    } catch (e) {
+    } catch {
         return process.env.NODE_ENV === 'production';
     }
 }
@@ -37,7 +37,7 @@ export async function loginAction(email: string, password: string) {
                                 httpOnly: true,
                             });
                         });
-                    } catch (error) {
+                    } catch {
                     }
                 },
             },
@@ -77,7 +77,7 @@ export async function signupAction(email: string, password: string, orgName: str
                                 httpOnly: true,
                             });
                         });
-                    } catch (error) {
+                    } catch {
                     }
                 },
             },

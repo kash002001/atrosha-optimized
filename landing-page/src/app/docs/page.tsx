@@ -1,6 +1,6 @@
 import React from "react";
 import Link from "next/link";
-import { Terminal, Copy } from "lucide-react";
+import { Copy } from "lucide-react";
 
 export default function DocsPage() {
     return (
@@ -38,8 +38,8 @@ export default function DocsPage() {
                         <section id="intro" className="mb-20">
                             <h1 className="text-4xl font-bold text-white mb-6">Introduction</h1>
                             <p className="text-lg text-gray-400 leading-relaxed mb-4">
-                                Atrosha provides a zero-trust cryptographic proxy to secure your AI Agents' financial capabilities.
-                                By routing your agent's API calls through our Rust Proxy, you cryptographically enforce spending limits,
+                                Atrosha provides a zero-trust cryptographic proxy to secure your AI Agents&apos; financial capabilities.
+                                By routing your agent&apos;s API calls through our Rust Proxy, you cryptographically enforce spending limits,
                                 budgets, and policy rules in real-time.
                             </p>
                         </section>
@@ -114,9 +114,9 @@ export default function DocsPage() {
                                         <br />
                                         <span className="text-gray-500"># Provide keys from Dashboard</span><br />
                                         proxy = AtroshaProxy(<br />
-                                        &nbsp;&nbsp;&nbsp;&nbsp;admin_secret=os.getenv(<span className="text-green-300">"ADMIN_SECRET"</span>),<br />
-                                        &nbsp;&nbsp;&nbsp;&nbsp;agent_id=os.getenv(<span className="text-green-300">"ATROSHA_AGENT_ID"</span>),<br />
-                                        &nbsp;&nbsp;&nbsp;&nbsp;private_key_hex=os.getenv(<span className="text-green-300">"ATROSHA_PRIVATE_KEY"</span>)<br />
+                                        &nbsp;&nbsp;&nbsp;&nbsp;admin_secret=os.getenv(<span className="text-green-300">&quot;ADMIN_SECRET&quot;</span>),<br />
+                                        &nbsp;&nbsp;&nbsp;&nbsp;agent_id=os.getenv(<span className="text-green-300">&quot;ATROSHA_AGENT_ID&quot;</span>),<br />
+                                        &nbsp;&nbsp;&nbsp;&nbsp;private_key_hex=os.getenv(<span className="text-green-300">&quot;ATROSHA_PRIVATE_KEY&quot;</span>)<br />
                                         )</pre>
                                 </div>
                             </div>

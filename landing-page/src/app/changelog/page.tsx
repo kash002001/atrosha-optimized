@@ -17,9 +17,17 @@ export default function ChangelogPage() {
                         <ul className="list-disc list-outside ml-4 text-muted-light dark:text-muted-dark space-y-2">
                             <li>Launched Public API and Developer Console</li>
                             <li>Released Official Node.js and Python SDKs</li>
-                            <li>Introduced "Stripe-like" Documentation Hub</li>
+                            <li>Introduced &quot;Stripe-like&quot; Documentation Hub</li>
                             <li>Deployed to Vercel with Global Edge Network</li>
                         </ul>
+                    </div>
+                    <div className="relative">
+                        <div className="absolute -left-[37px] top-2 w-4 h-4 rounded-full bg-gray-200 dark:bg-gray-800 ring-4 ring-background-light dark:ring-background-dark"></div>
+                        <h3 className="text-xl font-semibold mb-2 text-primary">v0.9.0 - The &quot;No Excuses&quot; Update</h3>
+                        <time className="text-sm text-gray-500 mb-4 block">December 2025</time>
+                        <p className="text-gray-400 mb-4">
+                            We completely rewrote the core routing engine. Why? Because the old one was slow, and slow is unacceptable. This update drops latency by 40%. We also added support for streaming responses, because you asked for it (and because the competition still can&apos;t figure it out).
+                        </p>
                     </div>
                     <div className="relative">
                         <div className="absolute -left-[37px] top-2 w-4 h-4 rounded-full bg-gray-200 dark:bg-gray-800 ring-4 ring-background-light dark:ring-background-dark"></div>

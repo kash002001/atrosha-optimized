@@ -13,12 +13,12 @@ export async function GET(request: NextRequest) {
         {
             cookies: {
                 getAll() { return allCookies; },
-                setAll(cookiesToSet) { }
+                setAll() { }
             }
         }
     );
 
-    const { data: { user }, error } = await supabase.auth.getUser();
+    const { data: { user } } = await supabase.auth.getUser();
 
     return NextResponse.json({
         status: 'ok',

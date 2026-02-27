@@ -1,6 +1,7 @@
 import { headers } from "next/headers";
 import { NextResponse } from "next/server";
 import { stripe } from "@/lib/stripe";
+import Stripe from "stripe";
 import { createClient } from "@supabase/supabase-js";
 
 // Helper to get admin client
@@ -23,9 +24,9 @@ export async function POST(req: Request) {
             signature,
             process.env.STRIPE_WEBHOOK_SECRET!
         );
-    } catch (err: any) {
-        console.error(`Webhook signature verification failed.`, err.message);
-        return NextResponse.json({ error: err.message }, { status: 400 });
+    } catch (err: unknown) {
+        console.error(`Webhook signature verification failed.`, err instanceof Error ? err.message : String(err));
+        return NextResponse.json({ error: err instanceof Error ? err.message : 'Unknown Error' }, { status: 400 });
     }
 
     const admin = getAdmin();
@@ -33,7 +34,7 @@ export async function POST(req: Request) {
     try {
         switch (event.type) {
             case "checkout.session.completed": {
-                const session = event.data.object as any;
+                const session = event.data.object as Stripe.Checkout.Session;
                 const orgId = session.metadata?.orgId;
 
                 if (orgId) {
@@ -55,18 +56,14 @@ export async function POST(req: Request) {
             }
 
             case "invoice.payment_succeeded": {
-                // Good place to update 'current_period_end' if tracking locally
-                const invoice = event.data.object as any;
-                const subscriptionId = invoice.subscription;
-
-                // Retrieve sub to get orgId if needed, or rely on customer mapping
-                // For now, minimal implementation
-                console.log(`Invoice paid for subscription: ${subscriptionId}`);
+                const invoice = event.data.object as Stripe.Invoice;
+                const subId = (invoice as unknown as Record<string, unknown>).subscription as string;
+                console.log(`Invoice paid for subscription: ${subId}`);
                 break;
             }
 
             case "customer.subscription.deleted": {
-                const subscription = event.data.object as any;
+                const subscription = event.data.object as Stripe.Subscription;
                 const stripeCustomerId = subscription.customer;
 
                 console.log(`Subscription canceled: ${subscription.id}`);
@@ -83,9 +80,9 @@ export async function POST(req: Request) {
                 break;
             }
         }
-    } catch (error: any) {
-        console.error("Webhook handler failed:", error);
-        return NextResponse.json({ error: "Webhook handler failed" }, { status: 500 });
+    } catch (err: unknown) {
+        console.error("ONBOARD ERROR:", err);
+        return NextResponse.json({ error: err instanceof Error ? err.message : "Internal error" }, { status: 500 });
     }
 
     return NextResponse.json({ received: true });

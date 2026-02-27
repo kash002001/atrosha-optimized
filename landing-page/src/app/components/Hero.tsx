@@ -3,7 +3,7 @@
 import { motion } from "framer-motion";
 import Link from "next/link";
 
-export default function Hero({ onCta }: { onCta: () => void }) {
+export default function Hero() {
     return (
         <section className="relative pt-32 pb-20 lg:pt-48 lg:pb-32 overflow-hidden flex items-center justify-center min-h-[80vh]">
             <div className="absolute inset-0 z-0 pointer-events-none flex items-center justify-center select-none">
@@ -17,7 +17,7 @@ export default function Hero({ onCta }: { onCta: () => void }) {
                     className="font-serif text-5xl md:text-7xl leading-tight text-text-light dark:text-white mb-6"
                 >
                     Code hallucinates. <br />
-                    <span className="italic text-primary">Capital shouldn’t.</span>
+                    <span className="italic text-primary">Capital shouldn&apos;t.</span>
                 </motion.h1>
                 <motion.p
                     initial={{ opacity: 0, y: 20 }}

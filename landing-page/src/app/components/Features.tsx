@@ -39,13 +39,9 @@ export default function Features() {
                             account_balance_wallet
                         </span>
                     </div>
-                    <h3 className="text-xl font-bold text-text-light dark:text-white mb-3">
-                        Spend Permits
-                    </h3>
-                    <p className="text-muted-light dark:text-muted-dark text-sm leading-relaxed">
-                        Define rigid spend velocities and single-transaction caps. Agents can
-                        reason freely, but they can't wire funds without a cryptographically
-                        signed permit.
+                    <h3 className="text-xl font-bold mb-3 text-text-light dark:text-white">Supervisor Approval</h3>
+                    <p className="text-muted-light dark:text-muted-dark leading-relaxed">
+                        Don&apos;t fully trust an agent yet? Require a human-in-the-loop cryptographically signed approval for transactions over a certain threshold.
                     </p>
                 </div>
                 <div className="bg-background-light dark:bg-background-dark p-8 rounded-2xl border border-gray-100 dark:border-gray-800 hover:shadow-soft transition-shadow">

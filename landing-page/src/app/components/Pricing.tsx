@@ -1,6 +1,6 @@
 "use client";
 
-export default function Pricing({ onCta }: { onCta: () => void }) {
+export default function Pricing() {
     return (
         <section className="py-24 bg-white dark:bg-surface-dark border-t border-gray-100 dark:border-gray-800">
             <div className="max-w-7xl mx-auto px-4">

@@ -10,10 +10,12 @@ export default function WaitlistModal({ open, onClose }: { open: boolean; onClos
 
     useEffect(() => {
         if (open) {
-            setStatus("idle");
-            setEmail("");
-            setMsg("");
-            setTimeout(() => inputRef.current?.focus(), 100);
+            setTimeout(() => {
+                setStatus("idle");
+                setEmail("");
+                setMsg("");
+                inputRef.current?.focus();
+            }, 10);
         }
     }, [open]);
 
@@ -68,7 +70,7 @@ export default function WaitlistModal({ open, onClose }: { open: boolean; onClos
                 {status === "done" ? (
                     <div className="text-center py-4">
                         <span className="material-symbols-outlined text-5xl text-accent-green mb-4 block">check_circle</span>
-                        <h3 className="text-xl font-semibold text-text-light dark:text-white mb-2">You're in!</h3>
+                        <h3 className="text-xl font-semibold text-text-light dark:text-white mb-2">You&apos;re in!</h3>
                         <p className="text-muted-light dark:text-muted-dark text-sm">{msg}</p>
                     </div>
                 ) : (
@@ -105,7 +107,7 @@ export default function WaitlistModal({ open, onClose }: { open: boolean; onClos
                             </button>
                         </form>
                         <p className="text-xs text-muted-light dark:text-muted-dark mt-4 text-center">
-                            No spam. We'll only email you when it's ready.
+                            No spam. We&apos;ll only email you when it&apos;s ready.
                         </p>
                     </>
                 )}

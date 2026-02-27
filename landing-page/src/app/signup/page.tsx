@@ -89,9 +89,9 @@ function SignupForm() {
                     window.location.href = body.checkout_url;
                     return;
                 }
-            } catch (fetchErr: any) {
+            } catch (fetchErr: unknown) {
                 console.error("ONBOARD_FETCH_ERROR:", fetchErr);
-                setError(`Organization setup failed: ${fetchErr.message || "Network error"}. Please try logging in directly.`);
+                setError(`Organization setup failed: ${fetchErr instanceof Error ? fetchErr.message : String(fetchErr) || "Network error"}. Please try logging in directly.`);
                 setLoading(false);
                 return;
             }
@@ -163,12 +163,7 @@ function SignupForm() {
         );
     }
 
-    const plans = [
-        { id: "explorer", label: "Explorer — Free" },
-        { id: "growth", label: "Growth — Contact Us" },
-        { id: "scale", label: "Scale — Contact Us" },
-        { id: "enterprise", label: "Enterprise — Contact Us" },
-    ];
+
 
     return (
         <>

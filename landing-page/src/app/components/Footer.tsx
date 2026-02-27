@@ -1,5 +1,7 @@
 "use client";
 
+import Link from "next/link";
+
 export default function Footer() {
     return (
         <footer className="bg-background-light dark:bg-background-dark pt-16 pb-8 border-t border-gray-100 dark:border-gray-800">
@@ -48,36 +50,36 @@ export default function Footer() {
                             </h4>
                             <ul className="space-y-4">
                                 <li>
-                                    <a
+                                    <Link
                                         className="text-sm text-muted-light dark:text-muted-dark hover:text-primary dark:hover:text-white transition-colors"
                                         href="/#features"
                                     >
                                         Features
-                                    </a>
+                                    </Link>
                                 </li>
                                 <li>
-                                    <a
+                                    <Link
                                         className="text-sm text-muted-light dark:text-muted-dark hover:text-primary dark:hover:text-white transition-colors"
                                         href="/docs"
                                     >
                                         Integrations
-                                    </a>
+                                    </Link>
                                 </li>
                                 <li>
-                                    <a
+                                    <Link
                                         className="text-sm text-muted-light dark:text-muted-dark hover:text-primary dark:hover:text-white transition-colors"
                                         href="/#pricing"
                                     >
                                         Pricing
-                                    </a>
+                                    </Link>
                                 </li>
                                 <li>
-                                    <a
+                                    <Link
                                         className="text-sm text-muted-light dark:text-muted-dark hover:text-primary dark:hover:text-white transition-colors"
                                         href="/changelog"
                                     >
                                         Changelog
-                                    </a>
+                                    </Link>
                                 </li>
                             </ul>
                         </div>
@@ -87,36 +89,36 @@ export default function Footer() {
                             </h4>
                             <ul className="space-y-4">
                                 <li>
-                                    <a
+                                    <Link
                                         className="text-sm text-muted-light dark:text-muted-dark hover:text-primary dark:hover:text-white transition-colors"
                                         href="/docs"
                                     >
                                         Documentation
-                                    </a>
+                                    </Link>
                                 </li>
                                 <li>
-                                    <a
+                                    <Link
                                         className="text-sm text-muted-light dark:text-muted-dark hover:text-primary dark:hover:text-white transition-colors"
                                         href="/docs#api-reference"
                                     >
                                         API Reference
-                                    </a>
+                                    </Link>
                                 </li>
                                 <li>
-                                    <a
+                                    <Link
                                         className="text-sm text-muted-light dark:text-muted-dark hover:text-primary dark:hover:text-white transition-colors"
                                         href="/docs#sdks"
                                     >
                                         SDKs
-                                    </a>
+                                    </Link>
                                 </li>
                                 <li>
-                                    <a
+                                    <Link
                                         className="text-sm text-muted-light dark:text-muted-dark hover:text-primary dark:hover:text-white transition-colors"
                                         href="#"
                                     >
                                         Status
-                                    </a>
+                                    </Link>
                                 </li>
                             </ul>
                         </div>

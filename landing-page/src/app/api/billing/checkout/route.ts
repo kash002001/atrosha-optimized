@@ -41,8 +41,11 @@ export async function POST(req: Request) {
         });
 
         return NextResponse.json({ url: session.url });
-    } catch (err: any) {
-        console.error("STRIPE CHECKOUT ERROR:", err);
-        return NextResponse.json({ error: err.message }, { status: 500 });
+    } catch (err: unknown) {
+        console.error('Error creating checkout session:', err);
+        return NextResponse.json(
+            { error: 'Error creating checkout session', details: err instanceof Error ? err.message : String(err) },
+            { status: 500 }
+        );
     }
 }

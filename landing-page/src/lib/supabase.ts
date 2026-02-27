@@ -1,6 +1,5 @@
 import { createClient as createJsClient, SupabaseClient } from "@supabase/supabase-js";
-import { createServerClient, type CookieOptions } from "@supabase/ssr";
-import { cookies } from "next/headers";
+import { createServerClient } from "@supabase/ssr";
 
 
 let _client: SupabaseClient | null = null;
@@ -18,11 +17,11 @@ export function getSupabase() {
 // backwards compat — lazy singleton
 export const supabase = new Proxy({} as SupabaseClient, {
     get(_target, prop) {
-        return (getSupabase() as any)[prop];
+        return (getSupabase() as unknown as Record<string | symbol, unknown>)[prop];
     },
 });
 
-export function createClient(cookieStore: any) {
+export function createClient(cookieStore: { get: (name: string) => { value: string } | undefined }) {
     return createServerClient(
         process.env.NEXT_PUBLIC_SUPABASE_URL!,
         process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,

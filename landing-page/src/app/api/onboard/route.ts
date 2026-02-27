@@ -112,8 +112,8 @@ export async function POST(req: Request) {
             message: "Organization successfully created and linked.",
         });
 
-    } catch (err: any) {
+    } catch (err: unknown) {
         console.error("ONBOARD ERROR:", err);
-        return NextResponse.json({ error: err.message || "Internal error" }, { status: 500 });
+        return NextResponse.json({ error: err instanceof Error ? err.message : "Internal error" }, { status: 500 });
     }
 }

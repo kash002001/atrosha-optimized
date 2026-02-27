@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState } from 'react';
+import { CheckCircle2 } from 'lucide-react'; // Added CheckCircle2 import
 import Navbar from '../components/Navbar';
 import Footer from '../components/Footer';
 
@@ -35,13 +36,14 @@ export default function ContactPage() {
                 <h1 className="text-4xl font-serif font-bold text-text-light dark:text-white mb-4">Contact Sales</h1>
                 <p className="text-muted-light dark:text-muted-dark mb-12">
                     Need enterprise volume? Custom integration? Or just have a question?
-                    We'd love to hear from you.
+                    We&apos;d love to hear from you.
                 </p>
 
                 {status === 'success' ? (
-                    <div className="bg-green-500/10 border border-green-500/20 text-green-400 p-6 rounded-lg text-center">
+                    <div className="bg-green-50 dark:bg-green-900/20 text-green-600 dark:text-green-400 p-6 rounded-lg text-center">
+                        <CheckCircle2 className="w-12 h-12 mx-auto mb-4" />
                         <h3 className="font-bold text-lg mb-2">Message Sent!</h3>
-                        <p>We'll get back to you within 24 hours.</p>
+                        <p>We&apos;ll get back to you within 24 hours.</p>
                     </div>
                 ) : (
                     <form onSubmit={handleSubmit} className="space-y-6">
@@ -58,9 +60,11 @@ export default function ContactPage() {
                             <textarea name="message" required rows={5} className="w-full bg-white dark:bg-black/50 border border-gray-200 dark:border-gray-800 rounded-lg px-4 py-3 text-text-light dark:text-white focus:outline-none focus:ring-2 focus:ring-primary/50" placeholder="How can we help?" />
                         </div>
 
-                        {status === 'error' && (
-                            <p className="text-red-400 text-sm">Something went wrong. Please try again.</p>
-                        )}
+                        {
+                            status === 'error' && (
+                                <p className="text-red-400 text-sm">Something went wrong. Please try again.</p>
+                            )
+                        }
 
                         <button
                             disabled={status === 'loading'}
@@ -68,10 +72,11 @@ export default function ContactPage() {
                         >
                             {status === 'loading' ? 'Sending...' : 'Send Message'}
                         </button>
-                    </form>
-                )}
-            </main>
+                    </form >
+                )
+                }
+            </main >
             <Footer />
-        </div>
+        </div >
     );
 }

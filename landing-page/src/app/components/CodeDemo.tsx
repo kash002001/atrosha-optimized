@@ -24,24 +24,28 @@ export default function CodeDemo() {
                         </div>
                     </div>
                     <div className="p-4 sm:p-6 text-gray-300 overflow-x-auto whitespace-nowrap min-w-full">
-                        <div className="mb-4">
-                            <span className="text-purple-400">from</span> atrosha_sdk.client <span className="text-purple-400">import</span> AtroshaProxy
-                        </div>
-                        <div className="mb-4">
-                            <span className="text-gray-500"># 1. Initialize with your agent's cryptographic identity</span><br />
-                            proxy = AtroshaProxy(<br />
-                            &nbsp;&nbsp;&nbsp;&nbsp;agent_id=<span className="text-green-300">"agt_123xyz"</span>,<br />
-                            &nbsp;&nbsp;&nbsp;&nbsp;private_key_hex=<span className="text-green-300">"7b8f2c...a91e"</span><br />
-                            )
-                        </div>
-                        <div className="mb-4 mt-6">
-                            <span className="text-gray-500"># 2. Route the financial request through the Secure Proxy</span><br />
-                            response = proxy.execute_request(<br />
-                            &nbsp;&nbsp;&nbsp;&nbsp;method=<span className="text-green-300">"POST"</span>,<br />
-                            &nbsp;&nbsp;&nbsp;&nbsp;target_url=<span className="text-green-300">"https://api.stripe.com/v1/refunds"</span>,<br />
-                            &nbsp;&nbsp;&nbsp;&nbsp;amount=<span className="text-yellow-300">5000</span>, <span className="text-gray-500"># 50.00 USD</span><br />
-                            &nbsp;&nbsp;&nbsp;&nbsp;body=<span className="text-green-300">"charge=ch_1abc123"</span><br />
-                            )
+                        <div>
+                            <span style={{ color: "var(--code-keyword)" }}>import</span> <span style={{ color: "var(--code-builtin)" }}>{"{ "}</span>AtroshaClient<span style={{ color: "var(--code-builtin)" }}>{" }"}</span> <span style={{ color: "var(--code-keyword)" }}>from</span> <span style={{ color: "var(--code-string)" }}>&apos;atrosha-node&apos;</span>;
+                            <br /><br />
+                            <span style={{ color: "var(--code-comment)" }}>{"// 1. Initialize with your master key and the agent's private key"}</span>
+                            <br />
+                            <span style={{ color: "var(--code-keyword)" }}>const</span> client = <span style={{ color: "var(--code-keyword)" }}>new</span> <span style={{ color: "var(--code-function)" }}>AtroshaClient</span>(<span style={{ color: "var(--code-string)" }}>&quot;sk_master_...&quot;</span>, <span style={{ color: "var(--code-string)" }}>&quot;agent_priv_...&quot;</span>);
+                            <br /><br />
+                            <span style={{ color: "var(--code-comment)" }}>{"// 2. Wrap your standard OpenAI call"}</span>
+                            <br />
+                            <span style={{ color: "var(--code-keyword)" }}>const</span> response = <span style={{ color: "var(--code-keyword)" }}>await</span> client.openai.chat.completions.<span style={{ color: "var(--code-function)" }}>create</span>({"{"}
+                            <br />
+                            &nbsp;&nbsp;model: <span style={{ color: "var(--code-string)" }}>&quot;gpt-4o&quot;</span>,
+                            <br />
+                            &nbsp;&nbsp;messages: [{"{"} role: <span style={{ color: "var(--code-string)" }}>&quot;user&quot;</span>, content: <span style={{ color: "var(--code-string)" }}>&quot;Transfer $500 to account X&quot;</span> {"}"}],
+                            <br />
+                            {"}"});
+                            <br /><br />
+                            <span style={{ color: "var(--code-comment)" }}>{"// Atrosha automatically verifies the agent's spend limit,"}</span>
+                            <br />
+                            <span style={{ color: "var(--code-comment)" }}>{"// runs behavioral analysis, and proxies the request to OpenAI."}</span>
+                            <br />
+                            <span style={{ color: "var(--code-comment)" }}>{"// If it violates policy, it throws an AtroshaPolicyError."}</span>
                         </div>
                         <div className="mt-6 bg-[#252526] p-4 rounded border border-gray-700/50">
                             <span className="text-gray-500">&gt; Proxy validating Ed25519 signature... [OK]</span><br />

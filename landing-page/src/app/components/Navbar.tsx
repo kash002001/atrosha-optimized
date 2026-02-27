@@ -1,6 +1,7 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
+import Link from "next/link";
 // We can modify the snippet to use Next.js Link if needed, but for now matching snippet exactly with <a> tags is fine for visual fidelity.
 // However, the snippet uses `class="...` which needs to be `className`.
 // And closing tags for void elements.
@@ -27,24 +28,24 @@ export default function Navbar() {
                     </div>
                     {/* Desktop Center Links */}
                     <div className="hidden md:flex items-center space-x-8">
-                        <a className="text-sm font-medium text-muted-light hover:text-primary dark:text-muted-dark dark:hover:text-white transition-colors" href="/#features">
+                        <Link className="text-sm font-medium text-muted-light hover:text-primary dark:text-muted-dark dark:hover:text-white transition-colors" href="/#features">
                             Product
-                        </a>
-                        <a className="text-sm font-medium text-muted-light hover:text-primary dark:text-muted-dark dark:hover:text-white transition-colors" href="/docs">
+                        </Link>
+                        <Link className="text-sm font-medium text-muted-light hover:text-primary dark:text-muted-dark dark:hover:text-white transition-colors" href="/docs">
                             Developers
-                        </a>
-                        <a className="text-sm font-medium text-muted-light hover:text-primary dark:text-muted-dark dark:hover:text-white transition-colors" href="/#pricing">
+                        </Link>
+                        <Link className="text-sm font-medium text-muted-light hover:text-primary dark:text-muted-dark dark:hover:text-white transition-colors" href="/#pricing">
                             Pricing
-                        </a>
+                        </Link>
                     </div>
                     {/* Desktop Right Links */}
                     <div className="hidden md:flex items-center space-x-4">
-                        <a className="text-sm font-medium text-muted-light hover:text-primary dark:text-muted-dark dark:hover:text-white transition-colors" href="/login">
+                        <Link className="text-sm font-medium text-muted-light hover:text-primary dark:text-muted-dark dark:hover:text-white transition-colors" href="/login">
                             Login
-                        </a>
-                        <a className="bg-primary hover:bg-primary-hover text-white px-5 py-2 rounded-full text-sm font-medium transition-colors shadow-lg shadow-primary/20" href="/signup">
+                        </Link>
+                        <Link className="bg-primary hover:bg-primary-hover text-white px-5 py-2 rounded-full text-sm font-medium transition-colors shadow-lg shadow-primary/20" href="/signup">
                             Sign Up
-                        </a>
+                        </Link>
                         <button className="p-2 text-muted-light dark:text-muted-dark hover:text-primary dark:hover:text-white" onClick={toggleDark}>
                             <span className="material-symbols-outlined text-sm">contrast</span>
                         </button>
@@ -69,14 +70,14 @@ export default function Navbar() {
             {isMobileMenuOpen && (
                 <div className="md:hidden bg-background-light dark:bg-background-dark border-b border-gray-100 dark:border-gray-800 px-4 pt-2 pb-6 space-y-4 shadow-xl">
                     <div className="flex flex-col space-y-4">
-                        <a className="text-base font-medium text-text-light dark:text-white padding-2" href="/#features" onClick={() => setIsMobileMenuOpen(false)}>Product</a>
-                        <a className="text-base font-medium text-text-light dark:text-white padding-2" href="/docs" onClick={() => setIsMobileMenuOpen(false)}>Developers</a>
-                        <a className="text-base font-medium text-text-light dark:text-white padding-2" href="/#pricing" onClick={() => setIsMobileMenuOpen(false)}>Pricing</a>
+                        <Link className="text-base font-medium text-text-light dark:text-white padding-2" href="/#features" onClick={() => setIsMobileMenuOpen(false)}>Product</Link>
+                        <Link className="text-base font-medium text-text-light dark:text-white padding-2" href="/docs" onClick={() => setIsMobileMenuOpen(false)}>Developers</Link>
+                        <Link className="text-base font-medium text-text-light dark:text-white padding-2" href="/#pricing" onClick={() => setIsMobileMenuOpen(false)}>Pricing</Link>
                         <hr className="border-gray-200 dark:border-gray-800" />
-                        <a className="text-base font-medium text-text-light dark:text-white padding-2" href="/login" onClick={() => setIsMobileMenuOpen(false)}>Login</a>
-                        <a className="bg-primary hover:bg-primary-hover text-white px-5 py-3 rounded-xl text-center font-medium transition-colors w-full" href="/signup" onClick={() => setIsMobileMenuOpen(false)}>
+                        <Link className="text-base font-medium text-text-light dark:text-white padding-2" href="/login" onClick={() => setIsMobileMenuOpen(false)}>Login</Link>
+                        <Link className="bg-primary hover:bg-primary-hover text-white px-5 py-3 rounded-xl text-center font-medium transition-colors w-full" href="/signup" onClick={() => setIsMobileMenuOpen(false)}>
                             Sign Up Free
-                        </a>
+                        </Link>
                     </div>
                 </div>
             )}
