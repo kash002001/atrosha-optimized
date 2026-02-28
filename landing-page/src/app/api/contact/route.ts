@@ -20,7 +20,7 @@ export async function POST(request: Request) {
         if (process.env.RESEND_API_KEY) {
             await resend.emails.send({
                 from: 'Atrosha Contact <kash@atrosha.bond>', // Use verified domain
-                to: 'kashabhi440@gmail.com',
+                to: 'kash@atrosha.bond',
                 subject: `New Contact from ${name}`,
                 html: `<p><strong>Name:</strong> ${name}</p><p><strong>Email:</strong> ${email}</p><p><strong>Message:</strong> ${message}</p>`
             });
