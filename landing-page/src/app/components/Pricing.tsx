@@ -60,9 +60,11 @@ export default function Pricing() {
                     </motion.div>
                     <motion.div
                         whileHover={{ y: -5 }}
-                        className="relative p-8 rounded-2xl border-2 border-primary/50 dark:border-primary flex flex-col h-full bg-white/90 dark:bg-surface-dark/95 backdrop-blur-2xl shadow-2xl shadow-primary/10 dark:shadow-[0_0_40px_rgba(6,78,59,0.2)] z-10 overflow-hidden transform-gpu"
+                        className="relative p-8 rounded-2xl border-2 border-primary/50 dark:border-primary flex flex-col h-full bg-white/90 dark:bg-surface-dark/95 backdrop-blur-2xl shadow-2xl shadow-primary/10 dark:shadow-[0_0_40px_rgba(6,78,59,0.2)] z-10 transform-gpu"
                     >
-                        <div className="absolute top-0 right-0 w-32 h-32 bg-primary/20 blur-[50px] rounded-full pointer-events-none"></div>
+                        <div className="absolute inset-0 overflow-hidden rounded-2xl pointer-events-none">
+                            <div className="absolute top-0 right-0 w-32 h-32 bg-primary/20 blur-[50px] rounded-full"></div>
+                        </div>
                         <div className="absolute -top-3 right-4 bg-primary text-white text-[10px] font-bold uppercase px-3 py-1 rounded-full tracking-wider shadow-lg">
                             Most Popular
                         </div>
