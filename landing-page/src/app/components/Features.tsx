@@ -22,7 +22,7 @@ export default function Features() {
             <div className="max-w-7xl mx-auto px-4 grid md:grid-cols-3 gap-8 relative z-10">
                 <motion.div
                     whileHover={{ y: -5 }}
-                    className="relative group p-8 rounded-2xl border border-gray-200 dark:border-white/10 bg-white/50 dark:bg-white/5 backdrop-blur-xl hover:border-primary/50 transition-all duration-300 shadow-sm hover:shadow-[0_0_30px_rgba(16,185,129,0.15)] overflow-hidden"
+                    className="relative group p-8 rounded-2xl border border-gray-200 dark:border-white/10 bg-white/50 dark:bg-white/5 backdrop-blur-xl hover:border-primary/50 transition-all duration-300 shadow-sm hover:shadow-[0_0_30px_rgba(6,78,59,0.15)] overflow-hidden"
                 >
                     <div className="absolute inset-0 bg-gradient-to-br from-primary/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none"></div>
                     <div className="relative z-10">
@@ -41,7 +41,7 @@ export default function Features() {
                 </motion.div>
                 <motion.div
                     whileHover={{ y: -5 }}
-                    className="relative group p-8 rounded-2xl border border-gray-200 dark:border-white/10 bg-white/50 dark:bg-white/5 backdrop-blur-xl hover:border-primary/50 transition-all duration-300 shadow-sm hover:shadow-[0_0_30px_rgba(16,185,129,0.15)] overflow-hidden"
+                    className="relative group p-8 rounded-2xl border border-gray-200 dark:border-white/10 bg-white/50 dark:bg-white/5 backdrop-blur-xl hover:border-primary/50 transition-all duration-300 shadow-sm hover:shadow-[0_0_30px_rgba(6,78,59,0.15)] overflow-hidden"
                 >
                     <div className="absolute inset-0 bg-gradient-to-br from-primary/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none"></div>
                     <div className="relative z-10">

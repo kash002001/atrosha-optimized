@@ -10,12 +10,12 @@ export default function Hero() {
                 <motion.div
                     animate={{ rotate: 360, scale: [1, 1.1, 1] }}
                     transition={{ duration: 20, repeat: Infinity, ease: "linear" }}
-                    className="absolute top-1/4 left-1/4 w-[600px] h-[600px] bg-primary/20 rounded-full blur-[100px] mix-blend-screen"
+                    className="absolute top-1/4 left-1/4 w-[600px] h-[600px] bg-primary/10 rounded-full blur-[100px] mix-blend-screen dark:mix-blend-normal"
                 />
                 <motion.div
                     animate={{ rotate: -360, scale: [1, 1.2, 1] }}
                     transition={{ duration: 25, repeat: Infinity, ease: "linear" }}
-                    className="absolute bottom-1/4 right-1/4 w-[500px] h-[500px] bg-emerald-500/10 rounded-full blur-[120px] mix-blend-screen"
+                    className="absolute bottom-1/4 right-1/4 w-[500px] h-[500px] bg-primary/5 rounded-full blur-[120px] mix-blend-screen dark:mix-blend-normal"
                 />
             </div>
             <div className="relative z-10 max-w-4xl mx-auto px-4 text-center">
@@ -26,7 +26,7 @@ export default function Hero() {
                     className="font-serif text-5xl md:text-7xl lg:text-[5rem] tracking-tight leading-[1.1] text-text-light dark:text-white mb-6 drop-shadow-sm"
                 >
                     Code hallucinates. <br />
-                    <span className="italic bg-clip-text text-transparent bg-gradient-to-r from-primary to-emerald-400">Capital shouldn&apos;t.</span>
+                    <span className="italic text-primary">Capital shouldn&apos;t.</span>
                 </motion.h1>
                 <motion.p
                     initial={{ opacity: 0, y: 20 }}
@@ -40,10 +40,10 @@ export default function Hero() {
                 </motion.p>
                 <div className="flex flex-col sm:flex-row justify-center items-center gap-4 mb-12">
                     <Link
-                        className="relative overflow-hidden group bg-gradient-to-br from-primary to-emerald-700 hover:from-primary-hover hover:to-emerald-800 text-white px-8 py-3.5 rounded-xl text-sm font-semibold transition-all shadow-[0_0_30px_rgba(16,185,129,0.3)] hover:shadow-[0_0_40px_rgba(16,185,129,0.5)] flex items-center gap-2 transform hover:-translate-y-0.5"
+                        className="relative overflow-hidden group bg-primary hover:bg-primary-hover text-white px-8 py-3.5 rounded-xl text-sm font-semibold transition-all shadow-glow flex items-center gap-2 transform hover:-translate-y-0.5"
                         href="/signup"
                     >
-                        <span className="absolute inset-0 w-full h-full bg-white/20 group-hover:bg-transparent translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-700 ease-in-out"></span>
+                        <span className="absolute inset-0 w-full h-full bg-white/10 group-hover:bg-transparent translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-700 ease-in-out"></span>
                         <span className="relative z-10 flex items-center gap-2">
                             Get Started for Free
                             <span className="material-symbols-outlined text-sm group-hover:translate-x-1 transition-transform">
@@ -52,7 +52,7 @@ export default function Hero() {
                         </span>
                     </Link>
                     <a
-                        className="bg-white/50 dark:bg-white/5 backdrop-blur-md border border-gray-200 dark:border-white/10 hover:border-primary/50 text-text-light dark:text-white px-8 py-3.5 rounded-xl text-sm font-medium transition-all flex items-center gap-2 transform hover:-translate-y-0.5"
+                        className="bg-white/50 dark:bg-surface-dark/50 backdrop-blur-md border border-gray-200 dark:border-gray-700 hover:border-primary/50 text-text-light dark:text-white px-8 py-3.5 rounded-xl text-sm font-medium transition-all flex items-center gap-2 transform hover:-translate-y-0.5"
                         href="/docs"
                     >
                         <span className="material-symbols-outlined text-gray-400 text-lg">

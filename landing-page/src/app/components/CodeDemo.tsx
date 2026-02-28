@@ -19,7 +19,7 @@ export default function CodeDemo() {
                     viewport={{ once: true }}
                     transition={{ duration: 0.8 }}
                     animate={{ y: [0, -10, 0] }}
-                    className="relative rounded-xl overflow-hidden shadow-[0_20px_50px_rgba(0,0,0,0.5)] dark:shadow-[0_0_40px_rgba(16,185,129,0.15)] bg-[#1E1E1E] border border-gray-700/50 font-mono text-sm leading-relaxed transform-gpu"
+                    className="relative rounded-xl overflow-hidden shadow-[0_20px_50px_rgba(0,0,0,0.5)] dark:shadow-[0_0_40px_rgba(6,78,59,0.15)] bg-[#1E1E1E] border border-gray-700/50 font-mono text-sm leading-relaxed transform-gpu"
                 >
                     <div className="absolute inset-0 bg-gradient-to-b from-white/5 to-transparent pointer-events-none"></div>
                     <div className="relative bg-[#2D2D2D]/90 backdrop-blur-sm px-4 py-3 flex items-center gap-2 border-b border-gray-700/50">
@@ -61,9 +61,9 @@ export default function CodeDemo() {
                             <span className="text-gray-500">&gt; Checking global spend limits... [OK]</span><br />
                             <span className="text-accent-green">&gt; Transaction Approved & Forwarded!</span>
                         </div>
-                        <div className="mt-4 animate-pulse flex items-center">
+                        <div className="mt-4 animate-pulse">
                             <span className="text-accent-green font-bold">$</span>{" "}
-                            <span className="w-2.5 h-5 inline-block bg-accent-green/70 align-middle ml-2 shadow-[0_0_8px_rgba(16,185,129,0.8)]"></span>
+                            <span className="w-2 h-4 inline-block bg-gray-400 align-middle ml-1"></span>
                         </div>
                     </div>
                 </motion.div>

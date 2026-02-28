@@ -18,7 +18,7 @@ export default function Pricing() {
                 <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6 relative z-10">
                     <motion.div
                         whileHover={{ y: -5 }}
-                        className="p-6 rounded-2xl border border-gray-200 dark:border-white/10 bg-white/50 dark:bg-white/5 backdrop-blur-xl flex flex-col h-full hover:border-primary/50 transition-all duration-300 shadow-sm hover:shadow-[0_0_30px_rgba(16,185,129,0.1)]"
+                        className="p-6 rounded-2xl border border-gray-200 dark:border-white/10 bg-white/50 dark:bg-white/5 backdrop-blur-xl flex flex-col h-full hover:border-primary/50 transition-all duration-300 shadow-sm hover:shadow-[0_0_30px_rgba(6,78,59,0.1)]"
                     >
                         <h3 className="text-lg font-bold text-text-light dark:text-white mb-2">
                             Explorer
@@ -60,10 +60,10 @@ export default function Pricing() {
                     </motion.div>
                     <motion.div
                         whileHover={{ y: -5 }}
-                        className="relative p-8 rounded-2xl border-2 border-primary/50 dark:border-primary flex flex-col h-full bg-white/90 dark:bg-surface-dark/95 backdrop-blur-2xl shadow-2xl shadow-primary/10 dark:shadow-[0_0_40px_rgba(16,185,129,0.2)] z-10 overflow-hidden transform-gpu"
+                        className="relative p-8 rounded-2xl border-2 border-primary/50 dark:border-primary flex flex-col h-full bg-white/90 dark:bg-surface-dark/95 backdrop-blur-2xl shadow-2xl shadow-primary/10 dark:shadow-[0_0_40px_rgba(6,78,59,0.2)] z-10 overflow-hidden transform-gpu"
                     >
                         <div className="absolute top-0 right-0 w-32 h-32 bg-primary/20 blur-[50px] rounded-full pointer-events-none"></div>
-                        <div className="absolute -top-3 right-4 bg-gradient-to-r from-primary to-emerald-500 text-white text-[10px] font-bold uppercase px-3 py-1 rounded-full tracking-wider shadow-lg">
+                        <div className="absolute -top-3 right-4 bg-primary text-white text-[10px] font-bold uppercase px-3 py-1 rounded-full tracking-wider shadow-lg">
                             Most Popular
                         </div>
                         <h3 className="text-lg font-bold text-text-light dark:text-white mb-2">
@@ -101,7 +101,7 @@ export default function Pricing() {
                             </li>
                         </ul>
                         <a
-                            className="w-full block text-center py-3 rounded-xl bg-gradient-to-r from-primary to-emerald-600 hover:from-primary-hover hover:to-emerald-700 text-white text-sm font-semibold transition-all shadow-[0_0_20px_rgba(16,185,129,0.3)] hover:shadow-[0_0_30px_rgba(16,185,129,0.5)] transform hover:-translate-y-0.5 relative z-10"
+                            className="w-full block text-center py-3 rounded-xl bg-primary hover:bg-primary-hover text-white text-sm font-semibold transition-all shadow-[0_0_20px_rgba(6,78,59,0.3)] hover:shadow-[0_0_30px_rgba(6,78,59,0.5)] transform hover:-translate-y-0.5 relative z-10"
                             href="/signup?plan=growth"
                         >
                             Contact Sales
@@ -109,7 +109,7 @@ export default function Pricing() {
                     </motion.div>
                     <motion.div
                         whileHover={{ y: -5 }}
-                        className="p-6 rounded-2xl border border-gray-200 dark:border-white/10 bg-white/50 dark:bg-white/5 backdrop-blur-xl flex flex-col h-full hover:border-primary/50 transition-all duration-300 shadow-sm hover:shadow-[0_0_30px_rgba(16,185,129,0.1)]"
+                        className="p-6 rounded-2xl border border-gray-200 dark:border-white/10 bg-white/50 dark:bg-white/5 backdrop-blur-xl flex flex-col h-full hover:border-primary/50 transition-all duration-300 shadow-sm hover:shadow-[0_0_30px_rgba(6,78,59,0.1)]"
                     >
                         <h3 className="text-lg font-bold text-text-light dark:text-white mb-2">
                             Scale
