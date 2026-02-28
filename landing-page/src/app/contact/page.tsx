@@ -33,9 +33,9 @@ export default function ContactPage() {
         <div className="min-h-screen bg-background-light dark:bg-background-dark">
             <Navbar />
             <main className="max-w-2xl mx-auto px-4 pt-32 pb-20">
-                <h1 className="text-4xl font-serif font-bold text-text-light dark:text-white mb-4">Contact Sales</h1>
+                <h1 className="text-4xl font-serif font-bold text-text-light dark:text-white mb-4">Contact Us</h1>
                 <p className="text-muted-light dark:text-muted-dark mb-12">
-                    Need enterprise volume? Custom integration? Or just have a question?
+                    Have a question, need enterprise volume, or want to explore custom integrations?
                     We&apos;d love to hear from you.
                 </p>
 

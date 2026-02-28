@@ -37,6 +37,9 @@ export default function Navbar() {
                         <Link className="text-sm font-medium text-muted-light hover:text-primary dark:text-muted-dark dark:hover:text-white transition-colors" href="/#pricing">
                             Pricing
                         </Link>
+                        <Link className="text-sm font-medium text-muted-light hover:text-primary dark:text-muted-dark dark:hover:text-white transition-colors" href="/contact">
+                            Contact
+                        </Link>
                     </div>
                     {/* Desktop Right Links */}
                     <div className="hidden md:flex items-center space-x-4">
@@ -73,6 +76,7 @@ export default function Navbar() {
                         <Link className="text-base font-medium text-text-light dark:text-white padding-2" href="/#features" onClick={() => setIsMobileMenuOpen(false)}>Product</Link>
                         <Link className="text-base font-medium text-text-light dark:text-white padding-2" href="/docs" onClick={() => setIsMobileMenuOpen(false)}>Developers</Link>
                         <Link className="text-base font-medium text-text-light dark:text-white padding-2" href="/#pricing" onClick={() => setIsMobileMenuOpen(false)}>Pricing</Link>
+                        <Link className="text-base font-medium text-text-light dark:text-white padding-2" href="/contact" onClick={() => setIsMobileMenuOpen(false)}>Contact</Link>
                         <hr className="border-gray-200 dark:border-gray-800" />
                         <Link className="text-base font-medium text-text-light dark:text-white padding-2" href="/login" onClick={() => setIsMobileMenuOpen(false)}>Login</Link>
                         <Link className="bg-primary hover:bg-primary-hover text-white px-5 py-3 rounded-xl text-center font-medium transition-colors w-full" href="/signup" onClick={() => setIsMobileMenuOpen(false)}>
