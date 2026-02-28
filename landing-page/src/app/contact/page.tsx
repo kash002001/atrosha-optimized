@@ -35,8 +35,7 @@ export default function ContactPage() {
             <main className="max-w-2xl mx-auto px-4 pt-32 pb-20">
                 <h1 className="text-4xl font-serif font-bold text-text-light dark:text-white mb-4">Contact Us</h1>
                 <p className="text-muted-light dark:text-muted-dark mb-12">
-                    Have a question, need enterprise volume, or want to explore custom integrations?
-                    We&apos;d love to hear from you.
+                    Questions about pricing, enterprise volume, or custom integrations? Drop us a message and we'll get right back to you.
                 </p>
 
                 {status === 'success' ? (
