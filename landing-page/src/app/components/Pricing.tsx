@@ -104,7 +104,7 @@ export default function Pricing() {
                         </ul>
                         <a
                             className="w-full block text-center py-3 rounded-xl bg-primary hover:bg-primary-hover text-white text-sm font-semibold transition-all shadow-[0_0_20px_rgba(6,78,59,0.3)] hover:shadow-[0_0_30px_rgba(6,78,59,0.5)] transform hover:-translate-y-0.5 relative z-10"
-                            href="/signup?plan=growth"
+                            href="/contact"
                         >
                             Contact Us
                         </a>
@@ -143,7 +143,7 @@ export default function Pricing() {
                         </ul>
                         <a
                             className="w-full block text-center py-2.5 rounded-xl border border-gray-200 dark:border-gray-700 text-sm font-medium hover:bg-white/50 dark:hover:bg-white/10 transition-colors"
-                            href="/signup?plan=scale"
+                            href="/contact"
                         >
                             Contact Us
                         </a>
