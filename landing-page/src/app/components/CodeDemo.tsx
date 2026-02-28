@@ -1,4 +1,5 @@
 "use client";
+import { motion } from "framer-motion";
 
 export default function CodeDemo() {
     return (
@@ -12,8 +13,16 @@ export default function CodeDemo() {
                         Drop into your existing infrastructure with a single binary.
                     </p>
                 </div>
-                <div className="rounded-xl overflow-hidden shadow-2xl bg-[#1E1E1E] border border-gray-800 font-mono text-sm leading-relaxed">
-                    <div className="bg-[#2D2D2D] px-4 py-2 flex items-center gap-2 border-b border-gray-700">
+                <motion.div
+                    initial={{ y: 20, opacity: 0 }}
+                    whileInView={{ y: 0, opacity: 1 }}
+                    viewport={{ once: true }}
+                    transition={{ duration: 0.8 }}
+                    animate={{ y: [0, -10, 0] }}
+                    className="relative rounded-xl overflow-hidden shadow-[0_20px_50px_rgba(0,0,0,0.5)] dark:shadow-[0_0_40px_rgba(16,185,129,0.15)] bg-[#1E1E1E] border border-gray-700/50 font-mono text-sm leading-relaxed transform-gpu"
+                >
+                    <div className="absolute inset-0 bg-gradient-to-b from-white/5 to-transparent pointer-events-none"></div>
+                    <div className="relative bg-[#2D2D2D]/90 backdrop-blur-sm px-4 py-3 flex items-center gap-2 border-b border-gray-700/50">
                         <div className="flex gap-1.5">
                             <div className="w-3 h-3 rounded-full bg-red-500"></div>
                             <div className="w-3 h-3 rounded-full bg-yellow-500"></div>
@@ -52,12 +61,12 @@ export default function CodeDemo() {
                             <span className="text-gray-500">&gt; Checking global spend limits... [OK]</span><br />
                             <span className="text-accent-green">&gt; Transaction Approved & Forwarded!</span>
                         </div>
-                        <div className="mt-4 animate-pulse">
-                            <span className="text-accent-green">$</span>{" "}
-                            <span className="w-2 h-4 inline-block bg-gray-400 align-middle ml-1"></span>
+                        <div className="mt-4 animate-pulse flex items-center">
+                            <span className="text-accent-green font-bold">$</span>{" "}
+                            <span className="w-2.5 h-5 inline-block bg-accent-green/70 align-middle ml-2 shadow-[0_0_8px_rgba(16,185,129,0.8)]"></span>
                         </div>
                     </div>
-                </div>
+                </motion.div>
             </div>
         </section>
     );

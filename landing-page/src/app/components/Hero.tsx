@@ -6,18 +6,27 @@ import Link from "next/link";
 export default function Hero() {
     return (
         <section className="relative pt-32 pb-20 lg:pt-48 lg:pb-32 overflow-hidden flex items-center justify-center min-h-[80vh]">
-            <div className="absolute inset-0 z-0 pointer-events-none flex items-center justify-center select-none">
-                <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[500px] h-[500px] bg-gradient-to-b from-primary/5 via-transparent to-transparent rounded-full blur-3xl"></div>
+            <div className="absolute inset-0 z-0 pointer-events-none flex items-center justify-center select-none overflow-hidden">
+                <motion.div
+                    animate={{ rotate: 360, scale: [1, 1.1, 1] }}
+                    transition={{ duration: 20, repeat: Infinity, ease: "linear" }}
+                    className="absolute top-1/4 left-1/4 w-[600px] h-[600px] bg-primary/20 rounded-full blur-[100px] mix-blend-screen"
+                />
+                <motion.div
+                    animate={{ rotate: -360, scale: [1, 1.2, 1] }}
+                    transition={{ duration: 25, repeat: Infinity, ease: "linear" }}
+                    className="absolute bottom-1/4 right-1/4 w-[500px] h-[500px] bg-emerald-500/10 rounded-full blur-[120px] mix-blend-screen"
+                />
             </div>
             <div className="relative z-10 max-w-4xl mx-auto px-4 text-center">
                 <motion.h1
-                    initial={{ opacity: 0, y: 20 }}
+                    initial={{ opacity: 0, y: 30 }}
                     animate={{ opacity: 1, y: 0 }}
-                    transition={{ duration: 0.8 }}
-                    className="font-serif text-5xl md:text-7xl leading-tight text-text-light dark:text-white mb-6"
+                    transition={{ duration: 0.8, ease: "easeOut" }}
+                    className="font-serif text-5xl md:text-7xl lg:text-[5rem] tracking-tight leading-[1.1] text-text-light dark:text-white mb-6 drop-shadow-sm"
                 >
                     Code hallucinates. <br />
-                    <span className="italic text-primary">Capital shouldn&apos;t.</span>
+                    <span className="italic bg-clip-text text-transparent bg-gradient-to-r from-primary to-emerald-400">Capital shouldn&apos;t.</span>
                 </motion.h1>
                 <motion.p
                     initial={{ opacity: 0, y: 20 }}
@@ -31,16 +40,19 @@ export default function Hero() {
                 </motion.p>
                 <div className="flex flex-col sm:flex-row justify-center items-center gap-4 mb-12">
                     <Link
-                        className="group bg-primary hover:bg-primary-hover text-white px-8 py-3.5 rounded-lg text-sm font-medium transition-all shadow-glow flex items-center gap-2"
+                        className="relative overflow-hidden group bg-gradient-to-br from-primary to-emerald-700 hover:from-primary-hover hover:to-emerald-800 text-white px-8 py-3.5 rounded-xl text-sm font-semibold transition-all shadow-[0_0_30px_rgba(16,185,129,0.3)] hover:shadow-[0_0_40px_rgba(16,185,129,0.5)] flex items-center gap-2 transform hover:-translate-y-0.5"
                         href="/signup"
                     >
-                        Get Started for Free
-                        <span className="material-symbols-outlined text-sm group-hover:translate-x-1 transition-transform">
-                            arrow_forward
+                        <span className="absolute inset-0 w-full h-full bg-white/20 group-hover:bg-transparent translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-700 ease-in-out"></span>
+                        <span className="relative z-10 flex items-center gap-2">
+                            Get Started for Free
+                            <span className="material-symbols-outlined text-sm group-hover:translate-x-1 transition-transform">
+                                arrow_forward
+                            </span>
                         </span>
                     </Link>
                     <a
-                        className="bg-white dark:bg-surface-dark border border-gray-200 dark:border-gray-700 hover:border-primary/30 text-text-light dark:text-white px-8 py-3.5 rounded-lg text-sm font-medium transition-colors flex items-center gap-2 shadow-sm"
+                        className="bg-white/50 dark:bg-white/5 backdrop-blur-md border border-gray-200 dark:border-white/10 hover:border-primary/50 text-text-light dark:text-white px-8 py-3.5 rounded-xl text-sm font-medium transition-all flex items-center gap-2 transform hover:-translate-y-0.5"
                         href="/docs"
                     >
                         <span className="material-symbols-outlined text-gray-400 text-lg">

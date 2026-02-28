@@ -19,44 +19,62 @@ export default function Features() {
                 </motion.h2>
                 <div className="w-24 h-1 bg-primary/20 mx-auto mt-8 rounded-full"></div>
             </div>
-            <div className="max-w-7xl mx-auto px-4 grid md:grid-cols-3 gap-8">
-                <div className="bg-background-light dark:bg-background-dark p-8 rounded-2xl border border-gray-100 dark:border-gray-800 hover:shadow-soft transition-shadow">
-                    <div className="w-12 h-12 bg-primary/5 rounded-xl flex items-center justify-center mb-6 text-primary">
-                        <span className="material-symbols-outlined">shield</span>
+            <div className="max-w-7xl mx-auto px-4 grid md:grid-cols-3 gap-8 relative z-10">
+                <motion.div
+                    whileHover={{ y: -5 }}
+                    className="relative group p-8 rounded-2xl border border-gray-200 dark:border-white/10 bg-white/50 dark:bg-white/5 backdrop-blur-xl hover:border-primary/50 transition-all duration-300 shadow-sm hover:shadow-[0_0_30px_rgba(16,185,129,0.15)] overflow-hidden"
+                >
+                    <div className="absolute inset-0 bg-gradient-to-br from-primary/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none"></div>
+                    <div className="relative z-10">
+                        <div className="w-12 h-12 bg-primary/10 dark:bg-primary/20 rounded-xl flex items-center justify-center mb-6 text-primary border border-primary/20">
+                            <span className="material-symbols-outlined">shield</span>
+                        </div>
+                        <h3 className="text-xl font-bold text-text-light dark:text-white mb-3">
+                            Intercept
+                        </h3>
+                        <p className="text-muted-light dark:text-muted-dark text-sm leading-relaxed">
+                            Sit between your LLM and external APIs. We monitor intent in
+                            real-time, blocking unauthorized financial actions before the request
+                            ever leaves your network.
+                        </p>
                     </div>
-                    <h3 className="text-xl font-bold text-text-light dark:text-white mb-3">
-                        Intercept
-                    </h3>
-                    <p className="text-muted-light dark:text-muted-dark text-sm leading-relaxed">
-                        Sit between your LLM and external APIs. We monitor intent in
-                        real-time, blocking unauthorized financial actions before the request
-                        ever leaves your network.
-                    </p>
-                </div>
-                <div className="bg-background-light dark:bg-background-dark p-8 rounded-2xl border border-gray-100 dark:border-gray-800 hover:shadow-soft transition-shadow">
-                    <div className="w-12 h-12 bg-primary/5 rounded-xl flex items-center justify-center mb-6 text-primary">
-                        <span className="material-symbols-outlined">
-                            account_balance_wallet
-                        </span>
+                </motion.div>
+                <motion.div
+                    whileHover={{ y: -5 }}
+                    className="relative group p-8 rounded-2xl border border-gray-200 dark:border-white/10 bg-white/50 dark:bg-white/5 backdrop-blur-xl hover:border-primary/50 transition-all duration-300 shadow-sm hover:shadow-[0_0_30px_rgba(16,185,129,0.15)] overflow-hidden"
+                >
+                    <div className="absolute inset-0 bg-gradient-to-br from-primary/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none"></div>
+                    <div className="relative z-10">
+                        <div className="w-12 h-12 bg-primary/10 dark:bg-primary/20 rounded-xl flex items-center justify-center mb-6 text-primary border border-primary/20">
+                            <span className="material-symbols-outlined">
+                                account_balance_wallet
+                            </span>
+                        </div>
+                        <h3 className="text-xl font-bold mb-3 text-text-light dark:text-white">Supervisor Approval</h3>
+                        <p className="text-muted-light dark:text-muted-dark text-sm leading-relaxed">
+                            Don&apos;t fully trust an agent yet? Require a human-in-the-loop cryptographically signed approval for transactions over a certain threshold.
+                        </p>
                     </div>
-                    <h3 className="text-xl font-bold mb-3 text-text-light dark:text-white">Supervisor Approval</h3>
-                    <p className="text-muted-light dark:text-muted-dark leading-relaxed">
-                        Don&apos;t fully trust an agent yet? Require a human-in-the-loop cryptographically signed approval for transactions over a certain threshold.
-                    </p>
-                </div>
-                <div className="bg-background-light dark:bg-background-dark p-8 rounded-2xl border border-gray-100 dark:border-gray-800 hover:shadow-soft transition-shadow">
-                    <div className="w-12 h-12 bg-primary/5 rounded-xl flex items-center justify-center mb-6 text-primary">
-                        <span className="material-symbols-outlined">block</span>
+                </motion.div>
+                <motion.div
+                    whileHover={{ y: -5 }}
+                    className="relative group p-8 rounded-2xl border border-gray-200 dark:border-white/10 bg-white/50 dark:bg-white/5 backdrop-blur-xl hover:border-primary/50 transition-all duration-300 shadow-sm hover:shadow-[0_0_30px_rgba(16,185,129,0.15)] overflow-hidden"
+                >
+                    <div className="absolute inset-0 bg-gradient-to-br from-primary/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none"></div>
+                    <div className="relative z-10">
+                        <div className="w-12 h-12 bg-primary/10 dark:bg-primary/20 rounded-xl flex items-center justify-center mb-6 text-primary border border-primary/20">
+                            <span className="material-symbols-outlined">block</span>
+                        </div>
+                        <h3 className="text-xl font-bold text-text-light dark:text-white mb-3">
+                            Zero Dependency
+                        </h3>
+                        <p className="text-muted-light dark:text-muted-dark text-sm leading-relaxed">
+                            Built in Rust for &lt; 2ms latency overhead. Deploy as a sidecar or
+                            a standalone proxy. No external API calls required for policy
+                            evaluation.
+                        </p>
                     </div>
-                    <h3 className="text-xl font-bold text-text-light dark:text-white mb-3">
-                        Zero Dependency
-                    </h3>
-                    <p className="text-muted-light dark:text-muted-dark text-sm leading-relaxed">
-                        Built in Rust for &lt; 2ms latency overhead. Deploy as a sidecar or
-                        a standalone proxy. No external API calls required for policy
-                        evaluation.
-                    </p>
-                </div>
+                </motion.div>
             </div>
         </section>
     );
