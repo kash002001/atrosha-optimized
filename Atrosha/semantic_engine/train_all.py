@@ -18,6 +18,8 @@ from data.dataset import PayloadDataset
 
 def run():
     t_start = time.time()
+    # Use absolute paths to avoid confusion in cloud environments
+    ROOT = os.path.abspath(os.path.dirname(__file__))
     data_dir = os.path.join(ROOT, "data")
     benign_path = os.path.join(data_dir, "benign_corpus.jsonl")
     attacks_path = os.path.join(data_dir, "attack_corpus.jsonl")
@@ -26,13 +28,20 @@ def run():
     print("=" * 60)
     print("STEP 1/5: Generating training data")
     print("=" * 60)
-    # from data.generate_benign import generate_benign_dataset
-    # from data.generate_attacks import generate_attack_dataset
-    if not os.path.exists(benign_path) or not os.path.exists(attacks_path):
+    
+    # Check if files exist and are non-empty
+    has_data = os.path.exists(benign_path) and os.path.exists(attacks_path)
+    if has_data:
+        has_data = os.path.getsize(benign_path) > 1000 and os.path.getsize(attacks_path) > 1000
+
+    if not has_data:
+        print(f"[*] Generating new 200k-sample dataset at {data_dir}...")
         from data.generate_benign import generate_benign_dataset
         from data.generate_attacks import generate_attack_dataset
         generate_benign_dataset(n=100000, out_path=benign_path)
         generate_attack_dataset(n=100000, out_path=attacks_path)
+    else:
+        print(f"[+] Found existing dataset ({os.path.getsize(benign_path)//1024} KB)")
 
     # --- step 2: train tokenizer ---
     print("\n" + "=" * 60)
