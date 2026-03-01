@@ -26,10 +26,11 @@ def run():
     print("=" * 60)
     print("STEP 1/5: Generating training data")
     print("=" * 60)
-    from data.generate_benign import generate_benign_dataset
-    from data.generate_attacks import generate_attack_dataset
-    generate_benign_dataset(n=50000, out_path=benign_path)
-    generate_attack_dataset(n=50000, out_path=attacks_path)
+    # Using pre-generated 100k datasets
+    # from data.generate_benign import generate_benign_dataset
+    # from data.generate_attacks import generate_attack_dataset
+    # generate_benign_dataset(n=100000, out_path=benign_path)
+    # generate_attack_dataset(n=100000, out_path=attacks_path)
 
     # --- step 2: train tokenizer ---
     print("\n" + "=" * 60)
@@ -46,51 +47,69 @@ def run():
     print("=" * 60)
 
     cfg = ModelConfig()
-    # lean config for fast CPU training
-    cfg.hidden_dim = 256
-    cfg.num_layers = 4
-    cfg.num_heads = 4
-    cfg.ff_dim = 1024
+    # V3 Production config
+    cfg.hidden_dim = 512
+    cfg.num_layers = 6
+    cfg.num_heads = 8
+    cfg.ff_dim = 2048
     cfg.max_seq_len = 512
 
-    model = AtroshaSemanticModel(cfg)
-    print(f"  params: {model.param_count():,}")
+    device = "cuda" if torch.cuda.is_available() else "cpu"
+    model = AtroshaSemanticModel(cfg).to(device)
+    print(f"  params: {model.param_count():,} | device: {device}")
 
-    ds = PayloadDataset([benign_path, attacks_path], max_len=256)
+    ds = PayloadDataset([benign_path, attacks_path], max_len=512)
     n = len(ds)
     train_n = int(n * 0.9)
     val_n = n - train_n
     train_ds, val_ds = torch.utils.data.random_split(ds, [train_n, val_n])
 
-    train_loader = DataLoader(train_ds, batch_size=32, shuffle=True, drop_last=True)
-    val_loader = DataLoader(val_ds, batch_size=32, shuffle=False)
-    print(f"  train={train_n}, val={val_n}, batches/epoch={len(train_loader)}")
+    batch_size = 64 if device == "cuda" else 32
+    train_loader = DataLoader(train_ds, batch_size=batch_size, shuffle=True, drop_last=True)
+    val_loader = DataLoader(val_ds, batch_size=batch_size, shuffle=False)
+    print(f"  train={train_n}, val={val_n}, batches/epoch={len(train_loader)} (bs={batch_size})")
 
     optimizer = torch.optim.AdamW(model.parameters(), lr=3e-4, weight_decay=0.01)
     loss_fn = nn.CrossEntropyLoss()
+    scaler = torch.cuda.amp.GradScaler(enabled=(device == "cuda"))
     ckpt_dir = os.path.join(ROOT, "training", "checkpoints")
     os.makedirs(ckpt_dir, exist_ok=True)
 
     best_acc = 0.0
-    epochs = 5
+    start_epoch = 0
+    epochs = 15
 
-    for epoch in range(epochs):
+    # resume if checkpoint exists
+    ckpt_path = os.path.join(ckpt_dir, "best_model.pt")
+    if os.path.exists(ckpt_path):
+        print(f"  loading checkpoint: {ckpt_path}")
+        ckpt = torch.load(ckpt_path, map_location=device)
+        model.load_state_dict(ckpt["model_state"])
+        optimizer.load_state_dict(ckpt.get("optimizer_state", optimizer.state_dict()))
+        start_epoch = ckpt.get("epoch", 0)
+        best_acc = ckpt.get("val_acc", 0.0)
+        print(f"    -> resuming from epoch {start_epoch} (best_acc={best_acc:.3f})")
+
+    for epoch in range(start_epoch, epochs):
         model.train()
         total_loss, correct, total = 0, 0, 0
         t0 = time.time()
 
         for batch in train_loader:
-            ids = batch["input_ids"]
-            mask = batch["attention_mask"]
-            labels = batch["label"]
-
-            logits = model(ids, mask)
-            loss = loss_fn(logits, labels)
+            ids = batch["input_ids"].to(device)
+            mask = batch["attention_mask"].to(device)
+            labels = batch["label"].to(device)
 
             optimizer.zero_grad()
-            loss.backward()
+            with torch.cuda.amp.autocast(enabled=(device == "cuda")):
+                logits = model(ids, mask)
+                loss = loss_fn(logits, labels)
+
+            scaler.scale(loss).backward()
+            scaler.unscale_(optimizer)
             torch.nn.utils.clip_grad_norm_(model.parameters(), 1.0)
-            optimizer.step()
+            scaler.step(optimizer)
+            scaler.update()
 
             total_loss += loss.item() * labels.size(0)
             preds = logits.argmax(dim=-1)
@@ -105,11 +124,12 @@ def run():
         vc, vt, vl = 0, 0, 0
         with torch.no_grad():
             for batch in val_loader:
-                ids = batch["input_ids"]
-                mask = batch["attention_mask"]
-                labels = batch["label"]
-                logits = model(ids, mask)
-                loss = loss_fn(logits, labels)
+                ids = batch["input_ids"].to(device)
+                mask = batch["attention_mask"].to(device)
+                labels = batch["label"].to(device)
+                with torch.cuda.amp.autocast(enabled=(device == "cuda")):
+                    logits = model(ids, mask)
+                    loss = loss_fn(logits, labels)
                 vl += loss.item() * labels.size(0)
                 preds = logits.argmax(dim=-1)
                 vc += (preds == labels).sum().item()
@@ -131,9 +151,10 @@ def run():
             torch.save({
                 "epoch": epoch + 1,
                 "model_state": model.state_dict(),
+                "optimizer_state": optimizer.state_dict(),
                 "val_acc": val_acc,
                 "config": cfg,
-            }, os.path.join(ckpt_dir, "best_model.pt"))
+            }, ckpt_path)
             print(f"    -> new best (val_acc={val_acc:.3f})")
 
     print(f"\n  best val_acc: {best_acc:.3f}")
@@ -145,8 +166,8 @@ def run():
     model.eval()
     onnx_path = os.path.join(ROOT, "export", "atrosha_engine.onnx")
     os.makedirs(os.path.dirname(onnx_path), exist_ok=True)
-    dummy_ids = torch.randint(0, cfg.vocab_size, (1, 256))
-    dummy_mask = torch.ones(1, 256, dtype=torch.long)
+    dummy_ids = torch.randint(0, cfg.vocab_size, (1, 512)).to(device)
+    dummy_mask = torch.ones(1, 512, dtype=torch.long).to(device)
 
     torch.onnx.export(
         model, (dummy_ids, dummy_mask), onnx_path,
@@ -207,8 +228,8 @@ def run():
     for t in tests:
         text = json.dumps(t["payload"], separators=(",", ":"))
         enc = tok.encode(text)
-        ids = enc.ids[:256]
-        pad = 256 - len(ids)
+        ids = enc.ids[:512]
+        pad = 512 - len(ids)
         inp = np.array([ids + [0]*pad], dtype=np.int64)
         mask = np.array([[1]*len(ids) + [0]*pad], dtype=np.int64)
 
