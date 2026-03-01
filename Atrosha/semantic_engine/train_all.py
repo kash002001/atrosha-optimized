@@ -18,6 +18,12 @@ from data.dataset import PayloadDataset
 
 def run():
     t_start = time.time()
+    # Diagnostic logging for cloud environments
+    print(f"[*] Starting Semantic Engine V3 Training Suite")
+    print(f"[*] Python version: {sys.version.split()[0]}")
+    print(f"[*] Current directory: {os.getcwd()}")
+    print(f"[*] Script file: {os.path.abspath(__file__)}")
+
     # Use absolute paths to avoid confusion in cloud environments
     ROOT = os.path.abspath(os.path.dirname(__file__))
     data_dir = os.path.join(ROOT, "data")
