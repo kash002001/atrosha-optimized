@@ -26,11 +26,13 @@ def run():
     print("=" * 60)
     print("STEP 1/5: Generating training data")
     print("=" * 60)
-    # Using pre-generated 100k datasets
     # from data.generate_benign import generate_benign_dataset
     # from data.generate_attacks import generate_attack_dataset
-    # generate_benign_dataset(n=100000, out_path=benign_path)
-    # generate_attack_dataset(n=100000, out_path=attacks_path)
+    if not os.path.exists(benign_path) or not os.path.exists(attacks_path):
+        from data.generate_benign import generate_benign_dataset
+        from data.generate_attacks import generate_attack_dataset
+        generate_benign_dataset(n=100000, out_path=benign_path)
+        generate_attack_dataset(n=100000, out_path=attacks_path)
 
     # --- step 2: train tokenizer ---
     print("\n" + "=" * 60)
