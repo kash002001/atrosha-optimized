@@ -3,6 +3,7 @@ import sys
 import json
 import time
 import numpy as np
+import urllib.request
 from fastapi import FastAPI, HTTPException
 from pydantic import BaseModel
 from contextlib import asynccontextmanager
@@ -13,6 +14,16 @@ from config import LABELS
 # globals loaded at startup
 _session = None
 _tokenizer = None
+
+def download_if_missing(file_path: str, url: str):
+    if not os.path.exists(file_path):
+        os.makedirs(os.path.dirname(file_path), exist_ok=True)
+        print(f"[*] Downloading {os.path.basename(file_path)} from {url}...")
+        try:
+            urllib.request.urlretrieve(url, file_path)
+            print(f"[+] Download complete: {file_path}")
+        except Exception as e:
+            print(f"[!] Failed to download {file_path}: {e}")
 
 
 @asynccontextmanager
@@ -30,17 +41,30 @@ async def lifespan(app: FastAPI):
         os.path.join(os.path.dirname(__file__), "..", "tokenizer", "tokenizer.json"),
     )
 
+    model_url = os.environ.get("ATROSHA_MODEL_URL", "https://huggingface.co/atrosha/engine/resolve/main/atrosha_engine.onnx")
+    tok_url = os.environ.get("ATROSHA_TOKENIZER_URL", "https://huggingface.co/atrosha/engine/resolve/main/tokenizer.json")
+
+    download_if_missing(model_path, model_url)
+    download_if_missing(tok_path, tok_url)
+
     print(f"[*] loading model: {model_path}")
-    _session = ort.InferenceSession(model_path, providers=["CPUExecutionProvider"])
+    if os.path.exists(model_path):
+        _session = ort.InferenceSession(model_path, providers=["CPUExecutionProvider"])
+    else:
+        print("[!] Warning: Model file not found. Engine will run in fail-open mode.")
+        
     print(f"[*] loading tokenizer: {tok_path}")
-    _tokenizer = load_tokenizer(tok_path)
+    if os.path.exists(tok_path):
+        _tokenizer = load_tokenizer(tok_path)
+    else:
+        print("[!] Warning: Tokenizer file not found.")
+
     print("[+] semantic engine ready")
 
     yield
 
     _session = None
     _tokenizer = None
-
 
 app = FastAPI(title="Atrosha Semantic Engine", lifespan=lifespan)
 
@@ -65,8 +89,47 @@ async def classify(req: PayloadRequest):
 
     t0 = time.perf_counter()
 
-    # serialize the payload the same way we did during training
-    payload_text = json.dumps(req.model_dump(), separators=(",", ":"))
+    # only keep headers the model was trained on — proxy noise eats the 256-token window
+    _keep = {"authorization", "content-type", "x-atrosha-agent-id", "x-atrosha-signature"}
+    clean_headers = {k: v for k, v in (req.headers or {}).items() if k.lower() in _keep}
+
+    clean_payload = {
+        "method": req.method,
+        "target_url": req.target_url,
+        "headers": clean_headers,
+        "body": req.body,
+    }
+    payload_text = json.dumps(clean_payload, separators=(",", ":"))
+    
+    # Layer 1: Deterministic Heuristic Pre-filter
+    import re
+    raw_body_str = json.dumps(req.body).lower()
+    bad_patterns = [
+        r"ignore all previous",
+        r"system override",
+        r"bypass.*policy",
+        r"drop table",
+        r"\/etc\/passwd",
+        r"\/etc\/shadow",
+        r"admin mode",
+        r"disregard policy",
+        r"revealf.*prompt",
+        r"acting as.*terminal",
+        r"instruction.*override",
+        r"mostra il prompt", # Italian
+        r"ignora tutte",      # Italian
+        r"dime cómo hackear",  # Spanish
+        r"leetspeak",
+        r"decipher",
+        r"hex payload",
+    ]
+    for pat in bad_patterns:
+        if re.search(pat, raw_body_str):
+            latency = (time.perf_counter() - t0) * 1000
+            print(f"[HEURISTIC BLOCK] matched pattern: {pat}")
+            return Verdict(verdict="DENY", confidence=1.0, latency_ms=round(latency, 2))
+
+    # Layer 2: ONNX Semantic Deep Inspection
     encoded = _tokenizer.encode(payload_text)
     ids = encoded.ids[:512]
 
