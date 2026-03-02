@@ -2,16 +2,17 @@ import os
 import sys
 import json
 import time
+import re
 import numpy as np
 import urllib.request
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI, HTTPException, Request
 from pydantic import BaseModel
 from contextlib import asynccontextmanager
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 from config import LABELS
+from server.audit_sink import push_verdict
 
-# globals loaded at startup
 _session = None
 _tokenizer = None
 
@@ -80,16 +81,44 @@ class Verdict(BaseModel):
     verdict: str         # ALLOW, DENY, QUARANTINE
     confidence: float
     latency_ms: float
+    source: str = ""     # "heuristic" or "semantic_v3"
+    reason: str = ""     # matched pattern or model label
+
+
+# deterministic blocklist — checked before the transformer
+_BAD_PATTERNS = [
+    r"ignore all previous",
+    r"system override",
+    r"bypass.*policy",
+    r"drop table",
+    r"\/etc\/passwd",
+    r"\/etc\/shadow",
+    r"admin mode",
+    r"disregard policy",
+    r"revealf.*prompt",
+    r"acting as.*terminal",
+    r"instruction.*override",
+    r"mostra il prompt",
+    r"ignora tutte",
+    r"dime cómo hackear",
+    r"leetspeak",
+    r"decipher",
+    r"hex payload",
+]
 
 
 @app.post("/classify", response_model=Verdict)
-async def classify(req: PayloadRequest):
+async def classify(req: PayloadRequest, raw: Request):
     if _session is None or _tokenizer is None:
         raise HTTPException(503, "model not loaded")
 
     t0 = time.perf_counter()
 
-    # only keep headers the model was trained on — proxy noise eats the 256-token window
+    # pull agent / org context from upstream proxy headers
+    agent_id = raw.headers.get("x-atrosha-agent-id", req.headers.get("x-atrosha-agent-id", ""))
+    org_id = raw.headers.get("x-atrosha-org-id", req.headers.get("x-atrosha-org-id", ""))
+
+    # only keep headers the model was trained on
     _keep = {"authorization", "content-type", "x-atrosha-agent-id", "x-atrosha-signature"}
     clean_headers = {k: v for k, v in (req.headers or {}).items() if k.lower() in _keep}
 
@@ -101,35 +130,32 @@ async def classify(req: PayloadRequest):
     }
     payload_text = json.dumps(clean_payload, separators=(",", ":"))
     
-    # Layer 1: Deterministic Heuristic Pre-filter
-    import re
+    # --- Layer 1: Deterministic Heuristic Pre-filter ---
     raw_body_str = json.dumps(req.body).lower()
-    bad_patterns = [
-        r"ignore all previous",
-        r"system override",
-        r"bypass.*policy",
-        r"drop table",
-        r"\/etc\/passwd",
-        r"\/etc\/shadow",
-        r"admin mode",
-        r"disregard policy",
-        r"revealf.*prompt",
-        r"acting as.*terminal",
-        r"instruction.*override",
-        r"mostra il prompt", # Italian
-        r"ignora tutte",      # Italian
-        r"dime cómo hackear",  # Spanish
-        r"leetspeak",
-        r"decipher",
-        r"hex payload",
-    ]
-    for pat in bad_patterns:
+    for pat in _BAD_PATTERNS:
         if re.search(pat, raw_body_str):
             latency = (time.perf_counter() - t0) * 1000
             print(f"[HEURISTIC BLOCK] matched pattern: {pat}")
-            return Verdict(verdict="DENY", confidence=1.0, latency_ms=round(latency, 2))
 
-    # Layer 2: ONNX Semantic Deep Inspection
+            push_verdict(
+                agent_id=agent_id,
+                target_url=req.target_url,
+                verdict="DENY",
+                confidence=1.0,
+                latency_ms=latency,
+                source="heuristic",
+                matched_pattern=pat,
+                payload_preview=raw_body_str[:500],
+                organization_id=org_id or None,
+            )
+
+            return Verdict(
+                verdict="DENY", confidence=1.0,
+                latency_ms=round(latency, 2),
+                source="heuristic", reason=pat,
+            )
+
+    # --- Layer 2: ONNX Semantic Deep Inspection ---
     encoded = _tokenizer.encode(payload_text)
     ids = encoded.ids[:512]
 
@@ -142,7 +168,6 @@ async def classify(req: PayloadRequest):
         "attention_mask": attn_mask,
     })[0]
 
-    # softmax
     exp = np.exp(logits - np.max(logits))
     probs = exp / exp.sum(axis=-1, keepdims=True)
 
@@ -152,7 +177,24 @@ async def classify(req: PayloadRequest):
 
     latency = (time.perf_counter() - t0) * 1000
 
-    return Verdict(verdict=verdict, confidence=round(confidence, 4), latency_ms=round(latency, 2))
+    push_verdict(
+        agent_id=agent_id,
+        target_url=req.target_url,
+        verdict=verdict,
+        confidence=confidence,
+        latency_ms=latency,
+        source="semantic_v3",
+        payload_preview=raw_body_str[:500],
+        organization_id=org_id or None,
+    )
+
+    return Verdict(
+        verdict=verdict,
+        confidence=round(confidence, 4),
+        latency_ms=round(latency, 2),
+        source="semantic_v3",
+        reason=verdict.lower(),
+    )
 
 
 @app.get("/health")
@@ -160,6 +202,7 @@ def health():
     return {
         "status": "alive",
         "model_loaded": _session is not None,
+        "audit_sink": os.environ.get("SUPABASE_URL") is not None,
     }
 
 

@@ -36,6 +36,10 @@ services:
         value: /app/export/atrosha_engine.onnx
       - key: ATROSHA_TOKENIZER_PATH
         value: /app/tokenizer/tokenizer.json
+      - key: SUPABASE_URL
+        sync: false  # set manually in Render dashboard
+      - key: SUPABASE_SERVICE_KEY
+        sync: false  # set manually in Render dashboard
 
 # 3. Managed Redis for Rate Limiting
 databases:
