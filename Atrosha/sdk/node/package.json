@@ -1,0 +1,36 @@
+{
+    "name": "@atrosha/client",
+    "version": "1.0.0",
+    "description": "Official Node.js/TypeScript SDK for the Atrosha AI Agent Safety Proxy",
+    "main": "./dist/index.cjs",
+    "module": "./dist/index.js",
+    "types": "./dist/index.d.ts",
+    "exports": {
+        ".": {
+            "import": "./dist/index.js",
+            "require": "./dist/index.cjs",
+            "types": "./dist/index.d.ts"
+        }
+    },
+    "files": [
+        "dist",
+        "README.md"
+    ],
+    "scripts": {
+        "build": "tsup src/index.ts --format esm,cjs --dts",
+        "dev": "tsup src/index.ts --format esm,cjs --dts --watch",
+        "test": "node --experimental-vm-modules node_modules/.bin/jest"
+    },
+    "keywords": [
+        "atrosha",
+        "ai-safety",
+        "agent-proxy",
+        "llm-security"
+    ],
+    "license": "MIT",
+    "devDependencies": {
+        "tsup": "^8.0.0",
+        "typescript": "^5.0.0",
+        "@types/node": "^20.0.0"
+    }
+}

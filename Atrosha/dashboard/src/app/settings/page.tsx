@@ -3,6 +3,7 @@ import { createClient as createServerSupabase } from "@/lib/supabase-server";
 import { redirect } from "next/navigation";
 import { Mail, Hash, ShieldCheck, Building, CreditCard } from "lucide-react";
 import BillingButton from "./BillingButton";
+import AlertConfig from "./AlertConfig";
 
 export default async function SettingsPage() {
     const supabase = await createServerSupabase();
@@ -20,6 +21,18 @@ export default async function SettingsPage() {
     const orgName = userMetadata.org_name || "Atrosha Corp";
     const role = userMetadata.role || "Administrator";
     const initials = (user.email?.[0] || "U").toUpperCase();
+    const orgId = userMetadata.organization_id;
+
+    // fetch alert config for this org
+    let alertConfig = null;
+    if (orgId) {
+        const { data } = await supabase
+            .from("alert_configs")
+            .select("*")
+            .eq("organization_id", orgId)
+            .single();
+        alertConfig = data;
+    }
 
     return (
         <div style={{ maxWidth: 800, margin: "0 auto", paddingBottom: 40 }}>
@@ -109,7 +122,6 @@ export default async function SettingsPage() {
                     </div>
                 </div>
 
-
                 {/* Billing Section */}
                 <div className="chart-card" style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
                     <div style={{ display: "flex", gap: 16, alignItems: "center" }}>
@@ -128,6 +140,9 @@ export default async function SettingsPage() {
                     </div>
                     <BillingButton />
                 </div>
+
+                {/* Alert Configuration */}
+                <AlertConfig initialConfig={alertConfig} />
 
             </div>
         </div>
