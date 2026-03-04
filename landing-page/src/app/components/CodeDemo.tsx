@@ -36,7 +36,7 @@ export default function CodeDemo() {
                         <div>
                             <span style={{ color: "var(--code-keyword)" }}>import</span> <span style={{ color: "var(--code-builtin)" }}>{"{ "}</span>AtroshaClient<span style={{ color: "var(--code-builtin)" }}>{" }"}</span> <span style={{ color: "var(--code-keyword)" }}>from</span> <span style={{ color: "var(--code-string)" }}>&apos;atrosha-node&apos;</span>;
                             <br /><br />
-                            <span style={{ color: "var(--code-comment)" }}>{"// 1. Initialize with your master key and the agent's private key"}</span>
+                            <span style={{ color: "var(--code-comment)" }}>{"// 1. Initialize with your master key and the agent&apos;s private key"}</span>
                             <br />
                             <span style={{ color: "var(--code-keyword)" }}>const</span> client = <span style={{ color: "var(--code-keyword)" }}>new</span> <span style={{ color: "var(--code-function)" }}>AtroshaClient</span>(<span style={{ color: "var(--code-string)" }}>&quot;sk_master_...&quot;</span>, <span style={{ color: "var(--code-string)" }}>&quot;agent_priv_...&quot;</span>);
                             <br /><br />
@@ -50,7 +50,7 @@ export default function CodeDemo() {
                             <br />
                             {"}"});
                             <br /><br />
-                            <span style={{ color: "var(--code-comment)" }}>{"// Atrosha automatically verifies the agent's spend limit,"}</span>
+                            <span style={{ color: "var(--code-comment)" }}>{"// Atrosha automatically verifies the agent&apos;s spend limit,"}</span>
                             <br />
                             <span style={{ color: "var(--code-comment)" }}>{"// runs behavioral analysis, and proxies the request to OpenAI."}</span>
                             <br />

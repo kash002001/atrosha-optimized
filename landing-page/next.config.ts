@@ -1,12 +1,11 @@
-import type { NextConfig } from "next";
 import { withSentryConfig } from "@sentry/nextjs";
 
-const nextConfig: NextConfig = {
+const nextConfig = {
   // output: "standalone", // Commented out for Vercel deployment
   /* config options here */
 };
 
-export default withSentryConfig(nextConfig, {
+export default withSentryConfig(nextConfig as unknown, {
   // For all available options, see:
   // https://github.com/getsentry/sentry-webpack-plugin#options
 

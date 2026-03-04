@@ -1,0 +1,18 @@
+
+> landing-page@0.1.0 lint
+> eslint
+
+
+C:\Python\Project Atrosha\landing-page\.vercel\output\functions\api\billing\checkout.func\___next_launcher.cjs
+  11:26  error  A `require()` style import is forbidden  @typescript-eslint/no-require-imports
+  46:18  error  A `require()` style import is forbidden  @typescript-eslint/no-require-imports
+
+C:\Python\Project Atrosha\landing-page\next.config.ts
+   1:15  warning  'NextConfig' is defined but never used    @typescript-eslint/no-unused-vars
+  12:47  error    Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+C:\Python\Project Atrosha\landing-page\src\app\contact\page.tsx
+  38:113  error  `'` can be escaped with `&apos;`, `&lsquo;`, `&#39;`, `&rsquo;`  react/no-unescaped-entities
+
+Γ£û 5 problems (4 errors, 1 warning)
+

@@ -18,8 +18,8 @@ export async function loginAction(email: string, password: string) {
     const cookieStore = await cookies();
 
     const supabase = createServerClient(
-        process.env.NEXT_PUBLIC_SUPABASE_URL!,
-        process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+        process.env.NEXT_PUBLIC_SUPABASE_URL || "https://placeholder.supabase.co",
+        process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || "placeholder",
         {
             cookies: {
                 getAll() {
@@ -58,8 +58,8 @@ export async function signupAction(email: string, password: string, orgName: str
     const cookieStore = await cookies();
 
     const supabase = createServerClient(
-        process.env.NEXT_PUBLIC_SUPABASE_URL!,
-        process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+        process.env.NEXT_PUBLIC_SUPABASE_URL || "https://placeholder.supabase.co",
+        process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || "placeholder",
         {
             cookies: {
                 getAll() {

@@ -10,12 +10,15 @@ export default function WaitlistModal({ open, onClose }: { open: boolean; onClos
 
     useEffect(() => {
         if (open) {
-            setTimeout(() => {
+            // Delay state updates slightly to avoid synchronous cascading renders
+            // when the modal is opened.
+            const timer = setTimeout(() => {
                 setStatus("idle");
                 setEmail("");
                 setMsg("");
                 inputRef.current?.focus();
             }, 10);
+            return () => clearTimeout(timer);
         }
     }, [open]);
 

@@ -1,0 +1,44 @@
+
+> landing-page@0.1.0 build
+> next build
+
+ΓÜá `eslint` configuration in next.config.ts is no longer supported. See more info here: https://nextjs.org/docs/app/api-reference/cli/next#next-lint-options
+ΓÜá Invalid next.config.ts options detected: 
+ΓÜá     Unrecognized key(s) in object: 'eslint'
+ΓÜá See more info here: https://nextjs.org/docs/messages/invalid-next-config
+ΓÜá Warning: Next.js inferred your workspace root, but it may not be correct.
+ We detected multiple lockfiles and selected the directory of C:\Python\Project Atrosha\package-lock.json as the root directory.
+ To silence this warning, set `turbopack.root` in your Next.js config, or consider removing one of the lockfiles if it's not needed.
+   See https://nextjs.org/docs/app/api-reference/config/next-config-js/turbopack#root-directory for more information.
+ Detected additional lockfiles: 
+   * C:\Python\Project Atrosha\landing-page\package-lock.json
+
+Γû▓ Next.js 16.1.6 (Turbopack)
+- Environments: .env.local
+- Experiments (use with caution):
+  ┬╖ clientTraceMetadata
+
+ΓÜá The "middleware" file convention is deprecated. Please use "proxy" instead. Learn more: https://nextjs.org/docs/messages/middleware-to-proxy
+  Creating an optimized production build ...
+Γ£ô Compiled successfully in 4.1s
+  Running next.config.js provided runAfterProductionCompile ...
+Γ£ô Completed runAfterProductionCompile in 681ms
+  Skipping validation of types
+  Collecting page data using 11 workers ...
+ΓÜá Using edge runtime on a page currently disables static generation for that page
+  Generating static pages using 11 workers (0/17) ...
+  Generating static pages using 11 workers (4/17) 
+  Generating static pages using 11 workers (8/17) 
+Error occurred prerendering page "/signup". Read more: https://nextjs.org/docs/messages/prerender-error
+Error: @supabase/ssr: Your project's URL and API key are required to create a Supabase client!
+
+Check your Supabase project's API settings to find these values
+
+https://supabase.com/dashboard/project/_/settings/api
+    at <unknown> (https://supabase.com/dashboard/project/_/settings/api)
+    at cs (C:\Python\Project Atrosha\landing-page\.next\server\chunks\ssr\ea9b6_04ed4f53._.js:38:51216)
+    at f (C:\Python\Project Atrosha\landing-page\.next\server\chunks\ssr\landing-page_a8ded9ee._.js:2:550) {
+  digest: '137956157'
+}
+Export encountered an error on /signup/page: /signup, exiting the build.
+Γ¿» Next.js build worker exited with code: 1 and signal: null
