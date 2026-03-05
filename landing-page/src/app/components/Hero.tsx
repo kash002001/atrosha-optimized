@@ -35,8 +35,8 @@ export default function Hero() {
                     className="text-lg md:text-xl text-muted-light dark:text-muted-dark max-w-2xl mx-auto mb-10 leading-relaxed"
                 >
                     AI agents are now making financial decisions. Atrosha provides the
-                    essential security layer, approving safe transactions and blocking risky
-                    ones in real-time to protect your capital.
+                    essential security layer, mathematically verifying transaction intent in
+                    real-time to protect your capital. No prompt injection. No LLM judges.
                 </motion.p>
                 <div className="flex flex-col sm:flex-row justify-center items-center gap-4 mb-12">
                     <Link

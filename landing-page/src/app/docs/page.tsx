@@ -38,8 +38,8 @@ export default function DocsPage() {
                             <h1 className="text-4xl font-bold text-white mb-6">Introduction</h1>
                             <p className="text-lg text-gray-400 leading-relaxed mb-4">
                                 Atrosha provides a zero-trust cryptographic proxy to secure your AI Agents&apos; financial capabilities.
-                                By routing your agent&apos;s API calls through our Rust Proxy, you cryptographically enforce spending limits,
-                                budgets, and policy rules in real-time.
+                                By routing your agent&apos;s API calls through our Rust Proxy, you cryptographically enforce the user&apos;s original Intent,
+                                mathematically blocking any hallucinations or prompt injections in real-time.
                             </p>
                         </section>
 
@@ -70,8 +70,8 @@ export default function DocsPage() {
                         <section id="transactions" className="mb-20">
                             <h2 className="text-2xl font-bold text-white mb-4">Transactions & Permits</h2>
                             <p className="text-gray-400 leading-relaxed mb-4">
-                                If a transaction breaks a static limit (like $5,000 per request), the proxy will block it. For complex natural language rules,
-                                your agent must first request an ephemeral <strong>Spend Permit</strong> from our Python Validator Engine, then attach that JWT to the proxied request.
+                                Atrosha analyzes the cosine similarity between the user&apos;s locked Intent and the agent&apos;s proposed transaction.
+                                If the transaction deviates semantically (like an agent secretly buying a TV instead of a laptop), the Rust Proxy instantly returns a 403 Forbidden. No more generic spend limits. No more vulnerable LLMs acting as judges.
                             </p>
                         </section>
 

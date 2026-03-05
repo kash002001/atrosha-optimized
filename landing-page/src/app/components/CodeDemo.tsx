@@ -40,25 +40,29 @@ export default function CodeDemo() {
                             <br />
                             <span style={{ color: "var(--code-keyword)" }}>const</span> client = <span style={{ color: "var(--code-keyword)" }}>new</span> <span style={{ color: "var(--code-function)" }}>AtroshaClient</span>(<span style={{ color: "var(--code-string)" }}>&quot;sk_master_...&quot;</span>, <span style={{ color: "var(--code-string)" }}>&quot;agent_priv_...&quot;</span>);
                             <br /><br />
-                            <span style={{ color: "var(--code-comment)" }}>{"// 2. Wrap your standard OpenAI call"}</span>
+                            <span style={{ color: "var(--code-comment)" }}>{"// 2. Cryptographically lock the user&apos;s original intent"}</span>
+                            <br />
+                            <span style={{ color: "var(--code-keyword)" }}>await</span> client.<span style={{ color: "var(--code-function)" }}>lockIntent</span>(<span style={{ color: "var(--code-string)" }}>&quot;Buy me a MacBook Pro for under $1600&quot;</span>);
+                            <br /><br />
+                            <span style={{ color: "var(--code-comment)" }}>{"// 3. Wrap your standard OpenAI call"}</span>
                             <br />
                             <span style={{ color: "var(--code-keyword)" }}>const</span> response = <span style={{ color: "var(--code-keyword)" }}>await</span> client.openai.chat.completions.<span style={{ color: "var(--code-function)" }}>create</span>({"{"}
                             <br />
                             &nbsp;&nbsp;model: <span style={{ color: "var(--code-string)" }}>&quot;gpt-4o&quot;</span>,
                             <br />
-                            &nbsp;&nbsp;messages: [{"{"} role: <span style={{ color: "var(--code-string)" }}>&quot;user&quot;</span>, content: <span style={{ color: "var(--code-string)" }}>&quot;Transfer $500 to account X&quot;</span> {"}"}],
+                            &nbsp;&nbsp;messages: [{"{"} role: <span style={{ color: "var(--code-string)" }}>&quot;user&quot;</span>, content: <span style={{ color: "var(--code-string)" }}>&quot;Purchase Apple MacBook Pro ($1499)&quot;</span> {"}"}],
                             <br />
                             {"}"});
                             <br /><br />
-                            <span style={{ color: "var(--code-comment)" }}>{"// Atrosha automatically verifies the agent&apos;s spend limit,"}</span>
+                            <span style={{ color: "var(--code-comment)" }}>{"// Atrosha mathematically verifies the agent&apos;s proposed spend"}</span>
                             <br />
-                            <span style={{ color: "var(--code-comment)" }}>{"// runs behavioral analysis, and proxies the request to OpenAI."}</span>
+                            <span style={{ color: "var(--code-comment)" }}>{"// against the locked intent and proxies the request to OpenAI."}</span>
                             <br />
-                            <span style={{ color: "var(--code-comment)" }}>{"// If it violates policy, it throws an AtroshaPolicyError."}</span>
+                            <span style={{ color: "var(--code-comment)" }}>{"// If it detects LLM drift, it throws an AtroshaPolicyError."}</span>
                         </div>
                         <div className="mt-6 bg-[#252526] p-4 rounded border border-gray-700/50">
                             <span className="text-gray-500">&gt; Proxy validating Ed25519 signature... [OK]</span><br />
-                            <span className="text-gray-500">&gt; Checking global spend limits... [OK]</span><br />
+                            <span className="text-gray-500">&gt; Verifying Semantic drift (Score: 0.85)... [OK]</span><br />
                             <span className="text-accent-green">&gt; Transaction Approved & Forwarded!</span>
                         </div>
                         <div className="mt-4 animate-pulse">

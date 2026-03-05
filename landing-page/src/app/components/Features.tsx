@@ -47,12 +47,12 @@ export default function Features() {
                     <div className="relative z-10">
                         <div className="w-12 h-12 bg-primary/10 dark:bg-primary/20 rounded-xl flex items-center justify-center mb-6 text-primary border border-primary/20">
                             <span className="material-symbols-outlined">
-                                account_balance_wallet
+                                key
                             </span>
                         </div>
-                        <h3 className="text-xl font-bold mb-3 text-text-light dark:text-white">Supervisor Approval</h3>
+                        <h3 className="text-xl font-bold mb-3 text-text-light dark:text-white">Cryptographic Intent</h3>
                         <p className="text-muted-light dark:text-muted-dark text-sm leading-relaxed">
-                            Don&apos;t fully trust an agent yet? Require a human-in-the-loop cryptographically signed approval for transactions over a certain threshold.
+                            Stop prompt injection. The user mathematically signs their original prompt with an Ed25519 key on their device. Our engine guarantees the agent never deviates from this locked intent.
                         </p>
                     </div>
                 </motion.div>
@@ -69,9 +69,7 @@ export default function Features() {
                             Zero Dependency
                         </h3>
                         <p className="text-muted-light dark:text-muted-dark text-sm leading-relaxed">
-                            Built in Rust for &lt; 2ms latency overhead. Deploy as a sidecar or
-                            a standalone proxy. No external API calls required for policy
-                            evaluation.
+                            Built in Rust for &lt; 2ms latency overhead. Uses deterministic Math and Sentence-Transformers for verification. Absolutely no Generative LLM vulnerabilities are exposed in the critical path.
                         </p>
                     </div>
                 </motion.div>
