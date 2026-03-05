@@ -13,7 +13,7 @@ export default function PrivacyPage() {
                     <h2>1. Introduction</h2>
                     <p>Atrosha respects your privacy. This policy explains how we handle your data.</p>
                     <h2>2. Data Collection</h2>
-                    <p>We collect your email address when you sign up. We process transaction data sent to our Proxy for analysis and security enforcement.</p>
+                    <p>We collect your email address when you sign up. We process transaction data sent to our Kernel for analysis and security enforcement.</p>
                     <h2>3. Data Usage</h2>
                     <p>We use data to provide the Atrosha service, improve our fraud detection algorithms, and communicate with you.</p>
                     <h2>4. Contact</h2>

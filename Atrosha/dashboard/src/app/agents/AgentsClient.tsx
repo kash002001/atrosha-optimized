@@ -107,7 +107,7 @@ export default function AgentsClient({ agents }: AgentsClientProps) {
                     <h5 style={{ fontSize: 13, fontWeight: 600, marginBottom: 12, color: "var(--text)", textTransform: "uppercase", letterSpacing: "0.5px" }}>Universal Integration Guide</h5>
                     <p style={{ fontSize: 13, color: "var(--text-dim)", marginBottom: 16, lineHeight: 1.5 }}>
                         Atrosha dynamically protects <strong>any AI agent in the world</strong> (OpenAI, Anthropic, custom LLMs, financial bots, Open Claw) out of the box.
-                        Simply route your agent&apos;s outbound internet requests through the secure proxy.
+                        Simply route your agent&apos;s outbound internet requests through the secure kernel.
                     </p>
 
                     <div style={{
@@ -119,8 +119,8 @@ export default function AgentsClient({ agents }: AgentsClientProps) {
 export ATROSHA_AGENT_KEY="${newAgentKey.priv.substring(0, 16).replace(/[^a-zA-Z0-9]/g, 'a')}..."
 
 # 2. Force external internet traffic through the guardian
-export HTTPS_PROXY="https://proxy.atrosha.bond"
-export HTTP_PROXY="http://proxy.atrosha.bond"
+export HTTPS_PROXY="https://kernel.atrosha.bond"
+export HTTP_PROXY="http://kernel.atrosha.bond"
 
 # 3. That's it! All HTTP requests, external API calls, and financial 
 # transfers are now cryptographically verified and semantically audited.`}

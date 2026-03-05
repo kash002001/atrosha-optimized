@@ -94,10 +94,10 @@ export default function StatusPage() {
                     </div>
                 </div>
 
-                {/* Proxy / Edge */}
+                {/* Kernel / Edge */}
                 <div className="chart-card">
                     <h3 style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 16 }}>
-                        <Shield size={16} /> Proxy / Edge
+                        <Shield size={16} /> Atrosha Kernel
                     </h3>
                     <div className="policy-field">
                         <label>Status</label>

@@ -34,9 +34,7 @@ export default function Hero() {
                     transition={{ duration: 0.8, delay: 0.2 }}
                     className="text-lg md:text-xl text-muted-light dark:text-muted-dark max-w-2xl mx-auto mb-10 leading-relaxed"
                 >
-                    AI agents are now making financial decisions. Atrosha provides the
-                    essential security layer, mathematically verifying transaction intent in
-                    real-time to protect your capital. No prompt injection. No LLM judges.
+                    Atrosha is the ultimate Sovereign Financial Agent. We don&apos;t just secure other agents; Atrosha natively ingests invoices, reasons locally, and executes payments perfectly aligned with your cryptographically signed intent.
                 </motion.p>
                 <div className="flex flex-col sm:flex-row justify-center items-center gap-4 mb-12">
                     <Link

@@ -10,7 +10,7 @@ export default function CodeDemo() {
                         Integrate in 120 seconds
                     </h2>
                     <p className="text-muted-light dark:text-muted-dark">
-                        Drop into your existing infrastructure with a single binary.
+                        Run our sovereign loop out of the box.
                     </p>
                 </div>
                 <motion.div
@@ -34,36 +34,28 @@ export default function CodeDemo() {
                     </div>
                     <div className="p-4 sm:p-6 text-gray-300 overflow-x-auto whitespace-nowrap min-w-full">
                         <div>
-                            <span style={{ color: "var(--code-keyword)" }}>import</span> <span style={{ color: "var(--code-builtin)" }}>{"{ "}</span>AtroshaClient<span style={{ color: "var(--code-builtin)" }}>{" }"}</span> <span style={{ color: "var(--code-keyword)" }}>from</span> <span style={{ color: "var(--code-string)" }}>&apos;atrosha-node&apos;</span>;
+                            <span style={{ color: "var(--code-keyword)" }}>import</span> atrosha
+                            <br />
+                            <span style={{ color: "var(--code-keyword)" }}>from</span> atrosha.agent <span style={{ color: "var(--code-keyword)" }}>import</span> SovereignAgent
                             <br /><br />
-                            <span style={{ color: "var(--code-comment)" }}>{"// 1. Initialize with your master key and the agent&apos;s private key"}</span>
+                            <span style={{ color: "var(--code-comment)" }}>{"# 1. Local OCR extraction (No cloud APIs)"}</span>
                             <br />
-                            <span style={{ color: "var(--code-keyword)" }}>const</span> client = <span style={{ color: "var(--code-keyword)" }}>new</span> <span style={{ color: "var(--code-function)" }}>AtroshaClient</span>(<span style={{ color: "var(--code-string)" }}>&quot;sk_master_...&quot;</span>, <span style={{ color: "var(--code-string)" }}>&quot;agent_priv_...&quot;</span>);
+                            invoice_data = atrosha.<span style={{ color: "var(--code-function)" }}>ingest</span>(<span style={{ color: "var(--code-string)" }}>"invoice_dec_2026.pdf"</span>)
                             <br /><br />
-                            <span style={{ color: "var(--code-comment)" }}>{"// 2. Cryptographically lock the user&apos;s original intent"}</span>
+                            <span style={{ color: "var(--code-comment)" }}>{"# 2. Local reasoning via Ollama (Mistral/Phi-3)"}</span>
                             <br />
-                            <span style={{ color: "var(--code-keyword)" }}>await</span> client.<span style={{ color: "var(--code-function)" }}>lockIntent</span>(<span style={{ color: "var(--code-string)" }}>&quot;Buy me a MacBook Pro for under $1600&quot;</span>);
+                            payment_intent = SovereignAgent.<span style={{ color: "var(--code-function)" }}>reason</span>(invoice_data)
                             <br /><br />
-                            <span style={{ color: "var(--code-comment)" }}>{"// 3. Wrap your standard OpenAI call"}</span>
+                            <span style={{ color: "var(--code-comment)" }}>{"# 3. Cryptographically enforced execution"}</span>
                             <br />
-                            <span style={{ color: "var(--code-keyword)" }}>const</span> response = <span style={{ color: "var(--code-keyword)" }}>await</span> client.openai.chat.completions.<span style={{ color: "var(--code-function)" }}>create</span>({"{"}
+                            <span style={{ color: "var(--code-comment)" }}>{"# Requires matching CFO-signed WebCrypto signature in proxy"}</span>
                             <br />
-                            &nbsp;&nbsp;model: <span style={{ color: "var(--code-string)" }}>&quot;gpt-4o&quot;</span>,
-                            <br />
-                            &nbsp;&nbsp;messages: [{"{"} role: <span style={{ color: "var(--code-string)" }}>&quot;user&quot;</span>, content: <span style={{ color: "var(--code-string)" }}>&quot;Purchase Apple MacBook Pro ($1499)&quot;</span> {"}"}],
-                            <br />
-                            {"}"});
-                            <br /><br />
-                            <span style={{ color: "var(--code-comment)" }}>{"// Atrosha mathematically verifies the agent&apos;s proposed spend"}</span>
-                            <br />
-                            <span style={{ color: "var(--code-comment)" }}>{"// against the locked intent and proxies the request to OpenAI."}</span>
-                            <br />
-                            <span style={{ color: "var(--code-comment)" }}>{"// If it detects LLM drift, it throws an AtroshaPolicyError."}</span>
+                            payment_intent.<span style={{ color: "var(--code-function)" }}>execute</span>()
                         </div>
                         <div className="mt-6 bg-[#252526] p-4 rounded border border-gray-700/50">
-                            <span className="text-gray-500">&gt; Proxy validating Ed25519 signature... [OK]</span><br />
-                            <span className="text-gray-500">&gt; Verifying Semantic drift (Score: 0.85)... [OK]</span><br />
-                            <span className="text-accent-green">&gt; Transaction Approved & Forwarded!</span>
+                            <span className="text-gray-500">&gt; Local Intelligence analyzing invoice... [OK]</span><br />
+                            <span className="text-gray-500">&gt; Verify Mathematical Intent signature... [OK]</span><br />
+                            <span className="text-accent-green">&gt; Payment Executed & Secured!</span>
                         </div>
                         <div className="mt-4 animate-pulse">
                             <span className="text-accent-green font-bold">$</span>{" "}

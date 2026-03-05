@@ -11,11 +11,13 @@ import {
     Activity,
     LogOut,
     Terminal,
+    CreditCard,
 } from "lucide-react";
 
 
 const nav = [
     { href: "/", label: "Overview", icon: LayoutDashboard },
+    { href: "/ap", label: "Accounts Payable", icon: CreditCard },
     { href: "/transactions", label: "Transactions", icon: ArrowLeftRight },
     { href: "/rules", label: "Intents", icon: BookOpen },
     { href: "/agents", label: "Agents", icon: Shield },

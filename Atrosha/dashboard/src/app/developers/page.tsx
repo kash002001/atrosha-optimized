@@ -131,12 +131,12 @@ export default function DevelopersPage() {
                                 </div>
                                 <div>
                                     <h4 style={{ fontSize: 13, fontWeight: 600, marginBottom: 4 }}>2. Proxy Request</h4>
-                                    <p style={{ fontSize: 12, color: "var(--text-muted)", lineHeight: 1.4 }}>Route LLM / API traffic through our high-speed Rust Edge Proxy.</p>
+                                    <p style={{ fontSize: 12, color: "var(--text-muted)", lineHeight: 1.4 }}>Route LLM / API traffic through our secure Rust Kernel.</p>
                                 </div>
                             </div>
                             <div className="quick-integration-right">
                                 <button
-                                    onClick={() => copyToClipboard(`curl -X POST https://proxy.atrosha.com/v1/chat/completions ...`)}
+                                    onClick={() => copyToClipboard(`curl -X POST https://kernel.atrosha.com/v1/chat/completions ...`)}
                                     style={{ position: "absolute", top: 12, right: 12, background: "rgba(255,255,255,0.1)", border: "none", padding: 6, borderRadius: 4, cursor: "pointer", color: "#fff" }}
                                 >
                                     <Copy size={12} />

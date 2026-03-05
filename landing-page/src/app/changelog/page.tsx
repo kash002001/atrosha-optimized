@@ -34,7 +34,7 @@ export default function ChangelogPage() {
                         <h3 className="text-xl font-bold text-text-light dark:text-white">Beta Release</h3>
                         <time className="text-sm text-gray-500 mb-4 block">January 2026</time>
                         <ul className="list-disc list-outside ml-4 text-muted-light dark:text-muted-dark space-y-2">
-                            <li>Core Proxy Engine (Rust)</li>
+                            <li>Core Kernel Engine (Rust)</li>
                             <li>Basic Dashboard and Analytics</li>
                         </ul>
                     </div>

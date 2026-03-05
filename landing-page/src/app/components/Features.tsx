@@ -30,12 +30,10 @@ export default function Features() {
                             <span className="material-symbols-outlined">shield</span>
                         </div>
                         <h3 className="text-xl font-bold text-text-light dark:text-white mb-3">
-                            Intercept
+                            Zero-Knowledge Ingestion
                         </h3>
                         <p className="text-muted-light dark:text-muted-dark text-sm leading-relaxed">
-                            Sit between your LLM and external APIs. We monitor intent in
-                            real-time, blocking unauthorized financial actions before the request
-                            ever leaves your network.
+                            Atrosha runs local OCR and reasoning models (Mistral/Phi-3) directly on your hardware. Invoices and sensitive data never leave your network.
                         </p>
                     </div>
                 </motion.div>
@@ -50,9 +48,9 @@ export default function Features() {
                                 key
                             </span>
                         </div>
-                        <h3 className="text-xl font-bold mb-3 text-text-light dark:text-white">Cryptographic Intent</h3>
+                        <h3 className="text-xl font-bold mb-3 text-text-light dark:text-white">Human-in-the-Loop Execution</h3>
                         <p className="text-muted-light dark:text-muted-dark text-sm leading-relaxed">
-                            Stop prompt injection. The user mathematically signs their original prompt with an Ed25519 key on their device. Our engine guarantees the agent never deviates from this locked intent.
+                            You sign the exact payment amount and payee using WebCrypto. Atrosha mathematically guarantees the agent can never deviate from this locked instruction.
                         </p>
                     </div>
                 </motion.div>
@@ -66,10 +64,10 @@ export default function Features() {
                             <span className="material-symbols-outlined">block</span>
                         </div>
                         <h3 className="text-xl font-bold text-text-light dark:text-white mb-3">
-                            Zero Dependency
+                            Mathematical Enforcement
                         </h3>
                         <p className="text-muted-light dark:text-muted-dark text-sm leading-relaxed">
-                            Built in Rust for &lt; 2ms latency overhead. Uses deterministic Math and Sentence-Transformers for verification. Absolutely no Generative LLM vulnerabilities are exposed in the critical path.
+                            The Atrosha Kernel uses deterministic mathematics to instantly block any hallucinated API calls at the network layer.
                         </p>
                     </div>
                 </motion.div>
