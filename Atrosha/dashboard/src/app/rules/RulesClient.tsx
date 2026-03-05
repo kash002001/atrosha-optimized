@@ -116,7 +116,7 @@ export default function RulesClient({ rules: initialRules }: { rules: Rule[] }) 
             <div className="chart-card" style={{ marginBottom: 24 }}>
                 <h3 style={{ display: "flex", alignItems: "center", gap: 8 }}>
                     <Sparkles size={16} style={{ color: "var(--primary)" }} />
-                    Rule Composer
+                    Intent Simulator
                 </h3>
                 <div style={{ display: "flex", flexWrap: "wrap", gap: 12, marginBottom: preview ? 16 : 0 }}>
                     <textarea
@@ -170,7 +170,7 @@ export default function RulesClient({ rules: initialRules }: { rules: Rule[] }) 
                             }}
                         >
                             <Plus size={14} />
-                            {saving ? "Saving..." : "Add Rule"}
+                            {saving ? "Signing..." : "Lock Intent"}
                         </button>
                     </div>
                 )}
@@ -179,13 +179,13 @@ export default function RulesClient({ rules: initialRules }: { rules: Rule[] }) 
             {/* active rules */}
             <div className="table-section">
                 <h3 style={{ display: "flex", alignItems: "center", gap: 8 }}>
-                    <BookOpen size={16} /> Active Rules ({rules.length})
+                    <BookOpen size={16} /> Cryptographic Intent Proofs ({rules.length})
                 </h3>
                 <table className="data-table">
                     <thead>
                         <tr>
                             <th>ID</th>
-                            <th>Natural Language Rule</th>
+                            <th>Secured Intent String</th>
                             <th>Agent</th>
                             <th>Status</th>
                             <th>Created</th>
@@ -262,7 +262,7 @@ export default function RulesClient({ rules: initialRules }: { rules: Rule[] }) 
                 </table>
                 {rules.length === 0 && (
                     <div style={{ padding: 40, textAlign: "center", color: "var(--text-dim)", fontSize: 13 }}>
-                        No rules active. Create one above.
+                        No intents locked. Sign one above.
                     </div>
                 )}
             </div>

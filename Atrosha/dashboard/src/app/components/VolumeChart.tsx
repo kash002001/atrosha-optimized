@@ -19,10 +19,12 @@ interface ChartData {
 
 interface VolumeChartProps {
     data: ChartData[];
+    totalTransactions?: number;
 }
 
-export default function VolumeChart({ data }: VolumeChartProps) {
-    const isEmpty = !data || data.length === 0 || data.every(d => d.approved === 0 && d.denied === 0);
+export default function VolumeChart({ data, totalTransactions }: VolumeChartProps) {
+    // If totalTransactions is precisely 0, it means they have never sent a transaction.
+    const isEmpty = totalTransactions === 0 || (totalTransactions === undefined && (!data || data.length === 0 || data.every(d => d.approved === 0 && d.denied === 0)));
 
     // Generate neat 12-hour time labels
     const formatTime = (hour: number) => {

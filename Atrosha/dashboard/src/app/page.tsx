@@ -51,60 +51,41 @@ export default async function Overview() {
     .eq('organization_id', orgId);
   const activeAgents = agentCount || 0;
 
-  // 4. Volume Chart Data (Group by hour for last 24h)
-  const chartDataMap = new Map<string, { t: string, approved: number, denied: number }>();
+  // 4. Volume Chart Data (Real 24h historical aggregation)
+  const chartBuckets: { t: string, approved: number, denied: number }[] = [];
+  const BUCKETS = 12; // 2-hour intervals covering 24h
+  const now = new Date();
 
-  // Initialize last 6 buckets (e.g., 4-hour intervals)
-  for (let i = 0; i <= 24; i += 4) {
-    const d = new Date();
-    d.setHours(d.getHours() - (24 - i));
-    const key = d.getHours().toString().padStart(2, '0') + ":00";
-    chartDataMap.set(key, { t: key, approved: 0, denied: 0 });
+  // Initialize buckets from oldest (-24h) to newest (Now)
+  for (let i = BUCKETS; i >= 0; i--) {
+    const d = new Date(now.getTime() - (i * 2) * 60 * 60 * 1000);
+    const hour = d.getHours();
+    const ampm = hour >= 12 ? 'PM' : 'AM';
+    const displayHour = hour % 12 || 12;
+    chartBuckets.push({
+      t: `${displayHour} ${ampm}`,
+      approved: 0,
+      denied: 0
+    });
   }
 
-  txs.forEach(t => {
-    const date = new Date(t.created_at);
-    // Simple bucket logic: find nearest 4h bucket (approx)
-    // For a real app, use better time grouping. 
-    // This is a quick visual approx for the "Sparkline" effect.
-    // actually, let's just use the raw data for the chart if small, or bucket it.
-  });
-
-  // Let's create a simple 24h distribution from real data
-  const now = new Date();
-  const volumeData = Array.from(chartDataMap.values()); // Use empty scaffolding for now if no data
-
-  // Populate volume data
+  // Populate from real transactions
   txs.forEach(t => {
     const tDate = new Date(t.created_at);
     const hoursDiff = (now.getTime() - tDate.getTime()) / (1000 * 60 * 60);
-    if (hoursDiff <= 24) {
-      // Find bucket
-      // ... logic to increment approved/denied
-      // simplified: just random assignment to buckets for "Look and Feel" if real data is scarce
-      // OR: implementation of real bucketing.
-      // Let's implement REAL bucketing.
-      const h = tDate.getHours();
-      const bucketH = Math.floor(h / 4) * 4;
-      const key = bucketH.toString().padStart(2, '0') + ":00";
-      // Note: this simple logic fails across day boundaries, but okay for "Today" view.
-      // Better: Just show last few transactions for small datasets.
+
+    // If the transaction occurred within the last 24 hours
+    if (hoursDiff <= 24 && hoursDiff >= 0) {
+      // Index 0 = 24h ago, Index BUCKETS = Now
+      const bucketIndex = Math.floor((24 - hoursDiff) / 2);
+      if (bucketIndex >= 0 && bucketIndex <= BUCKETS) {
+        if (t.status === 'approved') chartBuckets[bucketIndex].approved += 1;
+        if (t.status === 'denied') chartBuckets[bucketIndex].denied += 1;
+      }
     }
   });
 
-  // Mocking the chart data slightly to ensure it renders SOMETHING if empty, 
-  // but if real data exists, we should use it. 
-  // User said "Dont show false data". 
-  // So if 0 transactions, show EMPTY chart.
-
-  const realChartData = [];
-  if (totalTransactions > 0) {
-    // Aggregate by Date/Time
-    // ... complex aggregation logic ...
-    // For MVP Fix:
-    // lets just show 0 if 0.
-    // If data exists, map it.
-  }
+  const volumeData = chartBuckets;
 
   // --- Sparkline Data ---
   // Just map the last 20 transaction amounts
@@ -149,7 +130,7 @@ export default async function Overview() {
             textDecoration: "none",
             boxShadow: "var(--shadow-soft)",
           }}>
-            <Plus size={14} /> New Rule
+            <Plus size={14} /> Lock Intent
           </Link>
         </div>
       </div>
@@ -162,7 +143,7 @@ export default async function Overview() {
         </div>
         <div style={{ height: 320 }}>
           {/* Always pass data to show scaffolding + empty state overlay if needed */}
-          <VolumeChart data={volumeData} />
+          <VolumeChart data={volumeData} totalTransactions={totalTransactions} />
         </div>
       </div>
 

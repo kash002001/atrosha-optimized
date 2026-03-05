@@ -17,7 +17,7 @@ import { useState } from "react";
 const nav = [
     { href: "/", label: "Overview", icon: LayoutDashboard },
     { href: "/transactions", label: "Transactions", icon: ArrowLeftRight },
-    { href: "/rules", label: "Rules", icon: BookOpen },
+    { href: "/rules", label: "Intents", icon: BookOpen },
     { href: "/agents", label: "Agents", icon: Shield },
 ];
 

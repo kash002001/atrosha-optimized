@@ -88,24 +88,50 @@ export default function AgentsClient({ agents }: AgentsClientProps) {
             </div>
 
             {newAgentKey && (
-                <div className="chart-card" style={{ marginBottom: 20, border: "1px solid var(--accent)", background: "rgba(16, 185, 129, 0.05)" }}>
-                    <h4 style={{ marginTop: 0, color: "var(--accent)" }}>Agent Created Successfully</h4>
-                    <p style={{ fontSize: 13, marginBottom: 12 }}>
-                        Here is the Ed25519 Private Key for <strong>{newAgentKey.name}</strong>.
-                        Copy it now. Put it in your bot's environment variables.
-                        <strong> You will never be able to see this again.</strong>
-                    </p>
-                    <div style={{
-                        background: "#000", padding: 12, borderRadius: 4, fontFamily: "monospace",
-                        fontSize: 12, border: "1px solid #333", color: "#0f0", wordBreak: "break-all", marginBottom: 12
-                    }}>
+                <div className="chart-card" style={{ marginBottom: 20, border: "1px solid var(--accent)", background: "var(--bg-card)" }}>
+                    <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 16 }}>
+                        <div>
+                            <h4 style={{ marginTop: 0, color: "var(--accent)", display: "flex", alignItems: "center", gap: 8 }}>
+                                <Shield size={16} /> Agent Registered: {newAgentKey.name}
+                            </h4>
+                            <p style={{ fontSize: 13, color: "var(--text-muted)", margin: 0 }}>
+                                Save your Agent Private Key below. For your security, it will never be shown again.
+                            </p>
+                        </div>
+                    </div>
+
+                    <div style={{ background: "#000", padding: "12px 16px", borderRadius: 4, fontFamily: "monospace", fontSize: 13, color: "#10b981", wordBreak: "break-all", marginBottom: 24, border: "1px solid #333", letterSpacing: "0.5px" }}>
                         {newAgentKey.priv}
                     </div>
+
+                    <h5 style={{ fontSize: 13, fontWeight: 600, marginBottom: 12, color: "var(--text)", textTransform: "uppercase", letterSpacing: "0.5px" }}>Universal Integration Guide</h5>
+                    <p style={{ fontSize: 13, color: "var(--text-dim)", marginBottom: 16, lineHeight: 1.5 }}>
+                        Atrosha dynamically protects <strong>any AI agent in the world</strong> (OpenAI, Anthropic, custom LLMs, financial bots, Open Claw) out of the box.
+                        Simply route your agent's outbound internet requests through the secure proxy.
+                    </p>
+
+                    <div style={{
+                        background: "var(--bg)", padding: 16, borderRadius: 6, border: "1px solid var(--border)",
+                        fontFamily: "Consolas, monospace", fontSize: 12, color: "var(--text)", overflowX: "auto", marginBottom: 20
+                    }}>
+                        <pre style={{ margin: 0 }}>
+                            {`# 1. Provide Context to your AI Agent
+export ATROSHA_AGENT_KEY="${newAgentKey.priv.substring(0, 16).replace(/[^a-zA-Z0-9]/g, 'a')}..."
+
+# 2. Force external internet traffic through the guardian
+export HTTPS_PROXY="https://proxy.atrosha.bond"
+export HTTP_PROXY="http://proxy.atrosha.bond"
+
+# 3. That's it! All HTTP requests, external API calls, and financial 
+# transfers are now cryptographically verified and semantically audited.`}
+                        </pre>
+                    </div>
+
                     <button
                         onClick={() => setNewAgentKey(null)}
-                        style={{ background: "transparent", color: "var(--text-muted)", border: "1px solid var(--border)", padding: "4px 12px", borderRadius: 4, cursor: "pointer", fontSize: 12 }}
+                        style={{ padding: "8px 16px", background: "var(--accent)", color: "#000", border: "none", borderRadius: 4, cursor: "pointer", fontWeight: 600, fontSize: 13 }}
                     >
-                        I have copied the key
+                        I have securely saved my key
                     </button>
                 </div>
             )}

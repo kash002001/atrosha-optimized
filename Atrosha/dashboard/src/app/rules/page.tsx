@@ -32,8 +32,8 @@ export default async function RulesPage() {
     return (
         <>
             <div className="page-header">
-                <h2>Rules</h2>
-                <p>Define natural-language rules — they&apos;re compiled into enforceable agent policies automatically.</p>
+                <h2>Intent Proofs</h2>
+                <p>View cryptographically signed records of authorized user intents.</p>
             </div>
             <RulesClient rules={rules || []} />
         </>
