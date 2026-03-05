@@ -1,0 +1,14 @@
+
+> dashboard@0.1.0 lint
+> eslint
+
+
+C:\Python\Project Atrosha\Atrosha\dashboard\src\app\ap\APClient.tsx
+   12:60  error  Unexpected any. Specify a different type                         @typescript-eslint/no-explicit-any
+   14:60  error  Unexpected any. Specify a different type                         @typescript-eslint/no-explicit-any
+  104:72  error  `'` can be escaped with `&apos;`, `&lsquo;`, `&#39;`, `&rsquo;`  react/no-unescaped-entities
+  126:45  error  `"` can be escaped with `&quot;`, `&ldquo;`, `&#34;`, `&rdquo;`  react/no-unescaped-entities
+  126:70  error  `"` can be escaped with `&quot;`, `&ldquo;`, `&#34;`, `&rdquo;`  react/no-unescaped-entities
+
+Γ£û 5 problems (5 errors, 0 warnings)
+

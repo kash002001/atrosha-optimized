@@ -40,7 +40,7 @@ export default function CodeDemo() {
                             <br /><br />
                             <span style={{ color: "var(--code-comment)" }}>{"# 1. Local OCR extraction (No cloud APIs)"}</span>
                             <br />
-                            invoice_data = atrosha.<span style={{ color: "var(--code-function)" }}>ingest</span>(<span style={{ color: "var(--code-string)" }}>"invoice_dec_2026.pdf"</span>)
+                            invoice_data = atrosha.<span style={{ color: "var(--code-function)" }}>ingest</span>(<span style={{ color: "var(--code-string)" }}>&quot;invoice_dec_2026.pdf&quot;</span>)
                             <br /><br />
                             <span style={{ color: "var(--code-comment)" }}>{"# 2. Local reasoning via Ollama (Mistral/Phi-3)"}</span>
                             <br />

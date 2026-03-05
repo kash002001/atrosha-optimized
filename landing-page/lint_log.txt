@@ -1,0 +1,13 @@
+
+> landing-page@0.1.0 lint
+> eslint
+
+(node:11232) ESLintIgnoreWarning: The ".eslintignore" file is no longer supported. Switch to using the "ignores" property in "eslint.config.js": https://eslint.org/docs/latest/use/configure/migration-guide#ignoring-files
+(Use `node --trace-warnings ...` to show where the warning was created)
+
+C:\Python\Project Atrosha\landing-page\src\app\components\CodeDemo.tsx
+  43:160  error  `"` can be escaped with `&quot;`, `&ldquo;`, `&#34;`, `&rdquo;`  react/no-unescaped-entities
+  43:181  error  `"` can be escaped with `&quot;`, `&ldquo;`, `&#34;`, `&rdquo;`  react/no-unescaped-entities
+
+Γ£û 2 problems (2 errors, 0 warnings)
+

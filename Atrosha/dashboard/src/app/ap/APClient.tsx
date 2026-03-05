@@ -3,17 +3,33 @@
 import { useState } from "react";
 import { CheckCircle2, FileText, Lock, AlertTriangle, Play } from "lucide-react";
 
+interface Invoice {
+    id: string;
+    vendor: string;
+    amount: number;
+    status: string;
+    date: string;
+}
+
+interface SignatureResult {
+    intent: string;
+    sessionId: string;
+    status: string;
+    signature: string;
+}
+
 export default function APClient() {
-    const [invoices, setInvoices] = useState([
+    const [invoices, setInvoices] = useState<Invoice[]>([
         { id: "INV-1029", vendor: "Cloudflare Inc.", amount: 500.00, status: "pending", date: "2026-03-05" },
         { id: "INV-1030", vendor: "OpenAI", amount: 25000.00, status: "pending", date: "2026-03-04" },
     ]);
 
-    const [selectedInvoice, setSelectedInvoice] = useState<any>(null);
+    const [selectedInvoice, setSelectedInvoice] = useState<Invoice | null>(null);
     const [signing, setSigning] = useState(false);
-    const [signatureResult, setSignatureResult] = useState<any>(null);
+    const [signatureResult, setSignatureResult] = useState<SignatureResult | null>(null);
 
     const handleSignIntent = async () => {
+        if (!selectedInvoice) return;
         setSigning(true);
         // Simulate hardware-backed cryptography logic
         setTimeout(() => {
@@ -101,7 +117,7 @@ export default function APClient() {
 
                             <p style={{ fontSize: '0.875rem', color: 'var(--text-secondary)' }}>
                                 <AlertTriangle size={14} style={{ display: 'inline', marginRight: '4px', verticalAlign: '-2px' }} />
-                                Signing this intent will bind the Agent's execution to this mathematical constraint via Atrosha Kernel.
+                                Signing this intent will bind the Agent&apos;s execution to this mathematical constraint via Atrosha Kernel.
                             </p>
                         </div>
 
@@ -123,7 +139,7 @@ export default function APClient() {
 
                                 <div className="code-block" style={{ fontSize: '0.75rem', marginBottom: '1rem' }}>
                                     Session ID: {signatureResult.sessionId}<br />
-                                    Intent: "{signatureResult.intent}"<br />
+                                    Intent: &quot;{signatureResult.intent}&quot;<br />
                                     Sig_Ed25519: {signatureResult.signature.substring(0, 32)}...
                                 </div>
 
