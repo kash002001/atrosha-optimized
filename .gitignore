@@ -2,6 +2,9 @@ node_modules
 .next
 dist
 target
+target.old
+target_new
+target*/
 .env
 .env.local
 .DS_Store
@@ -9,3 +12,26 @@ at_os_logs
 *.log
 .vercel
 .env*.local
+
+.venv
+.venv_gpu
+venv
+__pycache__/
+
+proxy-temp/
+Atrosha/proxy-temp/
+*.onnx
+*.onnx.data
+
+# temp/scratch
+mock_out*.txt
+semantic_out*.txt
+out.txt
+out2.txt
+test_out.txt
+tmp_deploy.txt
+tmp_*.js
+large_files.txt
+robustness_results*.txt
+find_large.js
+mock_agent.py
