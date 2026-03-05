@@ -161,12 +161,38 @@ def gen_aws_cost_query():
     }
 
 
+def gen_openai_chat():
+    return {
+        "method": "POST",
+        "target_url": "https://api.openai.com/v1/chat/completions",
+        "headers": {
+            "X-Atrosha-Agent-ID": _rand_agent_id(),
+            "X-Atrosha-Signature": _rand_sig(),
+            "Content-Type": "application/json",
+            "Authorization": "Bearer sk-1234",
+        },
+        "body": {
+            "model": "gpt-4",
+            "messages": [
+                {"role": "user", "content": random.choice([
+                    "What is the capital of France?",
+                    "Write a python script to reverse a string.",
+                    "Summarize the following meeting notes.",
+                    "How do I configure a redis server?",
+                    "Translate 'Hello world' to Spanish.",
+                ])}
+            ],
+            "temperature": 0.7,
+        },
+    }
+
 _GENERATORS = [
     gen_stripe_charge,
     gen_stripe_refund,
     gen_wise_transfer,
     gen_paypal_payout,
     gen_aws_cost_query,
+    gen_openai_chat,
 ]
 
 

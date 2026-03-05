@@ -15,6 +15,7 @@ from server.audit_sink import push_verdict
 
 _session = None
 _tokenizer = None
+_st_model = None  # sentence-transformers for /verify
 
 def download_if_missing(file_path: str, url: str):
     if not os.path.exists(file_path):
@@ -29,9 +30,10 @@ def download_if_missing(file_path: str, url: str):
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    global _session, _tokenizer
+    global _session, _tokenizer, _st_model
     import onnxruntime as ort
     from tokenizer.train_tokenizer import load_tokenizer
+    from sentence_transformers import SentenceTransformer
 
     model_path = os.environ.get(
         "ATROSHA_MODEL_PATH",
@@ -60,12 +62,23 @@ async def lifespan(app: FastAPI):
     else:
         print("[!] Warning: Tokenizer file not found.")
 
+    # intent verification: load sentence-transformers for /verify
+    st_name = os.environ.get("ATROSHA_ST_MODEL", "all-MiniLM-L6-v2")
+    print(f"[*] loading sentence-transformer: {st_name}")
+    try:
+        _st_model = SentenceTransformer(st_name)
+        print(f"[+] sentence-transformer loaded ({st_name})")
+    except Exception as e:
+        print(f"[!] failed to load sentence-transformer: {e}")
+        _st_model = None
+
     print("[+] semantic engine ready")
 
     yield
 
     _session = None
     _tokenizer = None
+    _st_model = None
 
 app = FastAPI(title="Atrosha Semantic Engine", lifespan=lifespan)
 
@@ -75,6 +88,19 @@ class PayloadRequest(BaseModel):
     target_url: str = ""
     headers: dict = {}
     body: dict = {}
+
+
+class VerifyRequest(BaseModel):
+    intent: str          # user's original natural language prompt
+    action: str          # description of agent's proposed transaction
+    threshold: float = 0.70
+
+
+class VerifyResult(BaseModel):
+    verdict: str         # APPROVE or REJECT
+    similarity: float
+    threshold: float
+    latency_ms: float
 
 
 class Verdict(BaseModel):
@@ -197,11 +223,40 @@ async def classify(req: PayloadRequest, raw: Request):
     )
 
 
+@app.post("/verify", response_model=VerifyResult)
+async def verify_intent(req: VerifyRequest):
+    """Compare user's original intent against agent's proposed action via cosine similarity."""
+    if _st_model is None:
+        raise HTTPException(503, "sentence-transformer not loaded")
+
+    t0 = time.perf_counter()
+
+    # encode both into normalized vectors — dot product = cosine sim
+    vec_a = _st_model.encode(req.intent, normalize_embeddings=True)
+    vec_b = _st_model.encode(req.action, normalize_embeddings=True)
+    sim = float(np.dot(vec_a, vec_b))
+
+    verdict = "APPROVE" if sim >= req.threshold else "REJECT"
+    latency = (time.perf_counter() - t0) * 1000
+
+    print(f"[VERIFY] {verdict} | sim={sim:.4f} thr={req.threshold} | {latency:.1f}ms")
+    print(f"  intent: {req.intent[:80]}")
+    print(f"  action: {req.action[:80]}")
+
+    return VerifyResult(
+        verdict=verdict,
+        similarity=round(sim, 4),
+        threshold=req.threshold,
+        latency_ms=round(latency, 2),
+    )
+
+
 @app.get("/health")
 def health():
     return {
         "status": "alive",
         "model_loaded": _session is not None,
+        "st_model_loaded": _st_model is not None,
         "audit_sink": os.environ.get("SUPABASE_URL") is not None,
     }
 

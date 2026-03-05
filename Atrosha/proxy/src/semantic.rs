@@ -3,7 +3,7 @@ use serde::{Deserialize, Serialize};
 use std::time::Instant;
 
 // sidecar client for the Atrosha Semantic Engine (FastAPI)
-// calls POST /classify on the inference server and returns the verdict
+// calls POST /classify for payload inspection and POST /verify for intent matching
 
 #[derive(Debug, Clone, Serialize)]
 pub struct ClassifyRequest {
@@ -13,10 +13,25 @@ pub struct ClassifyRequest {
     pub body: serde_json::Value,
 }
 
+#[derive(Debug, Clone, Serialize)]
+pub struct VerifyRequest {
+    pub intent: String,
+    pub action: String,
+    pub threshold: f64,
+}
+
 #[derive(Debug, Clone, Deserialize)]
 pub struct SemanticVerdict {
     pub verdict: String,     // ALLOW, DENY, QUARANTINE
     pub confidence: f64,
+    pub latency_ms: f64,
+}
+
+#[derive(Debug, Clone, Deserialize)]
+pub struct VerifyResult {
+    pub verdict: String,     // APPROVE, REJECT
+    pub similarity: f64,
+    pub threshold: f64,
     pub latency_ms: f64,
 }
 
@@ -47,7 +62,6 @@ impl SemanticClient {
     ) -> Result<SemanticVerdict, SemanticError> {
         let t0 = Instant::now();
 
-        // extract headers into a flat map
         let mut hdr_map = std::collections::HashMap::new();
         for (k, v) in headers.iter() {
             if let Ok(val) = v.to_str() {
@@ -55,7 +69,6 @@ impl SemanticClient {
             }
         }
 
-        // try to parse body as JSON, fall back to raw string
         let body_val = serde_json::from_slice(body)
             .unwrap_or_else(|_| serde_json::Value::String(
                 String::from_utf8_lossy(body).to_string()
@@ -99,6 +112,55 @@ impl SemanticClient {
         );
 
         Ok(verdict)
+    }
+
+    /// compare user's locked intent against agent's proposed action via /verify
+    pub async fn verify_intent(
+        &self,
+        intent: &str,
+        action: &str,
+        threshold: f64,
+    ) -> Result<VerifyResult, SemanticError> {
+        let t0 = Instant::now();
+
+        let req = VerifyRequest {
+            intent: intent.to_string(),
+            action: action.to_string(),
+            threshold,
+        };
+
+        let url = format!("{}/verify", self.base_url);
+
+        let resp = self.client
+            .post(&url)
+            .json(&req)
+            .send()
+            .await
+            .map_err(|e| {
+                tracing::warn!(error = %e, elapsed_ms = ?t0.elapsed().as_millis(), "semantic engine /verify unreachable");
+                SemanticError::Unavailable
+            })?;
+
+        if resp.status() != ReqwestStatus::OK {
+            tracing::warn!(status = %resp.status(), "semantic engine /verify returned non-200");
+            return Err(SemanticError::BadResponse);
+        }
+
+        let result: VerifyResult = resp.json().await.map_err(|e| {
+            tracing::warn!(error = %e, "failed to parse verify result");
+            SemanticError::BadResponse
+        })?;
+
+        tracing::info!(
+            verdict = %result.verdict,
+            similarity = %result.similarity,
+            threshold = %result.threshold,
+            engine_latency_ms = %result.latency_ms,
+            total_latency_ms = ?t0.elapsed().as_millis(),
+            "intent verification verdict"
+        );
+
+        Ok(result)
     }
 }
 

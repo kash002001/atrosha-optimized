@@ -1,6 +1,7 @@
 import os
 import time
 import json
+import uuid
 import hashlib
 import requests
 import sys
@@ -33,6 +34,7 @@ class atroshaclient:
         self.privkey = None
         self.pubkey = None
         self.breaker = CircuitBreaker()
+        self.session_id = None  # set after lock_intent()
         
         self._load_keys()
 
@@ -62,6 +64,28 @@ class atroshaclient:
             with open(os.path.join(base_dir, "pub.hex"), "w") as fh:
                 fh.write(self.pubkey.public_bytes_raw().hex())
 
+    def lock_intent(self, prompt):
+        """Sign and lock the user's prompt for this session.
+        Must be called before dispatching the agent."""
+        sid = uuid.uuid4().hex
+        sig = self.privkey.sign(prompt.encode("utf-8"))
+        pub_hex = self.pubkey.public_bytes_raw().hex()
+
+        resp = requests.post(f"{self.monitor}/intent/lock", json={
+            "session_id": sid,
+            "prompt": prompt,
+            "pub_key": pub_hex,
+            "signature": sig.hex(),
+        }, timeout=10)
+
+        if resp.status_code != 200:
+            print(f"[!] intent lock failed: {resp.text}")
+            return None
+
+        self.session_id = sid
+        print(f"[+] intent locked: session={sid}")
+        return sid
+
     def getpermit(self, intent, rail="stripe"):
         payload = {
             "agent_id": self.agent_id,
@@ -69,6 +93,8 @@ class atroshaclient:
             "rail": rail,
             "ts": int(time.time()),
         }
+        if self.session_id:
+            payload["session_id"] = self.session_id
         try:
             resp = requests.post(f"{self.monitor}/permit", json=payload, timeout=10)
             if resp.status_code != 200:
@@ -102,6 +128,10 @@ class atroshaclient:
             "X-Atrosha-Signature": signature.hex(),
             "Content-Type": "application/json",
         }
+
+        # auto-attach session for intent verification
+        if self.session_id:
+            headers["X-Atrosha-Session-ID"] = self.session_id
         
         url = f"{self.proxy}/proxy/execute/{action}"
         
