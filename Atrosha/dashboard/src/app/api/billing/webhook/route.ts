@@ -28,9 +28,10 @@ export async function POST(req: Request) {
             return NextResponse.json({ error: 'Missing Stripe signature or secret' }, { status: 400 });
         }
         event = stripe.webhooks.constructEvent(body, sig, endpointSecret);
-    } catch (err: any) {
-        console.error(`Webhook Error: ${err.message}`);
-        return NextResponse.json({ error: `Webhook Error: ${err.message}` }, { status: 400 });
+    } catch (err: unknown) {
+        const msg = err instanceof Error ? err.message : String(err);
+        console.error(`Webhook Error: ${msg}`);
+        return NextResponse.json({ error: `Webhook Error: ${msg}` }, { status: 400 });
     }
 
     const supabase = createClient(supabaseUrl, supabaseServiceKey);

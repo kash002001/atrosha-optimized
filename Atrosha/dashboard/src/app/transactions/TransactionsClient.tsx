@@ -139,7 +139,11 @@ export default function TransactionsClient({ initialData }: { initialData: Tx[] 
     const [selectedTx, setSelectedTx] = useState<Tx | null>(null);
 
     useEffect(() => {
-        setMounted(true);
+        // use setImmediate or microtask to avoid synchronicity warning
+        Promise.resolve().then(() => setMounted(true));
+    }, []);
+
+    useEffect(() => {
         const supabase = createClient();
 
         const channel = supabase.channel('realtime:transactions')

@@ -1,10 +1,18 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { Activity, CheckCircle, XCircle, Database, Server, Clock, Shield } from "lucide-react";
+import { Activity, XCircle, Database, Server, Shield } from "lucide-react";
+
+interface StatusData {
+    db: { status: string; transactions_table_count: number };
+    auth: { session: boolean };
+    proxy?: { status: string; latency_ms: number };
+    app: string;
+    timestamp: string;
+}
 
 export default function StatusPage() {
-    const [data, setData] = useState<any>(null);
+    const [data, setData] = useState<StatusData | null>(null);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState("");
 
@@ -12,11 +20,11 @@ export default function StatusPage() {
         fetch("/api/diagnose")
             .then(res => res.json())
             .then(setData)
-            .catch(e => setError(e.message))
+            .catch(e => setError(e instanceof Error ? e.message : String(e)))
             .finally(() => setLoading(false));
     }, []);
 
-    if (loading) {
+    if (loading || !data) {
         return (
             <div className="page-header">
                 <h2>System Status</h2>
@@ -99,7 +107,7 @@ export default function StatusPage() {
                     </div>
                     <div className="policy-field">
                         <label>Latency</label>
-                        <span className="mono">{data.proxy?.latency_ms > 0 ? `${data.proxy?.latency_ms}ms` : "N/A"}</span>
+                        <span className="mono">{(data.proxy?.latency_ms ?? 0) > 0 ? `${data.proxy?.latency_ms}ms` : "N/A"}</span>
                     </div>
                 </div>
             </div>

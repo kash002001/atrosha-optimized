@@ -1,9 +1,7 @@
 import { createClient } from "@/lib/supabase-server";
-import dynamic from "next/dynamic";
 import Link from "next/link";
 import {
-  ArrowUpRight, ArrowDownRight, Calendar, ChevronDown, Download,
-  MoreHorizontal, Plus, CreditCard, FileText
+  Plus, FileText
 } from "lucide-react";
 import { redirect } from "next/navigation";
 import { VolumeChart, Sparkline } from "./components/DashboardCharts";

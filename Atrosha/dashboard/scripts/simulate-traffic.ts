@@ -2,6 +2,7 @@
 import { createClient } from '@supabase/supabase-js';
 import dotenv from 'dotenv';
 import path from 'path';
+import * as fs from 'fs';
 
 // Load env from .env.local
 dotenv.config({ path: path.resolve(process.cwd(), '.env.local') });
@@ -20,7 +21,7 @@ async function simulateTraffic() {
     console.log('🚀 Simulating traffic...');
 
     // 1. Get or Create Organization
-    let { data: orgs } = await supabase.from('organizations').select('id').limit(1);
+    const { data: orgs } = await supabase.from('organizations').select('id').limit(1);
     let orgId = orgs?.[0]?.id;
 
     if (!orgId) {
@@ -39,7 +40,7 @@ async function simulateTraffic() {
     }
 
     // 2. Get or Create Agent
-    let { data: agents } = await supabase.from('agents').select('id').eq('organization_id', orgId).limit(1);
+    const { data: agents } = await supabase.from('agents').select('id').eq('organization_id', orgId).limit(1);
     let agentId = agents?.[0]?.id;
 
     if (!agentId) {
@@ -90,7 +91,6 @@ async function simulateTraffic() {
 
     const { error } = await supabase.from('transactions').insert(transactions);
     if (error) {
-        const fs = require('fs');
         fs.writeFileSync('error.log', JSON.stringify(error, null, 2));
         console.error('Error logged to error.log');
     } else {

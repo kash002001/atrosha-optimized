@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { CreditCard, Loader2 } from "lucide-react";
+import { Loader2 } from "lucide-react";
 
 export default function BillingButton() {
     const [loading, setLoading] = useState(false);
@@ -17,7 +17,7 @@ export default function BillingButton() {
                 alert("Failed to load billing portal: " + (data.error || "Unknown error"));
                 setLoading(false);
             }
-        } catch (e) {
+        } catch {
             alert("Error connecting to server.");
             setLoading(false);
         }

@@ -13,7 +13,7 @@ if (!supabaseUrl || !supabaseServiceKey) process.exit(1);
 const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
 async function debugInsert() {
-    let { data: orgs } = await supabase.from('organizations').select('id').limit(1);
+    const { data: orgs } = await supabase.from('organizations').select('id').limit(1);
     let orgId = orgs?.[0]?.id;
 
     if (!orgId) {
@@ -43,7 +43,7 @@ async function debugInsert() {
 
     for (const attempt of attempts) {
         console.log(`\n--- Attempting ${attempt.table} with ${attempt.col} ---`);
-        const payload: any = { name: 'Debug Agent' };
+        const payload: Record<string, unknown> = { name: 'Debug Agent' };
         payload[attempt.col] = orgId;
 
         const { data, error } = await supabase.from(attempt.table).insert(payload).select();

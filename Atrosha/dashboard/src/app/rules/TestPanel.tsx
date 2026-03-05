@@ -10,7 +10,7 @@ interface TestPanelProps {
     onClose: () => void;
 }
 
-export default function TestPanel({ ruleId, ruleText, onClose }: TestPanelProps) {
+export default function TestPanel({ ruleText, onClose }: Omit<TestPanelProps, "ruleId">) {
     const [payload, setPayload] = useState(
         '{"transaction":{"amount":5000,"destination":"api.openai.com","intent":"process payment"}}'
     );
@@ -25,8 +25,8 @@ export default function TestPanel({ ruleId, ruleText, onClose }: TestPanelProps)
             try {
                 const res = await testRule(payload);
                 setResult(res);
-            } catch (e: any) {
-                setErr(e.message || "Test failed");
+            } catch (e: unknown) {
+                setErr(e instanceof Error ? e.message : "Test failed");
             }
         });
     };

@@ -3,7 +3,7 @@ import { createClient } from "@/lib/supabase-server";
 import { NextResponse } from "next/server";
 import Stripe from "stripe";
 
-export async function POST(req: Request) {
+export async function POST() {
     const supabase = await createClient();
     const { data: { user } } = await supabase.auth.getUser();
 
@@ -24,7 +24,7 @@ export async function POST(req: Request) {
     });
 
     // 1. Get Org & Stripe Customer ID
-    const { data: org, error } = await supabase
+    const { data: org } = await supabase
         .from("organizations")
         .select("stripe_cust")
         .eq("id", user.user_metadata.org_id)
@@ -59,8 +59,8 @@ export async function POST(req: Request) {
         });
 
         return NextResponse.json({ url: session.url });
-    } catch (err: any) {
+    } catch (err: unknown) {
         console.error(err);
-        return NextResponse.json({ error: err.message }, { status: 500 });
+        return NextResponse.json({ error: err instanceof Error ? err.message : String(err) }, { status: 500 });
     }
 }

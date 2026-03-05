@@ -73,8 +73,8 @@ export async function createAgent(name: string, limit: number) {
             if (!syncRes.ok) {
                 console.error("Failed to sync agent to Proxy", await syncRes.text());
             }
-        } catch (syncErr: any) {
-            console.warn("Network error or timeout syncing to proxy (sleeping Render). Agent created in DB.", syncErr.message);
+        } catch (syncErr: unknown) {
+            console.warn("Network error or timeout syncing to proxy (sleeping Render). Agent created in DB.", syncErr instanceof Error ? syncErr.message : String(syncErr));
         }
 
         revalidatePath("/agents");
@@ -83,7 +83,7 @@ export async function createAgent(name: string, limit: number) {
         // JSON parse/stringify ensures we don't return complex objects across the Server Action boundary
         const plainData = JSON.parse(JSON.stringify(data));
         return { data: { ...plainData, _privateKey: privHex } };
-    } catch (err: any) {
-        return { error: `Server crash: ${err.message}` };
+    } catch (err: unknown) {
+        return { error: `Server crash: ${err instanceof Error ? err.message : String(err)}` };
     }
 }

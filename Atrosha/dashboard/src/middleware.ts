@@ -35,8 +35,7 @@ export async function middleware(req: NextRequest) {
     );
 
     const {
-        data: { user },
-        error
+        data: { user }
     } = await supabase.auth.getUser();
 
     // no session → bounce to landing page login

@@ -20,7 +20,7 @@ async function clearData() {
     console.log('🧹 Clearing test data...');
 
     // 1. Clear Transactions
-    const { error: txError, count: txCount } = await supabase
+    const { error: txError } = await supabase
         .from('transactions')
         .delete()
         .neq('id', '00000000-0000-0000-0000-000000000000'); // Delete all

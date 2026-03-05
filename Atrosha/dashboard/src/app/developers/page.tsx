@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { Copy, RefreshCw, Terminal, Eye, EyeOff, Check, Shield, Code, Server } from "lucide-react";
+import { Copy, RefreshCw, Eye, EyeOff, Check, Code, Server } from "lucide-react";
 
 export default function DevelopersPage() {
     const [apiKey, setApiKey] = useState<string | null>(null);
@@ -22,7 +22,7 @@ export default function DevelopersPage() {
             } else {
                 alert("Failed to generate key: " + data.error);
             }
-        } catch (e) {
+        } catch {
             alert("Error generating key");
         } finally {
             setLoading(false);
@@ -127,7 +127,7 @@ export default function DevelopersPage() {
                             <div className="quick-integration-left">
                                 <div style={{ marginBottom: 16 }}>
                                     <h4 style={{ fontSize: 13, fontWeight: 600, marginBottom: 4 }}>1. Authenticate</h4>
-                                    <p style={{ fontSize: 12, color: "var(--text-muted)", lineHeight: 1.4 }}>Sign payloads with your Agent's Ed25519 Private Key. Provide the `X-Atrosha-Agent-ID` header.</p>
+                                    <p style={{ fontSize: 12, color: "var(--text-muted)", lineHeight: 1.4 }}>Sign payloads with your Agent&apos;s Ed25519 Private Key. Provide the `X-Atrosha-Agent-ID` header.</p>
                                 </div>
                                 <div>
                                     <h4 style={{ fontSize: 13, fontWeight: 600, marginBottom: 4 }}>2. Proxy Request</h4>
@@ -143,9 +143,9 @@ export default function DevelopersPage() {
                                 </button>
                                 <pre style={{ fontFamily: "monospace", fontSize: 12, color: "#E2E8F0", lineHeight: 1.6, overflowX: "auto" }}>
                                     <span style={{ color: "#C084FC" }}>curl</span> -X POST https://atrosha.onrender.com/proxy/ \ <br />
-                                    &nbsp;&nbsp;-H <span style={{ color: "#4ADE80" }}>"X-Atrosha-Agent-ID: agent_123"</span> \ <br />
-                                    &nbsp;&nbsp;-H <span style={{ color: "#4ADE80" }}>"X-Atrosha-Target: https://api.stripe.com/v1/refunds"</span> \ <br />
-                                    &nbsp;&nbsp;-H <span style={{ color: "#4ADE80" }}>"X-Atrosha-Signature: 7b8f2c...a91e"</span> \ <br />
+                                    &nbsp;&nbsp;-H <span style={{ color: "#4ADE80" }}>&quot;X-Atrosha-Agent-ID: agent_123&quot;</span> \ <br />
+                                    &nbsp;&nbsp;-H <span style={{ color: "#4ADE80" }}>&quot;X-Atrosha-Target: https://api.stripe.com/v1/refunds&quot;</span> \ <br />
+                                    &nbsp;&nbsp;-H <span style={{ color: "#4ADE80" }}>&quot;X-Atrosha-Signature: 7b8f2c...a91e&quot;</span> \ <br />
                                     &nbsp;&nbsp;-d <span style={{ color: "#FCD34D" }}>{`'{ "charge": "ch_1Oz", "amount": 5000 }'`}</span>
                                 </pre>
                             </div>

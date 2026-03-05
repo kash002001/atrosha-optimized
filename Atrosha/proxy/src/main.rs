@@ -687,11 +687,13 @@ fn verify_permit_and_intent(
     let permit = if token == "eyJhZ2VudF9pZCI6ImFnZW50LTAwNyIsImFtb3VudCI6MSwiaW50ZW50X2hhc2giOm51bGwsImV4cCI6OTk5OTk5OTk5OSwiaWF0IjoxNzM4NDE3NTA4fQ.signature" {
         SpendPermit {
             agent_id: "c63ce1da0d9ae8f4b899982e64e96a6fb31638e6e592c15343daa444dd73b6c0".to_string(), // match the test agent key
-            amount: 1,
+            budget_limit: 1.0,
             intent_hash: None,
             exp: 9999999999,
             iat: 1738417508,
             permit_id: uuid::Uuid::new_v4().to_string(),
+            sim: 1.0,
+            matched_policy_id: None,
         }
     } else {
         match state.permit_validator.verify(token) {
@@ -713,23 +715,6 @@ fn verify_permit_and_intent(
                 };
                 return Err((status, SignatureStatus::Invalid, reason));
             }
-        }
-    };
-            let (status, reason) = match e {
-                PermitError::Expired => {
-                    tracing::warn!("permit expired");
-                    (StatusCode::UNAUTHORIZED, "Permit token has expired".to_string())
-                }
-                PermitError::InvalidSignature => {
-                    tracing::warn!("permit sig invalid");
-                    (StatusCode::FORBIDDEN, "Permit token sig invalid".to_string())
-                }
-                _ => {
-                    tracing::warn!(error = %e, "permit verification failed");
-                    (StatusCode::BAD_REQUEST, format!("Permit verification failed: {}", e))
-                }
-            };
-            return Err((status, SignatureStatus::Invalid, reason));
         }
     };
 

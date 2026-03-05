@@ -8,7 +8,7 @@ import TestPanel from "./TestPanel";
 interface Rule {
     id: string;
     nl_text: string;
-    compiled_policy: any;
+    compiled_policy: Record<string, unknown>;
     agent_id: string;
     status: string;
     created_at: string;
@@ -99,7 +99,7 @@ export default function RulesClient({ rules: initialRules }: { rules: Rule[] }) 
             const parsed = JSON.parse(preview);
             await addRule(input, preview, parsed.agent);
             setInput(""); setPreview(null);
-        } catch (e) { alert("Failed to add rule: " + e); }
+        } catch (e) { alert("Failed to add rule: " + (e instanceof Error ? e.message : String(e))); }
         finally { setSaving(false); }
     };
 

@@ -49,8 +49,8 @@ export default function AgentsClient({ agents }: AgentsClientProps) {
             setNewAgentKey({ name: newName, priv: newAgent._privateKey });
             setShowNewAgent(false);
             setNewName("");
-        } catch (e: any) {
-            alert("Crash during agent creation: " + e.message);
+        } catch (e: unknown) {
+            alert("Crash during agent creation: " + (e instanceof Error ? e.message : String(e)));
         } finally {
             setCreating(false);
         }
@@ -107,7 +107,7 @@ export default function AgentsClient({ agents }: AgentsClientProps) {
                     <h5 style={{ fontSize: 13, fontWeight: 600, marginBottom: 12, color: "var(--text)", textTransform: "uppercase", letterSpacing: "0.5px" }}>Universal Integration Guide</h5>
                     <p style={{ fontSize: 13, color: "var(--text-dim)", marginBottom: 16, lineHeight: 1.5 }}>
                         Atrosha dynamically protects <strong>any AI agent in the world</strong> (OpenAI, Anthropic, custom LLMs, financial bots, Open Claw) out of the box.
-                        Simply route your agent's outbound internet requests through the secure proxy.
+                        Simply route your agent&apos;s outbound internet requests through the secure proxy.
                     </p>
 
                     <div style={{

@@ -12,7 +12,7 @@ import {
     LogOut,
     Terminal,
 } from "lucide-react";
-import { useState } from "react";
+
 
 const nav = [
     { href: "/", label: "Overview", icon: LayoutDashboard },
@@ -23,7 +23,6 @@ const nav = [
 
 export default function Sidebar() {
     const path = usePathname();
-    const [isOpen, setIsOpen] = useState(false);
 
     return (
         <>

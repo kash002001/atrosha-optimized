@@ -73,15 +73,15 @@ export async function testRule(payloadStr: string): Promise<{
 }> {
     const engineUrl = process.env.SEMANTIC_ENGINE_URL || "https://atrosha-engine.onrender.com";
 
-    let payload: any;
-    try { payload = JSON.parse(payloadStr); }
+    let payload: Record<string, unknown>;
+    try { payload = JSON.parse(payloadStr) as Record<string, unknown>; }
     catch { throw new Error("Invalid JSON payload"); }
 
     const res = await fetch(`${engineUrl}/classify`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-            target_url: payload?.transaction?.destination ?? "test",
+            target_url: ((payload?.transaction as Record<string, unknown>)?.destination as string) ?? "test",
             payload,
         }),
         // next.js server can talk to render directly

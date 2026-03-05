@@ -1,9 +1,9 @@
 import { NextResponse } from 'next/server';
-import type { NextRequest } from 'next/server';
+
 import { createServerClient } from '@supabase/ssr';
 import { cookies } from 'next/headers';
 
-export async function GET(request: NextRequest) {
+export async function GET() {
     const cookieStore = await cookies();
     const allCookies = cookieStore.getAll();
 
@@ -16,14 +16,14 @@ export async function GET(request: NextRequest) {
                 getAll() {
                     return allCookies;
                 },
-                setAll(cookiesToSet) {
+                setAll() {
                     // No-op for GET
                 }
             }
         }
     );
 
-    const { data: { user }, error } = await supabase.auth.getUser();
+    const { data: { user } } = await supabase.auth.getUser();
 
     // Check DB Connection & schema
     let dbStatus = "unknown";
@@ -42,9 +42,9 @@ export async function GET(request: NextRequest) {
             dbStatus = "connected";
             txCount = count || 0;
         }
-    } catch (e: any) {
+    } catch (e: unknown) {
         dbStatus = "exception";
-        dbError = e.message;
+        dbError = e instanceof Error ? e.message : String(e);
     }
 
     // Check Proxy Status
@@ -65,7 +65,7 @@ export async function GET(request: NextRequest) {
             } else {
                 proxyStatus = `error_${res.status}`;
             }
-        } catch (e: any) {
+        } catch {
             proxyStatus = "unreachable";
         }
     } else {
