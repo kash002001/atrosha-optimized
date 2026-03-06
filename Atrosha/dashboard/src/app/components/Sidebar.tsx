@@ -32,6 +32,7 @@ const nav = [
     { href: "/webhooks", label: "Developer Webhooks", icon: Webhook, roles: ["ADMIN"] },
     { href: "/audit", label: "Audit Log", icon: ScrollText, roles: ["ADMIN", "AUDITOR"] },
     { href: "/expenses", label: "Expenses", icon: Receipt, roles: ["ADMIN", "APPROVER"] },
+    { href: "/payroll", label: "Payroll", icon: BarChart3, roles: ["ADMIN", "APPROVER"] },
     { href: "/transactions", label: "Transactions", icon: ArrowLeftRight, roles: ["ADMIN", "APPROVER", "AUDITOR"] },
     { href: "/rules", label: "Intents", icon: BookOpen, roles: ["ADMIN", "APPROVER"] },
     { href: "/agents", label: "Agents", icon: Shield, roles: ["ADMIN"] },

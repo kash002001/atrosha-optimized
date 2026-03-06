@@ -162,6 +162,31 @@ class AtroshaDB:
                 created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
                 FOREIGN KEY (entity_id) REFERENCES entities(id)
             );
+
+            CREATE TABLE IF NOT EXISTS employee_master (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                entity_id INTEGER NOT NULL,
+                name TEXT NOT NULL,
+                email TEXT UNIQUE,
+                base_salary REAL,
+                currency TEXT DEFAULT 'USD',
+                joined_at TEXT,
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                FOREIGN KEY (entity_id) REFERENCES entities(id)
+            );
+
+            CREATE TABLE IF NOT EXISTS payroll_history (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                entity_id INTEGER NOT NULL,
+                employee_id INTEGER NOT NULL,
+                amount REAL NOT NULL,
+                period TEXT NOT NULL, -- '2026-03'
+                status TEXT DEFAULT 'completed',
+                hash TEXT,
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                FOREIGN KEY (entity_id) REFERENCES entities(id),
+                FOREIGN KEY (employee_id) REFERENCES employee_master(id)
+            );
         """)
         
         now = datetime.utcnow().isoformat()
@@ -480,5 +505,41 @@ class AtroshaDB:
             c.execute(
                 "UPDATE expenses SET status=?, matched_tx_id=? WHERE id=?",
                 (status, matched_tx_id, expense_id)
+            )
+            c.commit()
+
+    # ── payroll ─────────────────────────────────────────
+
+    def get_employee_master(self, employee_id: int, entity_id: int):
+        with self._conn() as c:
+            row = c.execute("SELECT * FROM employee_master WHERE id=? AND entity_id=?", (employee_id, entity_id)).fetchone()
+            return dict(row) if row else None
+
+    def get_employee_payroll_history(self, employee_id: int, entity_id: int, limit: int = 6):
+        with self._conn() as c:
+            rows = c.execute(
+                "SELECT * FROM payroll_history WHERE employee_id=? AND entity_id=? ORDER BY created_at DESC LIMIT ?",
+                (employee_id, entity_id, limit)
+            ).fetchall()
+            return [dict(r) for r in rows]
+
+    def add_payroll_record(self, entity_id: int, employee_id: int, amount: float, period: str):
+        with self._conn() as c:
+            c.execute(
+                "INSERT INTO payroll_history (entity_id, employee_id, amount, period) VALUES (?, ?, ?, ?)",
+                (entity_id, employee_id, amount, period)
+            )
+            c.commit()
+
+    def list_employees(self, entity_id: int) -> list[dict]:
+        with self._conn() as c:
+            rows = c.execute("SELECT * FROM employee_master WHERE entity_id=?", (entity_id,)).fetchall()
+            return [dict(r) for r in rows]
+
+    def add_employee(self, entity_id: int, name: str, email: str, base_salary: float, currency: str = 'USD'):
+        with self._conn() as c:
+            c.execute(
+                "INSERT INTO employee_master (entity_id, name, email, base_salary, currency) VALUES (?, ?, ?, ?, ?)",
+                (entity_id, name, email, base_salary, currency)
             )
             c.commit()

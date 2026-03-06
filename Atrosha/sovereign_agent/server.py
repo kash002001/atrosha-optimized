@@ -12,6 +12,7 @@ from brain import parse_invoice_with_fallback
 from tools import execute_payment
 from schemas import InvoiceData, PaymentStatus, IngestResponse, VendorUpdateRequest
 from db import AtroshaDB
+from payroll_engine import PayrollEngine
 
 app = FastAPI(title="Atrosha Sovereign Agent", version="1.0.0")
 
@@ -24,6 +25,7 @@ app.add_middleware(
 )
 
 db = AtroshaDB()
+payroll_engine = PayrollEngine(db)
 
 # --- Auth & RBAC Logic -----------------------------------
 
@@ -525,6 +527,30 @@ async def update_expense(expense_id: int, update: dict, ctx: UserContext = Depen
     # Basic status update or manual override
     db.update_expense_status(expense_id, update.get("status", "pending_match"), update.get("matched_tx_id"))
     return {"status": "success"}
+
+@app.get("/payroll/history/{employee_id}")
+async def get_payroll_history(employee_id: int, ctx: UserContext = Depends(get_current_user)):
+    return db.get_employee_payroll_history(employee_id, ctx.entity_id)
+
+@app.post("/payroll/verify")
+@requires_role(["ADMIN", "APPROVER"])
+async def verify_payroll(draft: List[dict], ctx: UserContext = Depends(get_current_user)):
+    # draft: [{"employee_id": 1, "amount": 5000, "period": "2026-03"}]
+    analysis = payroll_engine.analyze_draft(ctx.entity_id, draft)
+    return analysis
+
+@app.post("/payroll/approve")
+@requires_role(["ADMIN", "APPROVER"])
+async def approve_payroll(records: List[dict], ctx: UserContext = Depends(get_current_user)):
+    for rec in records:
+        db.add_payroll_record(
+            ctx.entity_id,
+            rec["employee_id"],
+            rec["amount"],
+            rec["period"]
+        )
+        db.log("payroll_approved", f"Payroll for {rec['employee_id']} ({rec['period']}) approved", ctx.entity_id, ctx.username)
+    return {"status": "success", "count": len(records)}
 
 if __name__ == "__main__":
     import uvicorn
