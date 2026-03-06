@@ -480,6 +480,51 @@ async def auth_callback(payload: dict):
     # and create a session for the user.
     return {"status": "authorized", "user": "sso_user", "role": "APPROVER"}
 
+# ── expenses ────────────────────────────────────────
+
+@app.get("/expenses")
+async def get_expenses(ctx: UserContext = Depends(get_current_user)):
+    return db.list_expenses(ctx.entity_id)
+
+@app.post("/expenses/upload")
+async def upload_receipt(
+    file: UploadFile, 
+    ctx: UserContext = Depends(get_current_user)
+):
+    import os
+    import shutil
+    from uuid import uuid4
+    
+    upload_dir = "sovereign_agent/uploads/receipts"
+    os.makedirs(upload_dir, exist_ok=True)
+    
+    file_ext = os.path.splitext(file.filename)[1]
+    file_name = f"{uuid4()}{file_ext}"
+    file_path = os.path.join(upload_dir, file_name)
+    
+    with open(file_path, "wb") as buffer:
+        shutil.copyfileobj(file.file, buffer)
+        
+    # Mock OCR Extraction
+    # In a real system, we'd trigger a local Tesseract or PaddleOCR process here
+    # For now, we seed with pending data to be edited by the user
+    db.add_expense(
+        ctx.entity_id,
+        "Unknown Vendor", # Extracted via OCR later
+        0.00,             # Extracted via OCR later
+        None,             # Extracted via OCR later
+        file_path
+    )
+    
+    db.log("expense_uploaded", f"Receipt {file.filename} uploaded", ctx.entity_id, ctx.username)
+    return {"status": "success", "file_path": file_path}
+
+@app.patch("/expenses/{expense_id}")
+@requires_role(["ADMIN", "APPROVER"])
+async def update_expense(expense_id: int, update: dict, ctx: UserContext = Depends(get_current_user)):
+    # Basic status update or manual override
+    db.update_expense_status(expense_id, update.get("status", "pending_match"), update.get("matched_tx_id"))
+    return {"status": "success"}
 
 if __name__ == "__main__":
     import uvicorn

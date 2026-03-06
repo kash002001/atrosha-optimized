@@ -148,6 +148,20 @@ class AtroshaDB:
                 UNIQUE(entity_id, provider_type),
                 FOREIGN KEY (entity_id) REFERENCES entities(id)
             );
+
+            CREATE TABLE IF NOT EXISTS expenses (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                entity_id INTEGER NOT NULL,
+                vendor_name TEXT,
+                amount REAL,
+                currency TEXT DEFAULT 'USD',
+                date TEXT,
+                receipt_path TEXT,
+                status TEXT DEFAULT 'pending_match', -- 'pending_match', 'matched', 'flagged'
+                matched_tx_id TEXT,
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                FOREIGN KEY (entity_id) REFERENCES entities(id)
+            );
         """)
         
         now = datetime.utcnow().isoformat()
@@ -444,4 +458,27 @@ class AtroshaDB:
     def delete_auth_settings(self, settings_id: int, entity_id: int):
         with self._conn() as c:
             c.execute("DELETE FROM auth_settings WHERE id=? AND entity_id=?", (settings_id, entity_id))
+            c.commit()
+
+    # ── expenses ────────────────────────────────────────
+
+    def list_expenses(self, entity_id: int) -> list[dict]:
+        with self._conn() as c:
+            rows = c.execute("SELECT * FROM expenses WHERE entity_id=? ORDER BY created_at DESC", (entity_id,)).fetchall()
+            return [dict(r) for r in rows]
+
+    def add_expense(self, entity_id: int, vendor: str, amount: float, date: str, receipt_path: str):
+        with self._conn() as c:
+            c.execute(
+                "INSERT INTO expenses (entity_id, vendor_name, amount, date, receipt_path) VALUES (?,?,?,?,?)",
+                (entity_id, vendor, amount, date, receipt_path)
+            )
+            c.commit()
+
+    def update_expense_status(self, expense_id: int, status: str, matched_tx_id: str = None):
+        with self._conn() as c:
+            c.execute(
+                "UPDATE expenses SET status=?, matched_tx_id=? WHERE id=?",
+                (status, matched_tx_id, expense_id)
+            )
             c.commit()

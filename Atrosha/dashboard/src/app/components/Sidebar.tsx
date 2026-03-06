@@ -17,6 +17,7 @@ import {
     Layers,
     FileSpreadsheet,
     Webhook,
+    Receipt,
 } from "lucide-react";
 
 
@@ -30,6 +31,7 @@ const nav = [
     { href: "/export", label: "Accounting Export", icon: FileSpreadsheet, roles: ["ADMIN"] },
     { href: "/webhooks", label: "Developer Webhooks", icon: Webhook, roles: ["ADMIN"] },
     { href: "/audit", label: "Audit Log", icon: ScrollText, roles: ["ADMIN", "AUDITOR"] },
+    { href: "/expenses", label: "Expenses", icon: Receipt, roles: ["ADMIN", "APPROVER"] },
     { href: "/transactions", label: "Transactions", icon: ArrowLeftRight, roles: ["ADMIN", "APPROVER", "AUDITOR"] },
     { href: "/rules", label: "Intents", icon: BookOpen, roles: ["ADMIN", "APPROVER"] },
     { href: "/agents", label: "Agents", icon: Shield, roles: ["ADMIN"] },
