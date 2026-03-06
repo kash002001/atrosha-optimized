@@ -29,4 +29,5 @@ once_cell = "1.19"
 prometheus = "0.13"
 ethers = { version = "2.0", features = ["rustls", "ws"] }
 regex = "1"
+url = "2.5"
 

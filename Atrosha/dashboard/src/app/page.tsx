@@ -5,6 +5,8 @@ import {
 } from "lucide-react";
 import { redirect } from "next/navigation";
 import { VolumeChart, Sparkline } from "./components/DashboardCharts";
+import DashboardAgentStats from "./components/DashboardAgentStats";
+
 
 export const revalidate = 0; // Ensure dynamic data
 
@@ -132,6 +134,9 @@ export default async function Overview() {
           </Link>
         </div>
       </div>
+
+      {/* Sovereign Agent Stats */}
+      <DashboardAgentStats />
 
       {/* Main Chart */}
       <div className="chart-card" style={{ padding: 24, minHeight: 400, marginBottom: 24 }}>

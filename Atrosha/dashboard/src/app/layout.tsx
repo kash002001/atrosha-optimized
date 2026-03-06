@@ -1,6 +1,8 @@
 import type { Metadata } from "next";
 import "./globals.css";
 import Sidebar from "./components/Sidebar";
+import { UserProvider } from "./context/UserContext";
+
 
 export const metadata: Metadata = {
   title: "Atrosha | Dashboard",
@@ -19,10 +21,12 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body>
-        <div className="app">
-          <Sidebar />
-          <main className="main-content">{children}</main>
-        </div>
+        <UserProvider>
+          <div className="app">
+            <Sidebar />
+            <main className="main-content">{children}</main>
+          </div>
+        </UserProvider>
       </body>
     </html>
   );

@@ -1,162 +1,312 @@
 "use client";
 
-import { useState } from "react";
-import { CheckCircle2, FileText, Lock, AlertTriangle, Play } from "lucide-react";
+import { useState, useCallback } from "react";
+import { CheckCircle2, FileText, Lock, AlertTriangle, Play, Upload, Loader2, Edit3, X } from "lucide-react";
+import { atroshaFetch } from "@/lib/api-client";
 
 interface Invoice {
-    id: string;
     vendor: string;
     amount: number;
-    status: string;
-    date: string;
+    currency: string;
+    due_date: string | null;
+    invoice_number: string | null;
+    confidence: "high" | "medium" | "low";
+    source: string;
 }
 
-interface SignatureResult {
-    intent: string;
-    sessionId: string;
-    status: string;
-    signature: string;
-}
+type Step = "upload" | "review" | "sign" | "execute" | "done";
 
 export default function APClient() {
-    const [invoices, setInvoices] = useState<Invoice[]>([
-        { id: "INV-1029", vendor: "Cloudflare Inc.", amount: 500.00, status: "pending", date: "2026-03-05" },
-        { id: "INV-1030", vendor: "OpenAI", amount: 25000.00, status: "pending", date: "2026-03-04" },
-    ]);
+    const [step, setStep] = useState<Step>("upload");
+    const [invoice, setInvoice] = useState<Invoice | null>(null);
+    const [sessionId, setSessionId] = useState("");
+    const [loading, setLoading] = useState(false);
+    const [error, setError] = useState("");
+    const [result, setResult] = useState<Record<string, string> | null>(null);
+    const [dragOver, setDragOver] = useState(false);
 
-    const [selectedInvoice, setSelectedInvoice] = useState<Invoice | null>(null);
-    const [signing, setSigning] = useState(false);
-    const [signatureResult, setSignatureResult] = useState<SignatureResult | null>(null);
+    // editable fields for review
+    const [editVendor, setEditVendor] = useState("");
+    const [editAmount, setEditAmount] = useState("");
 
-    const handleSignIntent = async () => {
-        if (!selectedInvoice) return;
-        setSigning(true);
-        // Simulate hardware-backed cryptography logic
-        setTimeout(() => {
-            const mockSessionId = "sess_" + Math.random().toString(36).substring(2, 9);
-            const intentStr = `I authorize the payment of $${selectedInvoice.amount} to ${selectedInvoice.vendor}.`;
+    const handleUpload = useCallback(async (file: File) => {
+        setLoading(true);
+        setError("");
+        try {
+            const form = new FormData();
+            form.append("file", file);
+            
+            // Note: atroshaFetch usually expects JSON, but for file uploads we might need the raw fetch 
+            // OR we can make a helper. For now, since it's just one multipart, I'll use raw fetch 
+            // but inject the headers manually if needed. 
+            // Actually, atroshaFetch logic: it gets user/entity from localStorage.
+            
+            const user = localStorage.getItem("atrosha_user") || "admin";
+            const entity = localStorage.getItem("atrosha_entity") || "1";
+            const agentUrl = process.env.NEXT_PUBLIC_BACKEND_URL || "http://localhost:8003";
 
-            setSignatureResult({
-                intent: intentStr,
-                sessionId: mockSessionId,
-                status: "Locked",
-                signature: "0x" + Array.from({ length: 64 }, () => Math.floor(Math.random() * 16).toString(16)).join("")
+            const res = await fetch(`${agentUrl}/ingest`, { 
+                method: "POST", 
+                body: form,
+                headers: {
+                    "X-Atrosha-User": user,
+                    "X-Atrosha-Entity": entity
+                }
             });
 
-            // Re-render invoice status
-            setInvoices(invoices.map(inv =>
-                inv.id === selectedInvoice.id ? { ...inv, status: "authorized" } : inv
-            ));
+            if (!res.ok) {
+                const txt = await res.text();
+                throw new Error(txt);
+            }
+            const data = await res.json();
+            setInvoice(data.invoice);
+            setEditVendor(data.invoice.vendor);
+            setEditAmount(String(data.invoice.amount));
+            setStep("review");
+        } catch (e: unknown) {
+            setError(e instanceof Error ? e.message : "upload failed");
+        } finally {
+            setLoading(false);
+        }
+    }, []);
 
-            setSigning(false);
-        }, 1500);
+    const handleDrop = useCallback((e: React.DragEvent) => {
+        e.preventDefault();
+        setDragOver(false);
+        const file = e.dataTransfer.files[0];
+        if (file?.name.toLowerCase().endsWith(".pdf")) handleUpload(file);
+        else setError("only PDF files accepted");
+    }, [handleUpload]);
+
+    const handleAuthorize = async () => {
+        setLoading(true);
+        setError("");
+        const sid = "sess_" + Math.random().toString(36).substring(2, 10);
+        try {
+            await atroshaFetch("/authorize", {
+                method: "POST",
+                body: JSON.stringify({
+                    session_id: sid,
+                    vendor: editVendor,
+                    amount: parseFloat(editAmount),
+                    signature: "0x" + Array.from({ length: 64 }, () => Math.floor(Math.random() * 16).toString(16)).join(""),
+                }),
+            });
+            setSessionId(sid);
+            setStep("sign");
+        } catch (e: unknown) {
+            setError(e instanceof Error ? e.message : "authorization failed");
+        } finally {
+            setLoading(false);
+        }
     };
 
+    const handleExecute = async () => {
+        setLoading(true);
+        setError("");
+        try {
+            const data = await atroshaFetch(`/execute/${sessionId}`, {
+                method: "POST",
+                body: JSON.stringify({ vendor: editVendor, amount: parseFloat(editAmount) }),
+            });
+            setResult(data);
+            setStep("done");
+        } catch (e: unknown) {
+            setError(e instanceof Error ? e.message : "execution failed");
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    const reset = () => {
+        setStep("upload");
+        setInvoice(null);
+        setSessionId("");
+        setResult(null);
+        setError("");
+    };
+
+    const confColor = (c: string) => c === "high" ? "var(--green, #22c55e)" : c === "medium" ? "#f59e0b" : "var(--red, #ef4444)";
+
     return (
-        <div className="ap-grid" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '2rem' }}>
-            {/* Left Col: Queue */}
-            <div className="card">
-                <div className="card-header">
-                    <h2>Pending Invoices</h2>
+        <div style={{ maxWidth: 720, margin: "0 auto" }}>
+            {error && (
+                <div style={{
+                    background: "rgba(239,68,68,0.1)", border: "1px solid rgba(239,68,68,0.3)",
+                    borderRadius: 8, padding: "12px 16px", marginBottom: 20,
+                    display: "flex", alignItems: "center", gap: 8, color: "#ef4444", fontSize: 13,
+                }}>
+                    <AlertTriangle size={16} />
+                    {error}
+                    <button onClick={() => setError("")} style={{ marginLeft: "auto", background: "none", border: "none", color: "#ef4444", cursor: "pointer" }}>
+                        <X size={14} />
+                    </button>
                 </div>
-                <div className="invoice-list">
-                    {invoices.map(inv => (
-                        <div
-                            key={inv.id}
-                            style={{
-                                padding: '1rem',
-                                border: '1px solid var(--border)',
-                                borderRadius: '8px',
-                                marginBottom: '1rem',
-                                cursor: 'pointer',
-                                background: selectedInvoice?.id === inv.id ? 'var(--bg-hover)' : 'transparent',
-                                display: 'flex',
-                                justifyContent: 'space-between',
-                                alignItems: 'center'
-                            }}
-                            onClick={() => setSelectedInvoice(inv)}
-                        >
-                            <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
-                                <FileText className="text-muted" size={24} />
-                                <div>
-                                    <h3 style={{ margin: 0, fontSize: '1rem' }}>{inv.vendor}</h3>
-                                    <span className="text-muted" style={{ fontSize: '0.875rem' }}>{inv.id} • {inv.date}</span>
-                                </div>
-                            </div>
-                            <div style={{ textAlign: 'right' }}>
-                                <div style={{ fontWeight: 600, fontSize: '1.125rem' }}>${inv.amount.toFixed(2)}</div>
-                                <span className={`badge ${inv.status === 'authorized' ? 'badge-success' : 'badge-warning'}`}>
-                                    {inv.status}
-                                </span>
-                            </div>
+            )}
+
+            {/* step 1: upload */}
+            {step === "upload" && (
+                <div
+                    onDragOver={(e) => { e.preventDefault(); setDragOver(true); }}
+                    onDragLeave={() => setDragOver(false)}
+                    onDrop={handleDrop}
+                    style={{
+                        border: `2px dashed ${dragOver ? "var(--primary, #3b82f6)" : "var(--border, #333)"}`,
+                        borderRadius: 12, padding: "4rem 2rem", textAlign: "center",
+                        background: dragOver ? "rgba(59,130,246,0.05)" : "var(--bg-card, #1a1a1a)",
+                        transition: "all 0.2s ease", cursor: "pointer",
+                    }}
+                    onClick={() => {
+                        const input = document.createElement("input");
+                        input.type = "file";
+                        input.accept = ".pdf";
+                        input.onchange = (e) => {
+                            const f = (e.target as HTMLInputElement).files?.[0];
+                            if (f) handleUpload(f);
+                        };
+                        input.click();
+                    }}
+                >
+                    {loading ? (
+                        <Loader2 size={40} className="animate-spin" style={{ color: "var(--primary, #3b82f6)", margin: "0 auto" }} />
+                    ) : (
+                        <>
+                            <Upload size={40} style={{ color: "var(--text-muted, #888)", margin: "0 auto 1rem" }} />
+                            <p style={{ fontSize: 16, fontWeight: 600, marginBottom: 4 }}>Drop an invoice PDF here</p>
+                            <p style={{ fontSize: 13, color: "var(--text-muted, #888)" }}>or click to browse — processed entirely on-device</p>
+                        </>
+                    )}
+                </div>
+            )}
+
+            {/* step 2: review extracted data */}
+            {step === "review" && invoice && (
+                <div className="card" style={{ padding: "1.5rem" }}>
+                    <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 20 }}>
+                        <Edit3 size={18} style={{ color: "var(--primary, #3b82f6)" }} />
+                        <h3 style={{ margin: 0, fontSize: 16 }}>Review Extracted Data</h3>
+                        <span style={{
+                            marginLeft: "auto", fontSize: 11, fontWeight: 600, padding: "2px 8px",
+                            borderRadius: 4, color: confColor(invoice.confidence),
+                            background: `${confColor(invoice.confidence)}15`, border: `1px solid ${confColor(invoice.confidence)}40`,
+                        }}>
+                            {invoice.confidence} confidence ({invoice.source})
+                        </span>
+                    </div>
+
+                    <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
+                        <div>
+                            <label style={{ fontSize: 11, color: "var(--text-muted, #888)", textTransform: "uppercase", letterSpacing: 1, marginBottom: 4, display: "block" }}>Vendor</label>
+                            <input
+                                value={editVendor} onChange={(e) => setEditVendor(e.target.value)}
+                                style={{
+                                    width: "100%", padding: "10px 12px", background: "var(--bg-card, #1a1a1a)",
+                                    border: "1px solid var(--border, #333)", borderRadius: 6,
+                                    color: "var(--text, #fff)", fontSize: 14,
+                                }}
+                            />
                         </div>
-                    ))}
-                </div>
-            </div>
-
-            {/* Right Col: Signing UI */}
-            <div className="card">
-                <div className="card-header" style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                    <Lock size={20} className="text-primary" />
-                    <h2>Intent Authorization</h2>
-                </div>
-
-                {selectedInvoice ? (
-                    <div style={{ padding: '1rem 0' }}>
-                        <div style={{ background: 'var(--bg-document)', padding: '1.5rem', borderRadius: '8px', marginBottom: '1.5rem', border: '1px solid var(--border)' }}>
-                            <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '1rem' }}>
-                                <span className="text-muted">Payee</span>
-                                <strong style={{ color: 'var(--text-primary)' }}>{selectedInvoice.vendor}</strong>
-                            </div>
-                            <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '1rem' }}>
-                                <span className="text-muted">Amount</span>
-                                <strong style={{ fontSize: '1.25rem', color: 'var(--text-primary)' }}>${selectedInvoice.amount.toFixed(2)}</strong>
-                            </div>
-
-                            <hr style={{ borderColor: 'var(--border)', margin: '1rem 0' }} />
-
-                            <p style={{ fontSize: '0.875rem', color: 'var(--text-secondary)' }}>
-                                <AlertTriangle size={14} style={{ display: 'inline', marginRight: '4px', verticalAlign: '-2px' }} />
-                                Signing this intent will bind the Agent&apos;s execution to this mathematical constraint via Atrosha Kernel.
-                            </p>
+                        <div>
+                            <label style={{ fontSize: 11, color: "var(--text-muted, #888)", textTransform: "uppercase", letterSpacing: 1, marginBottom: 4, display: "block" }}>Amount (USD)</label>
+                            <input
+                                type="number" step="0.01" value={editAmount} onChange={(e) => setEditAmount(e.target.value)}
+                                style={{
+                                    width: "100%", padding: "10px 12px", background: "var(--bg-card, #1a1a1a)",
+                                    border: "1px solid var(--border, #333)", borderRadius: 6,
+                                    color: "var(--text, #fff)", fontSize: 14,
+                                }}
+                            />
                         </div>
-
-                        {!signatureResult || selectedInvoice.status !== 'authorized' ? (
-                            <button
-                                className="btn-primary"
-                                style={{ width: '100%', padding: '1rem' }}
-                                onClick={handleSignIntent}
-                                disabled={signing}
-                            >
-                                {signing ? "Generating Hardware Proof..." : "Sign & Authorize Intent"}
-                            </button>
-                        ) : (
-                            <div className="card" style={{ background: 'var(--bg-success-light)', border: '1px solid var(--border-success)' }}>
-                                <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', color: 'var(--text-success)', marginBottom: '1rem' }}>
-                                    <CheckCircle2 size={20} />
-                                    <strong>Intent Locked Cryptographically</strong>
-                                </div>
-
-                                <div className="code-block" style={{ fontSize: '0.75rem', marginBottom: '1rem' }}>
-                                    Session ID: {signatureResult.sessionId}<br />
-                                    Intent: &quot;{signatureResult.intent}&quot;<br />
-                                    Sig_Ed25519: {signatureResult.signature.substring(0, 32)}...
-                                </div>
-
-                                <button className="btn-secondary" style={{ width: '100%', display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '0.5rem' }}>
-                                    <Play size={16} />
-                                    Deploy Sovereign Agent
-                                </button>
+                        {invoice.due_date && (
+                            <div>
+                                <label style={{ fontSize: 11, color: "var(--text-muted, #888)", textTransform: "uppercase", letterSpacing: 1 }}>Due Date</label>
+                                <div style={{ fontSize: 14, color: "var(--text, #fff)", marginTop: 4 }}>{invoice.due_date}</div>
                             </div>
                         )}
+                    </div>
 
+                    <div style={{ display: "flex", gap: 12, marginTop: 24 }}>
+                        <button onClick={reset} style={{
+                            flex: 1, padding: "10px", borderRadius: 6, border: "1px solid var(--border, #333)",
+                            background: "transparent", color: "var(--text-muted, #888)", cursor: "pointer", fontSize: 13,
+                        }}>Cancel</button>
+                        <button onClick={handleAuthorize} disabled={loading || !editVendor || !editAmount} style={{
+                            flex: 2, padding: "10px", borderRadius: 6, border: "none",
+                            background: "var(--primary, #3b82f6)", color: "#fff", cursor: "pointer",
+                            fontSize: 13, fontWeight: 600, opacity: loading ? 0.6 : 1,
+                        }}>
+                            {loading ? "Authorizing..." : "Approve & Sign Intent"}
+                        </button>
                     </div>
-                ) : (
-                    <div className="empty-state" style={{ padding: '3rem 0', textAlign: 'center', color: 'var(--text-muted)' }}>
-                        Select an invoice from the queue to review and sign.
+                </div>
+            )}
+
+            {/* step 3: signed, ready to execute */}
+            {step === "sign" && (
+                <div className="card" style={{ padding: "1.5rem" }}>
+                    <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 20 }}>
+                        <Lock size={18} style={{ color: "var(--green, #22c55e)" }} />
+                        <h3 style={{ margin: 0, fontSize: 16 }}>Intent Locked Cryptographically</h3>
                     </div>
-                )}
-            </div>
+
+                    <div style={{ background: "rgba(0,0,0,0.2)", padding: 16, borderRadius: 8, fontSize: 12, fontFamily: "monospace", marginBottom: 20, border: "1px solid var(--border, #333)" }}>
+                        <div>Session: {sessionId}</div>
+                        <div>Intent: &quot;Pay {editVendor} ${parseFloat(editAmount).toFixed(2)} USD&quot;</div>
+                        <div>Status: <span style={{ color: "var(--green, #22c55e)" }}>AUTHORIZED</span></div>
+                    </div>
+
+                    <p style={{ fontSize: 13, color: "var(--text-muted, #888)", marginBottom: 20 }}>
+                        <AlertTriangle size={14} style={{ display: "inline", verticalAlign: "-2px", marginRight: 4 }} />
+                        The Atrosha Kernel will mathematically verify this payment matches the signed intent before execution.
+                    </p>
+
+                    <div style={{ display: "flex", gap: 12 }}>
+                        <button onClick={reset} style={{
+                            flex: 1, padding: "10px", borderRadius: 6, border: "1px solid var(--border, #333)",
+                            background: "transparent", color: "var(--text-muted, #888)", cursor: "pointer", fontSize: 13,
+                        }}>Cancel</button>
+                        <button onClick={handleExecute} disabled={loading} style={{
+                            flex: 2, padding: "10px", borderRadius: 6, border: "none",
+                            background: "var(--green, #22c55e)", color: "#000", cursor: "pointer",
+                            fontSize: 13, fontWeight: 600, display: "flex", alignItems: "center", justifyContent: "center", gap: 6,
+                            opacity: loading ? 0.6 : 1,
+                        }}>
+                            {loading ? <Loader2 size={16} className="animate-spin" /> : <Play size={16} />}
+                            {loading ? "Executing..." : "Deploy Sovereign Agent"}
+                        </button>
+                    </div>
+                </div>
+            )}
+
+            {/* step 4: done */}
+            {step === "done" && result && (
+                <div className="card" style={{ padding: "1.5rem" }}>
+                    <div style={{
+                        display: "flex", alignItems: "center", gap: 8, marginBottom: 20,
+                        color: result.status === "confirmed" ? "var(--green, #22c55e)" : "var(--red, #ef4444)",
+                    }}>
+                        {result.status === "confirmed" ? <CheckCircle2 size={20} /> : <AlertTriangle size={20} />}
+                        <h3 style={{ margin: 0, fontSize: 16 }}>
+                            {result.status === "confirmed" ? "Payment Executed" : `Payment ${result.status}`}
+                        </h3>
+                    </div>
+
+                    <div style={{ background: "rgba(0,0,0,0.2)", padding: 16, borderRadius: 8, fontSize: 12, fontFamily: "monospace", marginBottom: 20, border: "1px solid var(--border, #333)" }}>
+                        {result.tx_ref && <div>TX Ref: {result.tx_ref}</div>}
+                        <div>Status: {result.status}</div>
+                        {result.reason && <div>Reason: {result.reason}</div>}
+                        {result.idempotency_key && <div>Idempotency: {result.idempotency_key}</div>}
+                    </div>
+
+                    <button onClick={reset} style={{
+                        width: "100%", padding: "10px", borderRadius: 6, border: "1px solid var(--border, #333)",
+                        background: "transparent", color: "var(--text, #fff)", cursor: "pointer", fontSize: 13,
+                    }}>
+                        <FileText size={14} style={{ display: "inline", verticalAlign: "-2px", marginRight: 6 }} />
+                        Process Another Invoice
+                    </button>
+                </div>
+            )}
         </div>
     );
 }

@@ -12,19 +12,34 @@ import {
     LogOut,
     Terminal,
     CreditCard,
+    ScrollText,
+    Users,
+    Layers,
+    FileSpreadsheet,
+    Webhook,
 } from "lucide-react";
 
 
+import { useUser } from "../context/UserContext";
+
 const nav = [
-    { href: "/", label: "Overview", icon: LayoutDashboard },
-    { href: "/ap", label: "Accounts Payable", icon: CreditCard },
-    { href: "/transactions", label: "Transactions", icon: ArrowLeftRight },
-    { href: "/rules", label: "Intents", icon: BookOpen },
-    { href: "/agents", label: "Agents", icon: Shield },
+    { href: "/", label: "Overview", icon: LayoutDashboard, roles: ["ADMIN", "APPROVER", "AUDITOR"] },
+    { href: "/ap", label: "Single AP", icon: CreditCard, roles: ["ADMIN", "APPROVER"] },
+    { href: "/batch", label: "Batch AP", icon: Layers, roles: ["ADMIN", "APPROVER"] },
+    { href: "/vendors", label: "Vendors", icon: Users, roles: ["ADMIN", "APPROVER", "AUDITOR"] },
+    { href: "/export", label: "Accounting Export", icon: FileSpreadsheet, roles: ["ADMIN"] },
+    { href: "/webhooks", label: "Developer Webhooks", icon: Webhook, roles: ["ADMIN"] },
+    { href: "/audit", label: "Audit Log", icon: ScrollText, roles: ["ADMIN", "AUDITOR"] },
+    { href: "/transactions", label: "Transactions", icon: ArrowLeftRight, roles: ["ADMIN", "APPROVER", "AUDITOR"] },
+    { href: "/rules", label: "Intents", icon: BookOpen, roles: ["ADMIN", "APPROVER"] },
+    { href: "/agents", label: "Agents", icon: Shield, roles: ["ADMIN"] },
 ];
 
 export default function Sidebar() {
     const path = usePathname();
+    const { user, role, entityId, setRole, setEntityId, setUser } = useUser();
+
+    const filteredNav = nav.filter(n => n.roles.includes(role));
 
     return (
         <>
@@ -53,6 +68,23 @@ export default function Sidebar() {
                 @media (max-width: 768px) {
                     .mobile-toggle { display: block !important; }
                 }
+                .context-switcher {
+                    padding: 12px;
+                    border-top: 1px solid var(--border);
+                    font-size: 0.8rem;
+                    display: flex;
+                    flex-direction: column;
+                    gap: 8px;
+                    background: rgba(255,255,255,0.02);
+                }
+                .context-switcher select {
+                    background: var(--bg-body);
+                    border: 1px solid var(--border);
+                    color: var(--text-main);
+                    padding: 4px;
+                    border-radius: 4px;
+                    outline: none;
+                }
             `}</style>
 
             <aside className="sidebar" onClick={(e) => {
@@ -63,19 +95,14 @@ export default function Sidebar() {
             }}>
                 <div className="sidebar-brand">
                     <h1>Atrosha</h1>
-                    <span>Beta</span>
-                    {/* Close button for mobile */}
-                    <button
-                        className="mobile-close"
-                        onClick={() => document.querySelector('.sidebar')?.classList.remove('open')}
-                        style={{ marginLeft: 'auto', background: 'none', border: 'none', cursor: 'pointer' }}
-                    >
-                        {/* Only visible on mobile? CSS handles it? logic simplified */}
-                    </button>
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+                        <span style={{ fontSize: '0.6rem', color: 'var(--accent)' }}>ENTITY: {entityId}</span>
+                        <span style={{ fontSize: '0.6rem', opacity: 0.6 }}>ROLE: {role}</span>
+                    </div>
                 </div>
                 <nav className="sidebar-nav">
                     <div className="sidebar-section">Main</div>
-                    {nav.map((n) => (
+                    {filteredNav.map((n) => (
                         <Link
                             key={n.href}
                             href={n.href}
@@ -85,20 +112,49 @@ export default function Sidebar() {
                             {n.label}
                         </Link>
                     ))}
-                    <div className="sidebar-section">System</div>
-                    <Link href="/settings" className={`sidebar-link ${path === "/settings" ? "active" : ""}`}>
-                        <Settings />
-                        Settings
-                    </Link>
-                    <Link href="/developers" className={`sidebar-link ${path === "/developers" ? "active" : ""}`}>
-                        <Terminal />
-                        Developers
-                    </Link>
-                    <Link href="/status" className={`sidebar-link ${path === "/status" ? "active" : ""}`}>
-                        <Activity />
-                        Status
-                    </Link>
+                    
+                    {role === "ADMIN" && (
+                        <>
+                            <div className="sidebar-section">System</div>
+                            <Link href="/settings" className={`sidebar-link ${path === "/settings" ? "active" : ""}`}>
+                                <Settings />
+                                Settings
+                            </Link>
+                            <Link href="/settings/auth" className={`sidebar-link ${path === "/settings/auth" ? "active" : ""}`}>
+                                <Shield />
+                                SSO Auth
+                            </Link>
+                            <Link href="/developers" className={`sidebar-link ${path === "/developers" ? "active" : ""}`}>
+                                <Terminal />
+                                Developers
+                            </Link>
+                            <Link href="/status" className={`sidebar-link ${path === "/status" ? "active" : ""}`}>
+                                <Activity />
+                                Status
+                            </Link>
+                        </>
+                    )}
                 </nav>
+
+                <div className="context-switcher">
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                        <span>Role</span>
+                        <select value={role} onChange={(e) => setRole(e.target.value)}>
+                            <option value="ADMIN">Admin</option>
+                            <option value="APPROVER">Approver</option>
+                            <option value="AUDITOR">Auditor</option>
+                        </select>
+                    </div>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                        <span>Entity</span>
+                        <select value={entityId} onChange={(e) => setEntityId(parseInt(e.target.value))}>
+                            <option value={1}>Main Entity</option>
+                            <option value={2}>Subsidiary A</option>
+                            <option value={3}>Region West</option>
+                        </select>
+                    </div>
+                </div>
+
                 <div className="sidebar-footer">
                     <button
                         onClick={async () => {

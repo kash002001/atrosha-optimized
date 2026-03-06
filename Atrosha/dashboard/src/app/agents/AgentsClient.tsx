@@ -1,30 +1,44 @@
 "use client";
 
-import { Shield, DollarSign, Clock, Users, AlertTriangle } from "lucide-react";
-import { useState } from "react";
+import { Shield, DollarSign, Clock, Users, AlertTriangle, Plus, HardDrive } from "lucide-react";
+import { useState, useEffect } from "react";
+import { useUser } from "../context/UserContext";
+import { atroshaFetch } from "@/lib/api-client";
 
 interface Agent {
     id: string;
     name: string;
-    organization_id: string;
+    entity_id: number;
     created_at: string;
     is_active?: boolean;
-    daily_limit_cents?: number;
 }
 
-interface AgentsClientProps {
-    agents: Agent[];
-}
-
-export default function AgentsClient({ agents }: AgentsClientProps) {
+export default function AgentsClient() {
+    const { entityId, role } = useUser();
+    const [agents, setAgents] = useState<Agent[]>([]);
     const [showNewAgent, setShowNewAgent] = useState(false);
     const [newName, setNewName] = useState("");
     const [creating, setCreating] = useState(false);
+    const [loading, setLoading] = useState(true);
 
     const [newAgentKey, setNewAgentKey] = useState<{ name: string, priv: string } | null>(null);
 
-    // Mock global stats for now as they might be config-based or aggregates
-    // Renamed "Global Policies" to "Global Limits" for clarity
+    const fetchAgents = async () => {
+        setLoading(true);
+        try {
+            const data = await atroshaFetch("/agents");
+            setAgents(data || []);
+        } catch (e) {
+            console.error(e);
+            setAgents([]);
+        }
+        setLoading(false);
+    };
+
+    useEffect(() => {
+        fetchAgents();
+    }, [entityId, role]);
+
     const global = [
         { icon: AlertTriangle, label: "HITL Threshold", value: "$50,000", desc: "Transactions above this require human-in-the-loop MFA" },
         { icon: Shield, label: "Supervisor Sig Threshold", value: "$10,000", desc: "Requires X-Atrosha-Supervisor-Signature header" },
@@ -36,19 +50,20 @@ export default function AgentsClient({ agents }: AgentsClientProps) {
         if (!newName.trim()) return;
         setCreating(true);
         try {
-            // Dynamic import to avoid SSR issues with server actions in client components if not perfectly set up
-            const { createAgent } = await import("./actions");
-            const result = await createAgent(newName, 500000); // Default $5k
+            const result = await atroshaFetch("/agents", {
+                method: "POST",
+                body: JSON.stringify({ name: newName })
+            });
 
             if (result.error) {
                 alert("Failed to create agent: " + result.error);
                 return;
             }
 
-            const newAgent = result.data;
-            setNewAgentKey({ name: newName, priv: newAgent._privateKey });
+            setNewAgentKey({ name: newName, priv: result._privateKey });
             setShowNewAgent(false);
             setNewName("");
+            fetchAgents();
         } catch (e: unknown) {
             alert("Crash during agent creation: " + (e instanceof Error ? e.message : String(e)));
         } finally {
@@ -60,7 +75,7 @@ export default function AgentsClient({ agents }: AgentsClientProps) {
         <>
             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-end", marginBottom: 12 }}>
                 <h3 style={{ fontSize: 14, fontWeight: 600, display: "flex", alignItems: "center", gap: 8, margin: 0 }}>
-                    <DollarSign size={16} /> Global Limits
+                    <DollarSign size={16} /> Global Limits (Entity {entityId})
                 </h3>
             </div>
 
@@ -69,7 +84,7 @@ export default function AgentsClient({ agents }: AgentsClientProps) {
                     <div className="stat-card" key={g.label}>
                         <div className="stat-label"><g.icon size={14} /> {g.label}</div>
                         <div className="stat-value" style={{ fontSize: 22 }}>{g.value}</div>
-                        <p style={{ fontSize: 11, color: "var(--text-dim)", marginTop: 4 }}>{g.desc}</p>
+                        <p style={{ fontSize: 11, color: "var(--text-muted)", marginTop: 4 }}>{g.desc}</p>
                     </div>
                 ))}
             </div>
@@ -78,17 +93,19 @@ export default function AgentsClient({ agents }: AgentsClientProps) {
                 <h3 style={{ fontSize: 14, fontWeight: 600, display: "flex", alignItems: "center", gap: 8, margin: 0 }}>
                     <Shield size={16} /> Active Agents ({agents.length})
                 </h3>
-                <button
-                    onClick={() => setShowNewAgent(true)}
-                    className="btn-primary"
-                    style={{ fontSize: 12, padding: "6px 12px", background: "var(--primary)", border: "none", borderRadius: 4, color: "#fff", cursor: "pointer" }}
-                >
-                    + New Agent
-                </button>
+                {role === "ADMIN" && (
+                    <button
+                        onClick={() => setShowNewAgent(true)}
+                        className="btn-primary"
+                        style={{ fontSize: 12, padding: "6px 12px", background: "var(--primary)", border: "none", borderRadius: 4, color: "#fff", cursor: "pointer", display: "flex", alignItems: "center", gap: 6 }}
+                    >
+                        <Plus size={14} /> New Agent
+                    </button>
+                )}
             </div>
 
             {newAgentKey && (
-                <div className="chart-card" style={{ marginBottom: 20, border: "1px solid var(--accent)", background: "var(--bg-card)" }}>
+                <div className="chart-card" style={{ marginBottom: 20, border: "1px solid var(--accent)", background: "rgba(139, 92, 246, 0.05)" }}>
                     <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 16 }}>
                         <div>
                             <h4 style={{ marginTop: 0, color: "var(--accent)", display: "flex", alignItems: "center", gap: 8 }}>
@@ -104,32 +121,9 @@ export default function AgentsClient({ agents }: AgentsClientProps) {
                         {newAgentKey.priv}
                     </div>
 
-                    <h5 style={{ fontSize: 13, fontWeight: 600, marginBottom: 12, color: "var(--text)", textTransform: "uppercase", letterSpacing: "0.5px" }}>Universal Integration Guide</h5>
-                    <p style={{ fontSize: 13, color: "var(--text-dim)", marginBottom: 16, lineHeight: 1.5 }}>
-                        Atrosha dynamically protects <strong>any AI agent in the world</strong> (OpenAI, Anthropic, custom LLMs, financial bots, Open Claw) out of the box.
-                        Simply route your agent&apos;s outbound internet requests through the secure kernel.
-                    </p>
-
-                    <div style={{
-                        background: "var(--bg)", padding: 16, borderRadius: 6, border: "1px solid var(--border)",
-                        fontFamily: "Consolas, monospace", fontSize: 12, color: "var(--text)", overflowX: "auto", marginBottom: 20
-                    }}>
-                        <pre style={{ margin: 0 }}>
-                            {`# 1. Provide Context to your AI Agent
-export ATROSHA_AGENT_KEY="${newAgentKey.priv.substring(0, 16).replace(/[^a-zA-Z0-9]/g, 'a')}..."
-
-# 2. Force external internet traffic through the guardian
-export HTTPS_PROXY="https://kernel.atrosha.bond"
-export HTTP_PROXY="http://kernel.atrosha.bond"
-
-# 3. That's it! All HTTP requests, external API calls, and financial 
-# transfers are now cryptographically verified and semantically audited.`}
-                        </pre>
-                    </div>
-
                     <button
                         onClick={() => setNewAgentKey(null)}
-                        style={{ padding: "8px 16px", background: "var(--accent)", color: "#000", border: "none", borderRadius: 4, cursor: "pointer", fontWeight: 600, fontSize: 13 }}
+                        style={{ padding: "8px 16px", background: "var(--primary)", color: "#fff", border: "none", borderRadius: 4, cursor: "pointer", fontWeight: 600, fontSize: 13 }}
                     >
                         I have securely saved my key
                     </button>
@@ -137,25 +131,25 @@ export HTTP_PROXY="http://kernel.atrosha.bond"
             )}
 
             {showNewAgent && (
-                <div className="chart-card" style={{ marginBottom: 20, border: "1px solid var(--primary)" }}>
-                    <h4 style={{ marginTop: 0 }}>Register New Agent</h4>
+                <div className="chart-card" style={{ marginBottom: 20, border: "1px solid var(--primary)", padding: 20 }}>
+                    <h4 style={{ marginTop: 0, marginBottom: 16 }}>Register New Agent</h4>
                     <div style={{ display: "flex", flexWrap: "wrap", gap: 10 }}>
                         <input
                             value={newName}
                             onChange={e => setNewName(e.target.value)}
                             placeholder="Agent Name (e.g. 'Support Bot')"
-                            style={{ flex: 1, padding: "8px", borderRadius: 4, border: "1px solid var(--border)", background: "var(--bg)" }}
+                            style={{ flex: 1, padding: "8px 12px", borderRadius: 6, border: "1px solid var(--border)", background: "var(--bg-body)", color: 'var(--text)' }}
                         />
                         <button
                             onClick={handleCreate}
                             disabled={creating}
-                            style={{ background: "var(--primary)", color: "white", border: "none", padding: "0 16px", borderRadius: 4, cursor: "pointer" }}
+                            style={{ background: "var(--primary)", color: "white", border: "none", padding: "0 20px", borderRadius: 6, cursor: "pointer", fontWeight: 600 }}
                         >
                             {creating ? "Creating..." : "Create"}
                         </button>
                         <button
                             onClick={() => setShowNewAgent(false)}
-                            style={{ background: "transparent", color: "var(--text-muted)", border: "1px solid var(--border)", padding: "0 12px", borderRadius: 4, cursor: "pointer" }}
+                            style={{ background: "transparent", color: "var(--text-muted)", border: "1px solid var(--border)", padding: "0 16px", borderRadius: 6, cursor: "pointer" }}
                         >
                             Cancel
                         </button>
@@ -163,27 +157,38 @@ export HTTP_PROXY="http://kernel.atrosha.bond"
                 </div>
             )}
 
-            <div className="policies-grid">
-                {agents.length === 0 ? (
-                    <div className="text-gray-500 text-sm">No agents detected yet. Use the SDK or create one above.</div>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))', gap: 16 }}>
+                {loading && agents.length === 0 ? (
+                    <div style={{ padding: 40, textAlign: "center", color: "var(--text-muted)", gridColumn: '1/-1' }}>Loading agents...</div>
+                ) : agents.length === 0 ? (
+                    <div style={{ padding: 40, textAlign: "center", color: "var(--text-muted)", gridColumn: '1/-1' }}>No agents detected for this entity.</div>
                 ) : (
                     agents.map((a) => (
-                        <div className="policy-card" key={a.id}>
-                            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 8 }}>
-                                <h4 style={{ margin: 0, fontSize: 16 }}>{a.name || "Unnamed Agent"}</h4>
-                                <span className={`badge ${a.is_active !== false ? 'approved' : 'denied'}`} style={{ fontSize: 10 }}>
-                                    {a.is_active !== false ? 'Active' : 'Inactive'}
+                        <div key={a.id} className="chart-card" style={{ padding: 16 }}>
+                            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 12 }}>
+                                <div>
+                                    <h4 style={{ margin: 0, fontSize: 15, fontWeight: 600 }}>{a.name}</h4>
+                                    <p style={{ margin: "2px 0 0", fontSize: 11, color: "var(--text-muted)", fontFamily: 'monospace' }}>ID: {a.id.substring(0, 13)}...</p>
+                                </div>
+                                <span style={{
+                                    fontSize: 10, fontWeight: 700, padding: "2px 6px", borderRadius: 4,
+                                    background: a.is_active !== 0 ? "rgba(34,197,94,0.1)" : "rgba(239,68,68,0.1)",
+                                    color: a.is_active !== 0 ? "#22c55e" : "#ef4444",
+                                    border: `1px solid ${a.is_active !== 0 ? "rgba(34,197,94,0.2)" : "rgba(239,68,68,0.2)"}`,
+                                    textTransform: 'uppercase'
+                                }}>
+                                    {a.is_active !== 0 ? "Active" : "Revoked"}
                                 </span>
                             </div>
-                            <p style={{ marginBottom: 16, fontSize: 12, color: "var(--text-muted)" }}>Role: General Purpose</p>
-
-                            <div className="policy-field">
-                                <label>Registered</label>
-                                <span>{new Date(a.created_at).toLocaleDateString()}</span>
-                            </div>
-                            <div className="policy-field">
-                                <label>Status</label>
-                                <span>Online</span>
+                            <div style={{ display: "flex", gap: 16, marginTop: 12, borderTop: '1px solid var(--border)', paddingTop: 12 }}>
+                                <div>
+                                    <div style={{ fontSize: 10, color: "var(--text-muted)", textTransform: 'uppercase' }}>Created</div>
+                                    <div style={{ fontSize: 12 }}>{new Date(a.created_at).toLocaleDateString()}</div>
+                                </div>
+                                <div>
+                                    <div style={{ fontSize: 10, color: "var(--text-muted)", textTransform: 'uppercase' }}>Scope</div>
+                                    <div style={{ fontSize: 12 }}>Full Entity</div>
+                                </div>
                             </div>
                         </div>
                     ))

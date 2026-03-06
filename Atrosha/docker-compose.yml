@@ -12,8 +12,15 @@ services:
       SEMANTIC_ENGINE_URL: http://semantic-engine:8002
       RUST_LOG: atrosha_proxy=debug
     depends_on:
-      - redis
-      - semantic-engine
+      redis:
+        condition: service_healthy
+      semantic-engine:
+        condition: service_started
+    healthcheck:
+      test: [ "CMD", "curl", "-f", "http://localhost:10000/health" ]
+      interval: 15s
+      timeout: 5s
+      retries: 3
 
   semantic-engine:
     build: ./semantic_engine
@@ -25,8 +32,58 @@ services:
     volumes:
       - ./semantic_engine/export:/app/export:ro
       - ./semantic_engine/tokenizer:/app/tokenizer:ro
+    healthcheck:
+      test: [ "CMD", "curl", "-f", "http://localhost:8002/health" ]
+      interval: 15s
+      timeout: 5s
+      retries: 3
+
+  intent-validator:
+    build: ./intent_validator
+    ports:
+      - "8001:8001"
+    environment:
+      REDIS_URL: redis://redis:6379/0
+      PERMIT_SECRET: ${PERMIT_SECRET:-super-secret-key-change-me}
+      INTENT_TTL: 3600
+    depends_on:
+      redis:
+        condition: service_healthy
+    healthcheck:
+      test: [ "CMD", "curl", "-f", "http://localhost:8001/health" ]
+      interval: 15s
+      timeout: 5s
+      retries: 3
+
+  sovereign-agent:
+    build: ./sovereign_agent
+    ports:
+      - "8003:8003"
+    environment:
+      AGENT_PORT: 8003
+      ATROSHA_DB_PATH: /data/atrosha.db
+      USE_LLM_FALLBACK: "false"
+    volumes:
+      - agent-data:/data
+    depends_on:
+      proxy:
+        condition: service_started
+    healthcheck:
+      test: [ "CMD", "curl", "-f", "http://localhost:8003/health" ]
+      interval: 15s
+      timeout: 5s
+      retries: 3
 
   redis:
     image: redis:7-alpine
     ports:
       - "6379:6379"
+    healthcheck:
+      test: [ "CMD", "redis-cli", "ping" ]
+      interval: 10s
+      timeout: 3s
+      retries: 3
+
+volumes:
+  agent-data:
+    driver: local
