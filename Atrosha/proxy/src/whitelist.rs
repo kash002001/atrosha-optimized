@@ -46,13 +46,4 @@ impl EgressWhitelist {
         is_org_whitelisted
     }
 
-    pub async fn add_to_whitelist(&self, org_id: &str, host: &str) -> redis::RedisResult<()> {
-        let mut conn = self.client.get_async_connection().await?;
-        let key = if org_id == "global" {
-            "atrosha:whitelist:global".to_string()
-        } else {
-            format!("atrosha:whitelist:{}", org_id)
-        };
-        conn.sadd(key, host).await
-    }
 }

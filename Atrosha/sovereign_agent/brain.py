@@ -3,25 +3,23 @@ import os
 import json
 from schemas import InvoiceData, Confidence
 
+# regex patterns for common invoice fields
 _AMOUNT_PATTERNS = [
     r'(?:total\s*(?:due|amount|balance)?|amount\s*due|balance\s*due|grand\s*total|net\s*amount)\s*[:\s]*\$?\s*([\d,]+\.?\d*)',
-    r'\$\s*([\d,]+\.\d{2})',
-
+    r'\$\s*([\d,]+\.\d{2})',  # standalone dollar amounts
     r'(?:USD|usd)\s*([\d,]+\.?\d*)',
 ]
 
 _VENDOR_PATTERNS = [
     r'(?:invoice\s+from|bill\s+from|from)\s*[:\s]*(.+?)(?:\n|$)',
     r'(?:vendor|supplier|company|billed?\s+by|payable\s+to|pay\s+to)\s*[:\s]*(.+?)(?:\n|$)',
-    r'^([A-Z][A-Za-z\s&.,]+(?:Inc|LLC|Ltd|Corp|Co|GmbH|SA|PLC)[.]?)',
-
+    r'^([A-Z][A-Za-z\s&.,]+(?:Inc|LLC|Ltd|Corp|Co|GmbH|SA|PLC)[.]?)',  # company name with suffix
 ]
 
 _DATE_PATTERNS = [
     r'(?:due\s*date|payment\s*due|pay\s*by|due)\s*[:\s]*([\d]{1,2}[/-][\d]{1,2}[/-][\d]{2,4})',
     r'(?:due\s*date|payment\s*due|pay\s*by|due)\s*[:\s]*(\w+\s+\d{1,2},?\s+\d{4})',
-    r'(\d{4}-\d{2}-\d{2})',
-
+    r'(\d{4}-\d{2}-\d{2})',  # ISO dates
 ]
 
 _INVOICE_NUM_PATTERNS = [
@@ -64,13 +62,17 @@ def parse_invoice(text: str) -> InvoiceData:
     due_date = _find_first(text, _DATE_PATTERNS)
     inv_num = _find_first(text, _INVOICE_NUM_PATTERNS)
 
+    # pick the largest amount as the total (heuristic — most invoices list line items then total)
     amount = amounts[0] if amounts else 0.0
 
+    # clean vendor name
     vendor = "Unknown"
     if vendor_raw:
         vendor = re.sub(r'\s+', ' ', vendor_raw).strip().rstrip('.')
+        # chop trailing noise
         vendor = vendor.split('\n')[0].strip()
 
+    # confidence scoring
     has_vendor = vendor != "Unknown"
     has_amount = amount > 0
     if has_vendor and has_amount:
@@ -94,6 +96,7 @@ def parse_invoice(text: str) -> InvoiceData:
 def parse_invoice_with_fallback(text: str) -> InvoiceData:
     result = parse_invoice(text)
 
+    # only attempt LLM if regex couldn't get both vendor + amount
     if result.confidence == Confidence.LOW and os.getenv("USE_LLM_FALLBACK", "").lower() == "true":
         try:
             import ollama

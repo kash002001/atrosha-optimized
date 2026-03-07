@@ -124,18 +124,5 @@ impl AgentRegistry {
         Ok(())
     }
 
-    pub async fn revoke_agent(&self, org_id: &str, agent_id: &str) -> Result<bool, RegistryError> {
-        let mut conn = self.client.get_async_connection().await?;
-        let key_pk = format!("atrosha:{}:keys:{}", org_id, agent_id);
-        let key_role = format!("atrosha:{}:role:{}", org_id, agent_id);
-        
-        let deleted_pk: i64 = conn.del(&key_pk).await?;
-        let _: i64 = conn.del(&key_role).await?;
-        
-        if deleted_pk > 0 {
-            tracing::info!(org_id = %org_id, agent_id = %agent_id, "agent revoked");
-        }
-        
-        Ok(deleted_pk > 0)
-    }
+
 }

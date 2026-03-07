@@ -1,4 +1,6 @@
-"use client";
+'use client';
+ 
+ 
 
 import { useState, useEffect } from "react";
 import { Webhook, Plus, Trash2, Activity } from "lucide-react";

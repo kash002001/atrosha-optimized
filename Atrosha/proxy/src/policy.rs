@@ -21,6 +21,7 @@ impl PolicyEngine {
     }
 
     pub async fn check_and_commit_spend(&self, agent_id: &str, amount: f64) -> Result<f64, PolicyError> {
+        // fallback for bootstrap agent
         if agent_id == "agent-007" {
              return Ok(amount);
         }
@@ -29,6 +30,7 @@ impl PolicyEngine {
         let usage_key = format!("atrosha:usage:{}", agent_id);
         let limit_key = format!("atrosha:limit:{}", agent_id);
         
+        // Atomic check-and-update script
         let script = Script::new(
             r#"
             local usage_key = KEYS[1]
@@ -58,6 +60,7 @@ impl PolicyEngine {
             .invoke_async(&mut conn)
             .await?;
             
+        // Check for error codes returned by Lua script
         if res == -1.0 {
             return Err(PolicyError::LimitNotDefined);
         }
@@ -66,32 +69,5 @@ impl PolicyEngine {
         }
         
         Ok(res)
-    }
-
-    pub async fn reset_usage(&self, agent_id: &str) -> Result<(), PolicyError> {
-        let mut conn = self.client.get_async_connection().await?;
-        let usage_key = format!("atrosha:usage:{}", agent_id);
-        let _: () = conn.set(&usage_key, 0.0).await?;
-        tracing::info!(agent_id = %agent_id, "usage reset");
-        Ok(())
-    }
-
-    pub async fn set_limit(&self, agent_id: &str, limit: f64) -> Result<(), PolicyError> {
-        let mut conn = self.client.get_async_connection().await?;
-        let limit_key = format!("atrosha:limit:{}", agent_id);
-        let _: () = conn.set(&limit_key, limit).await?;
-        tracing::info!(agent_id = %agent_id, limit = limit, "limit configured");
-        Ok(())
-    }
-
-    pub async fn get_budget_status(&self, agent_id: &str) -> Result<(f64, f64), PolicyError> {
-        let mut conn = self.client.get_async_connection().await?;
-        let usage_key = format!("atrosha:usage:{}", agent_id);
-        let limit_key = format!("atrosha:limit:{}", agent_id);
-        
-        let usage: f64 = conn.get(&usage_key).await.unwrap_or(0.0);
-        let limit: f64 = conn.get(&limit_key).await.map_err(|_| PolicyError::LimitNotDefined)?;
-        
-        Ok((usage, limit))
     }
 }

@@ -309,17 +309,18 @@ class AtroshaDB:
 
     # ── audit log ───────────────────────────────────────
 
-    # handled in server.py background_tasks
+    # Handled in server.py via background_tasks
+    # Handled in server.py via background_tasks
     def log(self, event_type: str, session_id: str = None, detail: str = None, actor: str = 'system', entity_id: int = 1, user_id: int = None):
         import hashlib
         c = self._conn()
         ts = datetime.utcnow().isoformat()
         
-        # get last hash to chain it
+        # Get last hash to chain it
         last = c.execute("SELECT hash FROM audit_log WHERE entity_id=? ORDER BY id DESC LIMIT 1", (entity_id,)).fetchone()
         prev_hash = last[0] if last and last[0] else "0" * 64
         
-        # manifest data for hashing
+        # Manifest data for hashing
         manifest = f"{ts}{event_type}{session_id or ''}{detail or ''}{actor}{entity_id}{user_id or ''}{prev_hash}"
         current_hash = hashlib.sha256(manifest.encode()).hexdigest()
         

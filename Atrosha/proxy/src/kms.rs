@@ -14,42 +14,6 @@ pub trait KmsProvider: Send + Sync {
     async fn fetch_verification_key(&self, key_id: &str) -> Result<Vec<u8>>;
 }
 
-pub struct MockKms {
-    keys: RwLock<HashMap<String, Vec<u8>>>,
-    default_key: Vec<u8>,
-}
-
-impl MockKms {
-    pub fn new(default_secret: &[u8]) -> Self {
-        Self {
-            keys: RwLock::new(HashMap::new()),
-            default_key: default_secret.to_vec(),
-        }
-    }
-
-    pub async fn set_key(&self, key_id: &str, key: Vec<u8>) {
-        let mut keys = self.keys.write().await;
-        keys.insert(key_id.to_string(), key);
-    }
-}
-
-#[async_trait]
-impl KmsProvider for MockKms {
-    async fn fetch_signing_key(&self, key_id: &str) -> Result<Vec<u8>> {
-        // Simulating some latency
-        tokio::time::sleep(tokio::time::Duration::from_micros(100)).await;
-        let keys = self.keys.read().await;
-        if let Some(key) = keys.get(key_id) {
-            Ok(key.clone())
-        } else {
-            Ok(self.default_key.clone())
-        }
-    }
-
-    async fn fetch_verification_key(&self, key_id: &str) -> Result<Vec<u8>> {
-        self.fetch_signing_key(key_id).await
-    }
-}
 
 pub struct EnvKms {
     secret: Vec<u8>,

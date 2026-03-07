@@ -1,4 +1,6 @@
-"use client";
+'use client';
+ 
+ 
 
 import { CreditCard, ArrowRight, CheckCircle2, AlertCircle, Search, Filter } from "lucide-react";
 import { useState, useEffect } from "react";

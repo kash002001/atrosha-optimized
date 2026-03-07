@@ -16,14 +16,16 @@ class PayrollEngine:
             amount = entry.get("amount")
             period = entry.get("period")
             
+            # 1. Contract Match
             contract = self.db.get_employee_master(emp_id, entity_id)
             contract_violation = False
             if contract:
                 base = contract.get("base_salary", 0)
-                # allow 5% variance for minor adjustments/overtime
+                # Allow 5% variance for minor adjustments/overtime without flagging
                 if amount > base * 1.05:
                     contract_violation = True
             
+            # 2. Historical Z-Score
             history = self.db.get_employee_payroll_history(emp_id, entity_id, limit=6)
             z_score = 0
             if len(history) >= 3:
@@ -35,6 +37,7 @@ class PayrollEngine:
                 if std_dev > 0:
                     z_score = (amount - avg) / std_dev
             
+            # 3. Decision
             status = "low_risk"
             reasons = []
             if contract_violation:

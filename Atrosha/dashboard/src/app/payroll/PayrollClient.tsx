@@ -2,13 +2,13 @@
 
 import React, { useState, useEffect } from 'react';
 import { atroshaFetch } from '@/lib/api-client';
-import { 
-    ShieldCheck, 
-    AlertTriangle, 
-    User, 
-    DollarSign, 
-    BarChart3, 
-    CheckCircle2, 
+import {
+    ShieldCheck,
+    AlertTriangle,
+    User,
+    DollarSign,
+    BarChart3,
+    CheckCircle2,
     History,
     FileSearch
 } from 'lucide-react';
@@ -32,7 +32,7 @@ export default function PayrollClient() {
     const handleVerify = async () => {
         setLoading(true);
         try {
-            // Mock parsing: expecting "EmpID, Amount, Period" per line
+            // parse draft: expecting "EmpID, Amount, Period" per line
             const lines = draft.trim().split('\n');
             const data = lines.map(line => {
                 const [id, amt, per] = line.split(',').map(s => s.trim());
@@ -94,13 +94,13 @@ export default function PayrollClient() {
                         Input Payroll Draft
                     </h3>
                     <div className="space-y-4">
-                        <textarea 
+                        <textarea
                             value={draft}
                             onChange={(e) => setDraft(e.target.value)}
                             placeholder="EmployeeID, Amount, Period&#10;1, 5200, 2026-03&#10;2, 4800, 2026-03"
                             className="w-full h-64 bg-black/40 border border-white/5 rounded-2xl p-4 font-mono text-sm text-gray-300 focus:outline-none focus:border-blue-500/50 transition-colors resize-none"
                         />
-                        <button 
+                        <button
                             onClick={handleVerify}
                             disabled={loading || !draft.trim()}
                             className="w-full py-4 bg-white text-black rounded-2xl font-bold hover:bg-gray-200 transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
@@ -116,7 +116,7 @@ export default function PayrollClient() {
                         <ShieldCheck className="w-5 h-5 text-green-400" />
                         Verified Outcomes
                     </h3>
-                    
+
                     {!analysis ? (
                         <div className="flex-1 flex flex-col items-center justify-center text-gray-500 gap-4 opacity-50">
                             <History className="w-12 h-12" />
@@ -153,8 +153,8 @@ export default function PayrollClient() {
                                     )}
                                 </div>
                             ))}
-                            
-                            <button 
+
+                            <button
                                 onClick={handleApprove}
                                 disabled={approving}
                                 className="w-full py-4 bg-green-500 text-white rounded-2xl font-bold hover:bg-green-600 transition-all flex items-center justify-center gap-2 mt-4"

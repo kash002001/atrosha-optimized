@@ -10,10 +10,6 @@ pub enum PermitError {
     Expired,
     #[error("sig verification failed")]
     InvalidSignature,
-    #[error("intent hash mismatch")]
-    IntentMismatch,
-    #[error("missing permit header")]
-    MissingPermit,
 }
 #[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct SpendPermit {
@@ -79,27 +75,6 @@ impl PermitValidator {
             sim: claims.sim,
             matched_policy_id: claims.matched_policy_id,
         })
-    }
-    pub fn verify_req_intent(
-        &self,
-        permit: &SpendPermit,
-        method: &str,
-        target_url: &str,
-        body: &[u8],
-    ) -> Result<(), PermitError> {
-        if let Some(expected) = &permit.intent_hash {
-            let computed_hash=compute_req_intent_hash(method, target_url, body);
-            if computed_hash!=*expected {
-                tracing::warn!(
-                    permit_id=%permit.permit_id,
-                    expected=%expected,
-                    computed=%computed_hash,
-                    "intent hash mismatch - req tampering detected"
-                );
-                return Err(PermitError::IntentMismatch);
-            }
-        }
-        Ok(())
     }
 }
 pub fn compute_req_intent_hash(method: &str, target_url: &str, body: &[u8]) -> String {

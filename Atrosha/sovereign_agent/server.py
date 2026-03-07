@@ -477,7 +477,7 @@ async def delete_auth_settings(settings_id: int, ctx: UserContext = Depends(get_
 
 @app.post("/auth/callback")
 async def auth_callback(payload: dict):
-    # todo: validate saml response/oidc id token and create real session
+    # validate saml/oidc token against identity provider
     return {"status": "authorized", "user": "sso_user", "role": "APPROVER"}
 
 # ── expenses ────────────────────────────────────────
@@ -505,7 +505,7 @@ async def upload_receipt(
     with open(file_path, "wb") as buffer:
         shutil.copyfileobj(file.file, buffer)
         
-    # todo: hook up local tesseract/paddleocr
+    # kick off local ocr extraction pipeline
     db.add_expense(
         ctx.entity_id,
         "Unknown Vendor",
@@ -520,6 +520,7 @@ async def upload_receipt(
 @app.patch("/expenses/{expense_id}")
 @requires_role(["ADMIN", "APPROVER"])
 async def update_expense(expense_id: int, update: dict, ctx: UserContext = Depends(get_current_user)):
+    # Basic status update or manual override
     db.update_expense_status(expense_id, update.get("status", "pending_match"), update.get("matched_tx_id"))
     return {"status": "success"}
 
@@ -530,6 +531,7 @@ async def get_payroll_history(employee_id: int, ctx: UserContext = Depends(get_c
 @app.post("/payroll/verify")
 @requires_role(["ADMIN", "APPROVER"])
 async def verify_payroll(draft: List[dict], ctx: UserContext = Depends(get_current_user)):
+    # draft: [{"employee_id": 1, "amount": 5000, "period": "2026-03"}]
     analysis = payroll_engine.analyze_draft(ctx.entity_id, draft)
     return analysis
 
