@@ -1,5 +1,5 @@
 <div align="center">
-  <h1>SovereignStack (Project Atrosha)</h1>
+  <h1>Atrosha</h1>
   <p>
     <strong>The Mathematically Secure, Zero-Exfiltration Financial AI Agent Framework.</strong>
   </p>
