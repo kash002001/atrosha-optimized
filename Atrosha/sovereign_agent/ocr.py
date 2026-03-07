@@ -1,12 +1,8 @@
-import fitz  # PyMuPDF
+import fitz
 import re
+import sys
 
 def extract_invoice_data(pdf_path: str) -> str:
-    """
-    Extracts raw text from an invoice PDF.
-    This acts as the 'Zero-Knowledge Eyes' of the Sovereign Agent.
-    No data is sent to cloud OCR APIs.
-    """
     text = ""
     try:
         doc = fitz.open(pdf_path)
@@ -18,7 +14,6 @@ def extract_invoice_data(pdf_path: str) -> str:
         return ""
 
 if __name__ == "__main__":
-    import sys
     if len(sys.argv) > 1:
         print(extract_invoice_data(sys.argv[1]))
     else:

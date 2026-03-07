@@ -477,9 +477,7 @@ async def delete_auth_settings(settings_id: int, ctx: UserContext = Depends(get_
 
 @app.post("/auth/callback")
 async def auth_callback(payload: dict):
-    # Mock SAML/OIDC callback logic
-    # In a real production system, this would validate the SAML Response / OIDC ID Token
-    # and create a session for the user.
+    # todo: validate saml response/oidc id token and create real session
     return {"status": "authorized", "user": "sso_user", "role": "APPROVER"}
 
 # ── expenses ────────────────────────────────────────
@@ -507,14 +505,12 @@ async def upload_receipt(
     with open(file_path, "wb") as buffer:
         shutil.copyfileobj(file.file, buffer)
         
-    # Mock OCR Extraction
-    # In a real system, we'd trigger a local Tesseract or PaddleOCR process here
-    # For now, we seed with pending data to be edited by the user
+    # todo: hook up local tesseract/paddleocr
     db.add_expense(
         ctx.entity_id,
-        "Unknown Vendor", # Extracted via OCR later
-        0.00,             # Extracted via OCR later
-        None,             # Extracted via OCR later
+        "Unknown Vendor",
+        0.00,
+        None,
         file_path
     )
     
@@ -524,7 +520,6 @@ async def upload_receipt(
 @app.patch("/expenses/{expense_id}")
 @requires_role(["ADMIN", "APPROVER"])
 async def update_expense(expense_id: int, update: dict, ctx: UserContext = Depends(get_current_user)):
-    # Basic status update or manual override
     db.update_expense_status(expense_id, update.get("status", "pending_match"), update.get("matched_tx_id"))
     return {"status": "success"}
 
@@ -535,7 +530,6 @@ async def get_payroll_history(employee_id: int, ctx: UserContext = Depends(get_c
 @app.post("/payroll/verify")
 @requires_role(["ADMIN", "APPROVER"])
 async def verify_payroll(draft: List[dict], ctx: UserContext = Depends(get_current_user)):
-    # draft: [{"employee_id": 1, "amount": 5000, "period": "2026-03"}]
     analysis = payroll_engine.analyze_draft(ctx.entity_id, draft)
     return analysis
 
