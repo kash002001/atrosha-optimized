@@ -1,75 +1,110 @@
 <div align="center">
   <h1>Project Atrosha</h1>
-  <p><strong>A framework for building reliable, local financial AI agents.</strong></p>
   <p>
-    <a href="https://github.com/atrosha/atrosha/actions"><img alt="Build Status" src="https://img.shields.io/github/actions/workflow/status/atrosha/atrosha/ci.yml?branch=main&style=for-the-badge" /></a>
-    <a href="https://github.com/atrosha/atrosha/blob/main/LICENSE"><img alt="License: MIT" src="https://img.shields.io/badge/License-MIT-yellow.svg?style=for-the-badge" /></a>
+    <strong>A local AI agent setup with a built-in Rust proxy for security.</strong>
+  </p>
+
+  <p>
+    <a href="https://github.com/atrosha/sovereignstack/actions"><img alt="Build Status" src="https://img.shields.io/github/actions/workflow/status/atrosha/sovereignstack/ci.yml?branch=main&style=for-the-badge" /></a>
+    <a href="https://github.com/atrosha/sovereignstack/blob/main/LICENSE"><img alt="License: MIT" src="https://img.shields.io/badge/License-MIT-yellow.svg?style=for-the-badge" /></a>
+    <a href="https://rustup.rs/"><img alt="Rust" src="https://img.shields.io/badge/rust-1.74%2B-orange.svg?style=for-the-badge&logo=rust" /></a>
+    <a href="https://www.python.org/downloads/"><img alt="Python" src="https://img.shields.io/badge/python-3.10%2B-blue.svg?style=for-the-badge&logo=python" /></a>
   </p>
 </div>
 
 ---
 
-## What is this?
-Project Atrosha is an open-source framework for building AI agents that handle financial tasks (like payroll checks, AP automation, or processing invoices). We built this because we wanted to use AI for internal accounting, but couldn't trust an LLM with full API access or sensitive data. 
+## Overview
 
-To solve this, we split the project into three distinct parts:
-1. **The Python Agent:** Handles the core AI logic, OCR, and database updates.
-2. **The Rust Proxy:** Acts as a strict firewall. Before the AI makes any external API call (like a bank transfer), the proxy checks if the AI has the right permissions and budget. If the AI goes rogue, the proxy blocks it.
-3. **The Next.js Dashboard:** A UI where you can approve actions, set spending limits, and see exactly what the AI is doing at all times.
+Project Atrosha is a framework for running AI financial agents locally on your own hardware or VPC.
 
-## How it works
-Here's the basic flow of the system:
-1. You go to the Dashboard and create a "Spend Permit" for the agent (e.g., "$500 for AWS invoices").
-2. The Agent runs its logic and tries to make an API call to pay the invoice.
-3. The Rust Proxy intercepts the call. It checks the permit, verifies the URL is allowed, and logs the attempt to the database.
-4. If everything looks good, the call goes through. If not (like if the agent tries to spend $501), it's blocked instantly.
+Most tools send your financial data to external APIs, which can be a security risk. This project keeps everything inside your network. We use a Python backend for the AI logic (like reading invoices or finding weird payroll spikes) and a Rust proxy that sits in front of it. The proxy makes sure the AI agent isn't allowed to make unauthorized API calls or spend more money than it's supposed to. 
 
-## Getting Started
+If the agent goes off the rails or hallucinates, the Rust proxy blocks the request.
 
-### Prerequisites
-Make sure you have installed:
-- Rust (1.74+) -> [rustup.rs](https://rustup.rs/)
-- Python (3.10+) -> [python.org](https://www.python.org/)
-- Node.js (18+)
-- Redis & ClickHouse (we included a `docker-compose.yml` so you can spin these up easily)
+## Architecture
 
-### 1. Setup the Database
+There are three main parts to the stack:
+
+1. **Python Agent**: The actual AI logic. It handles the OCR, talks to your local database, and figures out what APIs to call.
+2. **Rust Proxy**: A secure middleman. Every time the agent tries to talk to the outside world, it has to go through here. The proxy checks if the agent is allowed to do that and enforces budget limits.
+3. **Next.js Dashboard**: A simple UI where humans can approve budgets, set rules, and see what the agent has been up to.
+
+```mermaid
+graph TD
+    subgraph Dashboard
+        D[Next.js UI] -->|Approves Budgets| API(Python Agent)
+    end
+    
+    subgraph Internal Network
+        API -->|Tries to do something| P[Rust Proxy]
+    end
+
+    subgraph Defense
+        P -->|Checks Rules| Redis[(Redis)]
+        P -->|Logs Action| CH[(ClickHouse)]
+    end
+
+    P -->|Approved| External[External API / Bank]
+```
+
+## Running it locally
+
+You'll need Rust, Python 3.10+, Node, Redis, and ClickHouse to run this locally.
+
+Clone the repo:
+```bash
+git clone https://github.com/kash002001/atrosha.git
+cd atrosha
+```
+
+Start Redis and ClickHouse (a docker-compose file is included):
 ```bash
 docker-compose up -d redis clickhouse
 ```
 
-### 2. Start the Rust Proxy
-The proxy needs to be running for the agent to do anything external.
+**1. Start the Rust Proxy**
 ```bash
 cd proxy
-cp .env.example .env  # set your keys if needed
+cp .env.example .env
 cargo run --release
 ```
-Runs on `localhost:8080`.
 
-### 3. Start the Python Agent
-This is the core logic engine.
+**2. Start the Python Agent**
 ```bash
-cd sovereign_agent
+cd ../sovereign_agent
 python -m venv venv
-source venv/bin/activate  # Windows: venv\Scripts\activate
+# windows: venv\Scripts\activate, mac/linux: source venv/bin/activate
 pip install -r requirements.txt
-
 export PROXY_URL="http://127.0.0.1:8080"
 python server.py
 ```
-Runs on `localhost:8000`.
 
-### 4. Start the Dashboard
+**3. Start the Dashboard**
 ```bash
-cd dashboard
+cd ../dashboard
 npm install
 npm run dev
 ```
-Open `http://localhost:3000` in your browser.
+
+## How to use it
+
+Before the agent can do anything that costs money (like paying a vendor), a human has to approve a budget via the dashboard. 
+
+You can also do it via the API. Here is an example using cURL to give an agent a $500 limit:
+```bash
+curl -X POST http://localhost:8000/auth/permit \
+  -H "X-Atrosha-Entity-ID: org-123" \
+  -H "X-Atrosha-Role: ADMIN" \
+  -d '{"agent_id": "agent-007", "budget": 500, "intent": "Pay vendor"}'
+```
+
+If the agent tries to spend $501, or calls an API that isn't on its allowed list, the Rust proxy will just drop the request. There's also payroll anomaly detection built-in that will automatically flag things if salaries spike weirdly compared to previous months.
 
 ## Contributing
-If you find a bug or want to add a feature, feel free to open a PR. Just make sure to run `cargo check` in the `proxy` folder and `npm run lint` in the `dashboard` folder before committing so we keep the build clean and warning-free.
+
+Pull requests are welcome. Make sure your Rust code passes `cargo check` and `cargo clippy` without warnings, and run `npm run lint` on the dashboard code before submitting. 
 
 ## License
-MIT License. See `LICENSE` for details.
+
+MIT
