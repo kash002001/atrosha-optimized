@@ -1,4 +1,0 @@
-/*
-!/Atrosha
-/Atrosha/*
-!/Atrosha/dashboard
