@@ -5,8 +5,7 @@
   </p>
 
   <p>
-    <a href="https://github.com/atrosha/sovereignstack/actions"><img alt="Build Status" src="https://img.shields.io/github/actions/workflow/status/atrosha/sovereignstack/ci.yml?branch=main&style=for-the-badge" /></a>
-    <a href="https://github.com/atrosha/sovereignstack/blob/main/LICENSE"><img alt="License: MIT" src="https://img.shields.io/badge/License-MIT-yellow.svg?style=for-the-badge" /></a>
+    <a href="https://github.com/kash002001/atrosha/blob/main/LICENSE"><img alt="License: MIT" src="https://img.shields.io/badge/License-MIT-yellow.svg?style=for-the-badge" /></a>
     <a href="https://rustup.rs/"><img alt="Rust" src="https://img.shields.io/badge/rust-1.74%2B-orange.svg?style=for-the-badge&logo=rust" /></a>
     <a href="https://www.python.org/downloads/"><img alt="Python" src="https://img.shields.io/badge/python-3.10%2B-blue.svg?style=for-the-badge&logo=python" /></a>
   </p>
