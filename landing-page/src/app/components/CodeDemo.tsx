@@ -34,28 +34,24 @@ export default function CodeDemo() {
                     </div>
                     <div className="p-4 sm:p-6 text-gray-300 overflow-x-auto whitespace-nowrap min-w-full">
                         <div>
-                            <span style={{ color: "var(--code-keyword)" }}>import</span> atrosha
-                            <br />
-                            <span style={{ color: "var(--code-keyword)" }}>from</span> atrosha.agent <span style={{ color: "var(--code-keyword)" }}>import</span> SovereignAgent
+                            <span style={{ color: "var(--code-keyword)" }}>from</span> atrosha <span style={{ color: "var(--code-keyword)" }}>import</span> Atrosha
                             <br /><br />
-                            <span style={{ color: "var(--code-comment)" }}>{"# 1. Local OCR extraction (No cloud APIs)"}</span>
+                            <span style={{ color: "var(--code-comment)" }}>{"# 1. Connect with your API key"}</span>
                             <br />
-                            invoice_data = atrosha.<span style={{ color: "var(--code-function)" }}>ingest</span>(<span style={{ color: "var(--code-string)" }}>&quot;invoice_dec_2026.pdf&quot;</span>)
+                            client = Atrosha(api_key=<span style={{ color: "var(--code-string)" }}>&quot;sk_live_...&quot;</span>)
                             <br /><br />
-                            <span style={{ color: "var(--code-comment)" }}>{"# 2. Local reasoning via Ollama (Mistral/Phi-3)"}</span>
+                            <span style={{ color: "var(--code-comment)" }}>{"# 2. Register an agent with a budget"}</span>
                             <br />
-                            payment_intent = SovereignAgent.<span style={{ color: "var(--code-function)" }}>reason</span>(invoice_data)
+                            agent = client.agents.<span style={{ color: "var(--code-function)" }}>create</span>(name=<span style={{ color: "var(--code-string)" }}>&quot;invoice-bot&quot;</span>)
                             <br /><br />
-                            <span style={{ color: "var(--code-comment)" }}>{"# 3. Cryptographically enforced execution"}</span>
+                            <span style={{ color: "var(--code-comment)" }}>{"# 3. Run a transaction through the proxy"}</span>
                             <br />
-                            <span style={{ color: "var(--code-comment)" }}>{"# Requires matching CFO-signed WebCrypto signature in proxy"}</span>
-                            <br />
-                            payment_intent.<span style={{ color: "var(--code-function)" }}>execute</span>()
+                            result = client.transactions.<span style={{ color: "var(--code-function)" }}>list</span>()
                         </div>
                         <div className="mt-6 bg-[#252526] p-4 rounded border border-gray-700/50">
-                            <span className="text-gray-500">&gt; Local Intelligence analyzing invoice... [OK]</span><br />
-                            <span className="text-gray-500">&gt; Verify Mathematical Intent signature... [OK]</span><br />
-                            <span className="text-accent-green">&gt; Payment Executed & Secured!</span>
+                            <span className="text-gray-500">&gt; Agent registered: invoice-bot [OK]</span><br />
+                            <span className="text-gray-500">&gt; Proxy signature verified [OK]</span><br />
+                            <span className="text-accent-green">&gt; 3 transactions returned</span>
                         </div>
                         <div className="mt-4 animate-pulse">
                             <span className="text-accent-green font-bold">$</span>{" "}

@@ -94,7 +94,7 @@ export default function DocsPage() {
                             <div>
                                 <h5 className="text-xs font-mono text-gray-500 mb-2">INSTALLATION</h5>
                                 <div className="bg-[#1a1a1a] rounded-lg p-4 border border-white/5 font-mono text-sm text-green-400 flex justify-between group">
-                                    <code>pip install atrosha-sdk</code>
+                                    <code>pip install atrosha</code>
                                     <Copy className="w-4 h-4 text-gray-600 opacity-0 group-hover:opacity-100 cursor-pointer" />
                                 </div>
                             </div>
@@ -109,30 +109,30 @@ export default function DocsPage() {
                                 <div className="bg-[#1a1a1a] rounded-lg p-4 border border-white/5 font-mono text-sm overflow-x-auto">
                                     <pre className="text-blue-300">
                                         <span className="text-purple-300">import</span> os<br />
-                                        <span className="text-purple-300">from</span> atrosha_sdk.client <span className="text-purple-300">import</span> AtroshaProxy<br />
+                                        <span className="text-purple-300">from</span> atrosha <span className="text-purple-300">import</span> Atrosha<br />
                                         <br />
-                                        <span className="text-gray-500"># Provide keys from Dashboard</span><br />
-                                        proxy = AtroshaProxy(<br />
-                                        &nbsp;&nbsp;&nbsp;&nbsp;admin_secret=os.getenv(<span className="text-green-300">&quot;ADMIN_SECRET&quot;</span>),<br />
-                                        &nbsp;&nbsp;&nbsp;&nbsp;agent_id=os.getenv(<span className="text-green-300">&quot;ATROSHA_AGENT_ID&quot;</span>),<br />
-                                        &nbsp;&nbsp;&nbsp;&nbsp;private_key_hex=os.getenv(<span className="text-green-300">&quot;ATROSHA_PRIVATE_KEY&quot;</span>)<br />
-                                        )</pre>
+                                        <span className="text-gray-500"># grab your API key from the Dashboard</span><br />
+                                        client = Atrosha(<br />
+                                        &nbsp;&nbsp;&nbsp;&nbsp;api_key=os.getenv(<span className="text-green-300">&quot;ATROSHA_API_KEY&quot;</span>),<br />
+                                        )<br />
+                                        <br />
+                                        <span className="text-gray-500"># list recent transactions</span><br />
+                                        txns = client.transactions.list()<br />
+                                        <br />
+                                        <span className="text-gray-500"># register an agent</span><br />
+                                        client.agents.create(name=<span className="text-green-300">&quot;payroll-bot&quot;</span>)</pre>
                                 </div>
                             </div>
 
-                            {/* Webhook Block */}
+                            {/* cURL Block */}
                             <div>
-                                <h5 className="text-xs font-mono text-gray-500 mb-2 uppercase tracking-widest">CONFIGURE STRIPE WEBHOOK</h5>
+                                <h5 className="text-xs font-mono text-gray-500 mb-2 uppercase tracking-widest">CURL (RAW)</h5>
                                 <div className="bg-[#1a1a1a] rounded-lg p-4 border border-white/5 font-mono text-sm overflow-x-auto">
-                                    <div className="text-[10px] text-gray-500 mb-2 font-bold uppercase">Required Events</div>
-                                    <ul className="text-xs space-y-1 mb-4">
-                                        <li className="text-green-400">✓ checkout.session.completed</li>
-                                        <li className="text-green-400">✓ invoice.payment_succeeded</li>
-                                        <li className="text-green-400">✓ customer.subscription.deleted</li>
-                                    </ul>
-                                    <div className="p-2 bg-black rounded border border-white/5 text-[10px] text-gray-400">
-                                        URL: https://atrosha.bond/api/billing/webhook
-                                    </div>
+                                    <pre className="text-blue-300">
+                                        curl -X POST https://proxy.atrosha.com/agents \<br />
+                                        &nbsp;&nbsp;-H <span className="text-green-300">&quot;Authorization: Bearer $ATROSHA_API_KEY&quot;</span> \<br />
+                                        &nbsp;&nbsp;-H <span className="text-green-300">&quot;Content-Type: application/json&quot;</span> \<br />
+                                        &nbsp;&nbsp;-d <span className="text-green-300">{`'{"name": "payroll-bot"}'`}</span></pre>
                                 </div>
                             </div>
 
