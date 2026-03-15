@@ -1,3 +1,5 @@
+from .resources import Transactions, Agents
 from .client import Atrosha
 
-__all__ = ['Atrosha']
+__version__ = "0.1.0"
+__all__ = ["Atrosha"]

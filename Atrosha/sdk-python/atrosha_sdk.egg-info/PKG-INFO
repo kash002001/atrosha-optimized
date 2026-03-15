@@ -1,0 +1,67 @@
+Metadata-Version: 2.4
+Name: atrosha-sdk
+Version: 0.1.0
+Summary: Official Python SDK for the Atrosha cryptographic AI proxy
+Home-page: https://github.com/kash002001/atrosha
+Author: kash002001
+Project-URL: Documentation, https://atrosha.bond/docs
+Project-URL: Source, https://github.com/kash002001/atrosha
+Project-URL: Bug Tracker, https://github.com/kash002001/atrosha/issues
+Keywords: atrosha ai agent proxy cryptographic security
+Classifier: Programming Language :: Python :: 3
+Classifier: License :: OSI Approved :: MIT License
+Classifier: Operating System :: OS Independent
+Classifier: Topic :: Software Development :: Libraries :: Python Modules
+Classifier: Intended Audience :: Developers
+Requires-Python: >=3.8
+Description-Content-Type: text/markdown
+Requires-Dist: requests>=2.25.0
+Dynamic: author
+Dynamic: classifier
+Dynamic: description
+Dynamic: description-content-type
+Dynamic: home-page
+Dynamic: keywords
+Dynamic: project-url
+Dynamic: requires-dist
+Dynamic: requires-python
+Dynamic: summary
+
+# atrosha-sdk
+
+Official Python SDK for the [Atrosha](https://atrosha.bond) cryptographic AI proxy.
+
+## Installation
+
+```bash
+pip install atrosha-sdk
+```
+
+## Usage
+
+```python
+import os
+from atrosha import Atrosha
+
+client = Atrosha(api_key=os.getenv("ATROSHA_API_KEY"))
+
+# list recent transactions
+txns = client.transactions.guard(
+    agent_id="my-agent",
+    amount=5000,
+    currency="usd",
+)
+
+# list all agents
+agents = client.agents.list()
+```
+
+## Links
+
+- [Documentation](https://atrosha.bond/docs)
+- [GitHub](https://github.com/kash002001/atrosha)
+- [Issues](https://github.com/kash002001/atrosha/issues)
+
+## License
+
+MIT
