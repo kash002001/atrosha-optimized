@@ -18,6 +18,7 @@ import {
     FileSpreadsheet,
     Webhook,
     Receipt,
+    BarChart3,
 } from "lucide-react";
 
 

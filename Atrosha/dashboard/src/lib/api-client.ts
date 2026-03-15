@@ -6,8 +6,8 @@
  */
 
 export async function atroshaFetch(endpoint: string, options: RequestInit = {}) {
-    const user = localStorage.getItem("atrosha_user") || "admin";
-    const entity = localStorage.getItem("atrosha_entity") || "1";
+    const user = typeof window !== "undefined" ? localStorage.getItem("atrosha_user") || "admin" : "admin";
+    const entity = typeof window !== "undefined" ? localStorage.getItem("atrosha_entity") || "1" : "1";
     
     // Default to the local dev server if not specified
     const baseUrl = process.env.NEXT_PUBLIC_BACKEND_URL || "http://localhost:8000";
