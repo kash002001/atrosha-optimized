@@ -1,8 +1,8 @@
 import hashlib
-import requests
+import requests  # type: ignore
 import os
-from schemas import PaymentStatus
-from db import AtroshaDB
+from schemas import PaymentStatus  # type: ignore
+from db import AtroshaDB  # type: ignore
 
 PROXY_URL = os.getenv("PROXY_URL", "http://localhost:8080")  # atrosha kernel
 
@@ -11,7 +11,8 @@ db = AtroshaDB()
 
 def _idempotency_key(session_id: str, vendor: str, amount: float) -> str:
     raw = f"{session_id}:{vendor}:{amount:.2f}"
-    return hashlib.sha256(raw.encode()).hexdigest()[:32]
+    digest: str = hashlib.sha256(raw.encode()).hexdigest()
+    return digest[:32]  # type: ignore
 
 
 def execute_payment(vendor: str, amount: float, session_id: str, permit: str, currency: str = "USD") -> dict:
@@ -47,7 +48,8 @@ def execute_payment(vendor: str, amount: float, session_id: str, permit: str, cu
         resp = requests.post(url, headers=headers, json=payload, timeout=15)
 
         if resp.status_code == 200:
-            tx_ref = resp.json().get("tx_ref", f"tx_{idem_key[:8]}")
+            key_slice: str = idem_key[:8]  # type: ignore
+            tx_ref = resp.json().get("tx_ref", f"tx_{key_slice}")
             db.update_execution_status(idem_key, PaymentStatus.CONFIRMED.value, tx_ref=tx_ref)
             return {"status": "confirmed", "tx_ref": tx_ref, "idempotency_key": idem_key}
 

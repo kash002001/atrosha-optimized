@@ -97,7 +97,7 @@ def main():
     ok("Proxy listening on http://127.0.0.1:9999")
 
     step(2, "Importing SDK")
-    from atrosha import Atrosha
+    from atrosha import Atrosha  # type: ignore
     ok("from atrosha import Atrosha")
 
     step(3, "Connecting to proxy")
