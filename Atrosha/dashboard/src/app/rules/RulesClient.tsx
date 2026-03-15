@@ -1,7 +1,7 @@
 'use client';
  
  import { Shield, Hammer, ToggleLeft, Trash2, Cpu, FileJson, Play } from "lucide-react";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useUser } from "../context/UserContext";
 import { atroshaFetch } from "@/lib/api-client";
 
@@ -24,8 +24,7 @@ export default function RulesClient() {
     const [simResult, setSimResult] = useState<any>(null);
     const [loading, setLoading] = useState(true);
 
-    const fetchRules = async () => {
-        setLoading(true);
+    const fetchRules = useCallback(async () => {
         try {
             const data = await atroshaFetch("/rules");
             setRules(data || []);
@@ -34,11 +33,11 @@ export default function RulesClient() {
             setRules([]);
         }
         setLoading(false);
-    };
+    }, []);
 
     useEffect(() => {
         fetchRules();
-    }, [entityId, role]);
+    }, [fetchRules, entityId, role]);
 
     const handleSimulate = () => {
         if (!prompt.trim()) return;
@@ -73,6 +72,7 @@ export default function RulesClient() {
             setShowSimulate(false);
             setSimResult(null);
             setPrompt("");
+            setLoading(true);
             fetchRules();
         } catch (e) {
             alert("Failed to save rule");
@@ -84,6 +84,7 @@ export default function RulesClient() {
         if (!confirm("Are you sure?")) return;
         try {
             await atroshaFetch(`/rules/${id}`, { method: "DELETE" });
+            setLoading(true);
             fetchRules();
         } catch (e) {
             alert("Failed to delete rule");

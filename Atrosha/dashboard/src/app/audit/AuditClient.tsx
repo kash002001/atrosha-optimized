@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { ScrollText, Download, Clock, Zap, ShieldAlert, FileText, Lock } from "lucide-react";
 import { useUser } from "../context/UserContext";
 import { atroshaFetch } from "@/lib/api-client";
@@ -38,17 +38,16 @@ export default function AuditClient() {
     const [loading, setLoading] = useState(true);
     const [filter, setFilter] = useState<string>("");
 
-    const fetchAudit = () => {
-        setLoading(true);
+    const fetchAudit = useCallback(() => {
         atroshaFetch(`/audit?limit=200${filter ? `&event_type=${filter}` : ""}`)
             .then(setEntries)
             .catch(() => setEntries([]))
             .finally(() => setLoading(false));
-    };
+    }, [filter]);
 
     useEffect(() => {
         fetchAudit();
-    }, [filter, entityId, role]);
+    }, [fetchAudit, entityId, role]);
 
     const exportCSV = () => {
         const header = "Timestamp,Event,Session,Detail,Actor\n";
@@ -78,7 +77,7 @@ export default function AuditClient() {
                 <div style={{ display: "flex", gap: 8 }}>
                     <select
                         value={filter}
-                        onChange={(e) => { setFilter(e.target.value); }}
+                        onChange={(e) => { setLoading(true); setFilter(e.target.value); }}
                         style={{
                             padding: "6px 10px", borderRadius: 6, fontSize: 12,
                             background: "var(--bg-card)", border: "1px solid var(--border)",

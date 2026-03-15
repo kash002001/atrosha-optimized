@@ -2,7 +2,7 @@
  
  
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { Users, Search, Edit2, CheckCircle2 } from "lucide-react";
 import { useUser } from "../context/UserContext";
 import { atroshaFetch } from "@/lib/api-client";
@@ -24,17 +24,16 @@ export default function VendorClient() {
     const [editingId, setEditingId] = useState<number | null>(null);
     const [editValue, setEditValue] = useState<string>("");
 
-    const fetchVendors = () => {
-        setLoading(true);
+    const fetchVendors = useCallback(() => {
         atroshaFetch("/vendors")
             .then(setVendors)
             .catch(console.error)
             .finally(() => setLoading(false));
-    };
+    }, []);
 
     useEffect(() => {
         fetchVendors();
-    }, [entityId, role]); // Refetch when entity or role changes
+    }, [fetchVendors, entityId, role]); // Refetch when entity or role changes
 
     const handleSaveThreshold = async (id: number) => {
         const val = parseFloat(editValue);
@@ -46,6 +45,7 @@ export default function VendorClient() {
                 body: JSON.stringify({ auto_approve_below: val })
             });
             setEditingId(null);
+            setLoading(true);
             fetchVendors();
         } catch (e) {
             console.error(e);

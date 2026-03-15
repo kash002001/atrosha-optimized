@@ -3,7 +3,7 @@
  
 
 import { CreditCard, ArrowRight, CheckCircle2, AlertCircle, Search, Filter } from "lucide-react";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useUser } from "../context/UserContext";
 import { atroshaFetch } from "@/lib/api-client";
 
@@ -22,8 +22,7 @@ export default function TransactionsClient() {
     const [transactions, setTransactions] = useState<Transaction[]>([]);
     const [loading, setLoading] = useState(true);
 
-    const fetchTransactions = async () => {
-        setLoading(true);
+    const fetchTransactions = useCallback(async () => {
         try {
             const data = await atroshaFetch("/transactions");
             setTransactions(data || []);
@@ -32,11 +31,11 @@ export default function TransactionsClient() {
             setTransactions([]);
         }
         setLoading(false);
-    };
+    }, []);
 
     useEffect(() => {
         fetchTransactions();
-    }, [entityId, role]);
+    }, [fetchTransactions, entityId, role]);
 
     return (
         <>

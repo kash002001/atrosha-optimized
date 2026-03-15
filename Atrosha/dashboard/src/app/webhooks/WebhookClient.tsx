@@ -2,7 +2,7 @@
  
  
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { Webhook, Plus, Trash2, Activity } from "lucide-react";
 import { useUser } from "../context/UserContext";
 import { atroshaFetch } from "@/lib/api-client";
@@ -19,8 +19,7 @@ export default function WebhookClient() {
     const [newUrl, setNewUrl] = useState("");
     const [loading, setLoading] = useState(true);
 
-    const fetchWebhooks = async () => {
-        setLoading(true);
+    const fetchWebhooks = useCallback(async () => {
         try {
             const data = await atroshaFetch("/webhooks");
             setWebhooks(data || []);
@@ -29,11 +28,11 @@ export default function WebhookClient() {
             setWebhooks([]);
         }
         setLoading(false);
-    };
+    }, []);
 
     useEffect(() => {
         fetchWebhooks();
-    }, [entityId, role]);
+    }, [fetchWebhooks, entityId, role]);
 
     const addWebhook = async () => {
         if (!newUrl) return;
@@ -43,6 +42,7 @@ export default function WebhookClient() {
                 body: JSON.stringify({ url: newUrl })
             });
             setNewUrl("");
+            setLoading(true);
             fetchWebhooks();
         } catch (e) {
             console.error(e);
@@ -52,6 +52,7 @@ export default function WebhookClient() {
     const deleteWebhook = async (id: number) => {
         try {
             await atroshaFetch(`/webhooks/${id}`, { method: "DELETE" });
+            setLoading(true);
             fetchWebhooks();
         } catch (e) {
             console.error(e);

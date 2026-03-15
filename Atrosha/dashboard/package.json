@@ -6,7 +6,7 @@
     "dev": "next dev -p 3001",
     "build": "next build",
     "start": "next start",
-    "lint": "eslint . --fix || true"
+    "lint": "eslint . --fix"
   },
   "dependencies": {
     "@supabase/ssr": "^0.8.0",

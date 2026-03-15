@@ -14,20 +14,21 @@ interface UserContextType {
 const UserContext = createContext<UserContextType | undefined>(undefined);
 
 export function UserProvider({ children }: { children: React.ReactNode }) {
-    const [user, setUser] = useState("admin");
-    const [entityId, setEntityId] = useState(1);
-    const [role, setRole] = useState("ADMIN");
-
-    // Load from localStorage if available
-    useEffect(() => {
-        const savedUser = localStorage.getItem("atrosha_user");
-        const savedEntity = localStorage.getItem("atrosha_entity");
-        const savedRole = localStorage.getItem("atrosha_role");
-
-        if (savedUser) setUser(savedUser);
-        if (savedEntity) setEntityId(parseInt(savedEntity));
-        if (savedRole) setRole(savedRole);
-    }, []);
+    const [user, setUser] = useState(() => {
+        if (typeof window !== "undefined") return localStorage.getItem("atrosha_user") || "admin";
+        return "admin";
+    });
+    const [entityId, setEntityId] = useState(() => {
+        if (typeof window !== "undefined") {
+            const saved = localStorage.getItem("atrosha_entity");
+            return saved ? parseInt(saved) : 1;
+        }
+        return 1;
+    });
+    const [role, setRole] = useState(() => {
+        if (typeof window !== "undefined") return localStorage.getItem("atrosha_role") || "ADMIN";
+        return "ADMIN";
+    });
 
     const updateValue = (key: string, value: string, setter: (v: any) => void) => {
         setter(value);
