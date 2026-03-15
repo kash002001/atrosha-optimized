@@ -22,11 +22,6 @@ impl EgressWhitelist {
             None => return false,
         };
 
-        // Static safety bypass for demo/local services
-        if host == "127.0.0.1" || host == "localhost" {
-            return true;
-        }
-
         let mut conn = match self.client.get_async_connection().await {
             Ok(c) => c,
             Err(_) => return false, // Fail closed

@@ -1,9 +1,10 @@
 import hashlib
 import requests
+import os
 from schemas import PaymentStatus
 from db import AtroshaDB
 
-PROXY_URL = "http://localhost:8080"  # atrosha kernel
+PROXY_URL = os.getenv("PROXY_URL", "http://localhost:8080")  # atrosha kernel
 
 db = AtroshaDB()
 

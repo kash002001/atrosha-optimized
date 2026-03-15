@@ -1,0 +1,19 @@
+PROPRIETARY AND CONFIDENTIAL SOFTWARE LICENSE AGREEMENT
+
+Copyright (c) 2026 Atrosha. All rights reserved.
+
+1. PERMITTED USE
+This software and associated documentation files (the "Software") are the proprietary property of Atrosha. You are granted a non-exclusive, non-transferable license to deploy and use the Software within your organization ("Licensee") strictly for internal business purposes, subject to a signed commercial agreement with Atrosha.
+
+2. RESTRICTIONS
+You may not:
+- Distribute, sub-license, sell, lease, or publicly display the Software or any portion thereof.
+- Modify, reverse-engineer, decompile, or create derivative works of the Software beyond your internal deployment needs.
+- Use the Software to provide competitive services or host the Software in a multi-tenant SaaS environment for third parties without explicit written consent.
+- Remove or alter any copyright, trademark, or other proprietary notices contained in the Software.
+
+3. OWNERSHIP
+Atrosha retains all right, title, and interest in and to the Software, including any intellectual property rights therein. This license is not a sale of the Software.
+
+4. NO WARRANTY
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.

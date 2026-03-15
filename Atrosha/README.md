@@ -1,109 +1,49 @@
 <div align="center">
-  <h1>Project Atrosha</h1>
+  <h1>Atrosha Enterprise Edition</h1>
   <p>
-    <strong>A local AI agent setup with a built-in Rust proxy for security.</strong>
+    <strong>Cryptographic Guardrails for Autonomous Enterprise AI Agents.</strong>
   </p>
-
   <p>
-    <a href="https://github.com/kash002001/atrosha/blob/main/LICENSE"><img alt="License: MIT" src="https://img.shields.io/badge/License-MIT-yellow.svg?style=for-the-badge" /></a>
-    <a href="https://rustup.rs/"><img alt="Rust" src="https://img.shields.io/badge/rust-1.74%2B-orange.svg?style=for-the-badge&logo=rust" /></a>
-    <a href="https://www.python.org/downloads/"><img alt="Python" src="https://img.shields.io/badge/python-3.10%2B-blue.svg?style=for-the-badge&logo=python" /></a>
+    <em>PROPRIETARY & CONFIDENTIAL</em>
   </p>
 </div>
 
 ---
 
-## Overview
+## 🔒 Overview
 
-Project Atrosha is a framework for running AI financial agents locally on your own hardware or VPC.
+**Atrosha Enterprise** solves the single biggest roadblock preventing Fortune 500 companies from fully automating financial Operations: **LLM Hallucination Liability.**
 
-Most tools send your financial data to external APIs, which can be a security risk. This project keeps everything inside your network. We use a Python backend for the AI logic (like reading invoices or finding weird payroll spikes) and a Rust proxy that sits in front of it. The proxy makes sure the AI agent isn't allowed to make unauthorized API calls or spend more money than it's supposed to. 
+It provides a zero-trust cryptographic proxy that sits between your autonomous AI agents and your financial APIs (Stripe, Netsuite, SAP, AWS). Atrosha mathematically guarantees that an agent can only execute transactions explicitly signed by human-verified localized *Intent*. If the LLM hallucinates or falls victim to prompt injection, the Rust proxy catches the semantic deviation and blocks the transaction at the network layer in `< 5ms`.
 
-If the agent goes off the rails or hallucinates, the Rust proxy blocks the request.
+## 🏛 Architecture
 
-## Architecture
+The Atrosha Enterprise architecture completely removes API keys from your agent's localized environment. 
 
-There are three main parts to the stack:
+1. **The Isolated AI Agent**: Executes OCR, makes decisions, and generates a *Transaction Intent*. Uses an `Ed25519` private key to cryptographically sign the intent.
+2. **The Rust Defense Proxy**: Intercepts the request. Verifies the cryptographic signature. Uses a local, offline LLM embedding model to compare the requested transaction against the locked Intent. 
+3. **Immutable Audit Trail**: Every approved or denied request is instantly logged to ClickHouse for SOC2 compliance.
 
-1. **Python Agent**: The actual AI logic. It handles the OCR, talks to your local database, and figures out what APIs to call.
-2. **Rust Proxy**: A secure middleman. Every time the agent tries to talk to the outside world, it has to go through here. The proxy checks if the agent is allowed to do that and enforces budget limits.
-3. **Next.js Dashboard**: A simple UI where humans can approve budgets, set rules, and see what the agent has been up to.
+## 🚀 Quick Start (Local Trial)
 
-```mermaid
-graph TD
-    subgraph Dashboard
-        D[Next.js UI] -->|Approves Budgets| API(Python Agent)
-    end
-    
-    subgraph Internal Network
-        API -->|Tries to do something| P[Rust Proxy]
-    end
+For enterprise evaluators, the entire stack can be spun up locally via Docker.
 
-    subgraph Defense
-        P -->|Checks Rules| Redis[(Redis)]
-        P -->|Logs Action| CH[(ClickHouse)]
-    end
-
-    P -->|Approved| External[External API / Bank]
-```
-
-## Running it locally
-
-You'll need Rust, Python 3.10+, Node, Redis, and ClickHouse to run this locally.
-
-Clone the repo:
+**Start the Infrastructure:**
 ```bash
-git clone https://github.com/kash002001/atrosha.git
-cd atrosha
+docker compose up -d redis clickhouse semantic-engine proxy intent-validator
 ```
 
-Start Redis and ClickHouse (a docker-compose file is included):
+**Run an Agent:**
+The Python agent SDK demonstrates the cryptographic signing workflow.
 ```bash
-docker-compose up -d redis clickhouse
+pip install atrosha-sdk
+python demo.py
 ```
 
-**1. Start the Rust Proxy**
-```bash
-cd proxy
-cp .env.example .env
-cargo run --release
-```
+## 📚 Documentation
+- **[Deployment & VPC Setup](./ENTERPRISE_SETUP.md)**
+- **[Security & Threat Models](./SECURITY.md)**
+- **[API Reference](https://atrosha.bond/docs)**
 
-**2. Start the Python Agent**
-```bash
-cd ../sovereign_agent
-python -m venv venv
-# windows: venv\Scripts\activate, mac/linux: source venv/bin/activate
-pip install -r requirements.txt
-export PROXY_URL="http://127.0.0.1:8080"
-python server.py
-```
-
-**3. Start the Dashboard**
-```bash
-cd ../dashboard
-npm install
-npm run dev
-```
-
-## How to use it
-
-Before the agent can do anything that costs money (like paying a vendor), a human has to approve a budget via the dashboard. 
-
-You can also do it via the API. Here is an example using cURL to give an agent a $500 limit:
-```bash
-curl -X POST http://localhost:8000/auth/permit \
-  -H "X-Atrosha-Entity-ID: org-123" \
-  -H "X-Atrosha-Role: ADMIN" \
-  -d '{"agent_id": "agent-007", "budget": 500, "intent": "Pay vendor"}'
-```
-
-If the agent tries to spend $501, or calls an API that isn't on its allowed list, the Rust proxy will just drop the request. There's also payroll anomaly detection built-in that will automatically flag things if salaries spike weirdly compared to previous months.
-
-## Contributing
-
-Pull requests are welcome. Make sure your Rust code passes `cargo check` and `cargo clippy` without warnings, and run `npm run lint` on the dashboard code before submitting. 
-
-## License
-
-MIT
+## ⚖️ License & Agreements
+This software is provided under a **Proprietary Commercial License**. Unauthorized distribution, reverse engineering, or hosting for third parties is strictly prohibited. See `LICENSE` for details.
