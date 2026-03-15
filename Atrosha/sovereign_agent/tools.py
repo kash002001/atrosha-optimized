@@ -14,7 +14,7 @@ def _idempotency_key(session_id: str, vendor: str, amount: float) -> str:
     return hashlib.sha256(raw.encode()).hexdigest()[:32]
 
 
-def execute_payment(vendor: str, amount: float, session_id: str, currency: str = "USD") -> dict:
+def execute_payment(vendor: str, amount: float, session_id: str, permit: str, currency: str = "USD") -> dict:
     idem_key = _idempotency_key(session_id, vendor, amount)
 
     # check for existing execution (prevents double-payments)
@@ -38,7 +38,7 @@ def execute_payment(vendor: str, amount: float, session_id: str, currency: str =
         "X-Atrosha-Amount": str(amount),
         "X-Atrosha-Session-ID": session_id,
         "X-Idempotency-Key": idem_key,
-        "X-Atrosha-Permit": "eyJhZ2VudF9pZCI6ImFnZW50LTAwNyIsImFtb3VudCI6MSwiaW50ZW50X2hhc2giOm51bGwsImV4cCI6OTk5OTk5OTk5OSwiaWF0IjoxNzM4NDE3NTA4fQ.signature",
+        "X-Atrosha-Permit": permit,
     }
 
     payload = {"vendor": vendor, "amount": amount, "currency": currency}
@@ -65,4 +65,4 @@ def execute_payment(vendor: str, amount: float, session_id: str, currency: str =
 
 
 if __name__ == "__main__":
-    print(execute_payment("Cloudflare", 500.0, "test_session"))
+    print(execute_payment("Cloudflare", 500.0, "test_session", permit="mock-permit-token"))
