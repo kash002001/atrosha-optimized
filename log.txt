@@ -1,0 +1,29 @@
+commit 9c4a28d332f086cd613cf0b58c883b53e7711e01
+Author: kash002100 <kashabhi440@gmail.com>
+Date:   Sun Mar 22 20:13:04 2026 +0530
+
+    fix: resolve 504 MIDDLEWARE_INVOCATION_TIMEOUT by patching supabase SSR cookie loss
+
+commit 406a8e5b89fc8d2be482caaa4d01f7c5cdab007d
+Author: kash002100 <kashabhi440@gmail.com>
+Date:   Sun Mar 15 18:10:47 2026 +0530
+
+    fix: import missing BarChart3 and guard localStorage on building evaluation
+
+commit 6b2b32dabd1c01179cca7f6de6a4a375c973deb2
+Author: kash002100 <kashabhi440@gmail.com>
+Date:   Sun Mar 15 17:51:58 2026 +0530
+
+    fix: clear static type warnings inside tools.py and demo.py
+
+commit 44c773d15d9bbfe3abfc6395056ebf74502eca98
+Author: kash002100 <kashabhi440@gmail.com>
+Date:   Sun Mar 15 17:49:37 2026 +0530
+
+    fix: resolve hardcoded permits in tools.py and cast strict header lengths in demo.py
+
+commit 0cf99800e0e6dfc86e7eb8dd0e7e1eaeb01e7155
+Author: kash002100 <kashabhi440@gmail.com>
+Date:   Sun Mar 15 17:36:59 2026 +0530
+
+    fix: resolve react hook render cascades and state initializations from core
