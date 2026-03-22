@@ -9,13 +9,11 @@ export async function middleware(req: NextRequest) {
     const path = req.nextUrl.pathname;
     const isProd = process.env.NODE_ENV === 'production';
 
-    // security headers first
     res.headers.set("X-Frame-Options", "DENY");
     res.headers.set("X-Content-Type-Options", "nosniff");
     res.headers.set("Referrer-Policy", "strict-origin-when-cross-origin");
     res.headers.set("Strict-Transport-Security", "max-age=31536000; includeSubDomains; preload");
 
-    // skip auth for static/public assets
     if (SKIP_AUTH.has(path) || path.startsWith('/api/')) return res;
 
     if (!process.env.NEXT_PUBLIC_SUPABASE_URL || !process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY) {
@@ -31,27 +29,35 @@ export async function middleware(req: NextRequest) {
                     return req.cookies.getAll();
                 },
                 setAll(cookiesToSet) {
+                    cookiesToSet.forEach(({ name, value }) => req.cookies.set(name, value));
+                    
+                    res = NextResponse.next({ request: req });
+                    
+                    res.headers.set("X-Frame-Options", "DENY");
+                    res.headers.set("X-Content-Type-Options", "nosniff");
+                    res.headers.set("Referrer-Policy", "strict-origin-when-cross-origin");
+                    res.headers.set("Strict-Transport-Security", "max-age=31536000; includeSubDomains; preload");
+
                     cookiesToSet.forEach(({ name, value, options }) => {
-                        const cookieOptions = {
+                        res.cookies.set(name, value, {
                             ...options,
                             domain: isProd ? '.atrosha.bond' : undefined,
                             path: '/',
-                            sameSite: 'lax' as const,
+                            sameSite: 'lax',
                             secure: isProd,
-                        };
-                        req.cookies.set(name, value);
-                        res.cookies.set(name, value, cookieOptions);
+                        });
                     });
-                    res = NextResponse.next({ request: req });
                 },
             },
         }
     );
 
     try {
-        await supabase.auth.getUser();
+        const fetchUser = supabase.auth.getUser();
+        const timeout = new Promise((_, reject) => setTimeout(() => reject(new Error('timeout')), 1000));
+        await Promise.race([fetchUser, timeout]);
     } catch {
-        // noop
+        // silent fail to avoid edge crashing
     }
 
     return res;

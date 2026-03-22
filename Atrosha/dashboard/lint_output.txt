@@ -1,0 +1,156 @@
+
+> dashboard@0.1.0 lint
+> eslint
+
+
+C:\Python\Project Atrosha\Atrosha\dashboard\src\app\agents\AgentsClient.tsx
+  3:65  warning  'HardDrive' is defined but never used  @typescript-eslint/no-unused-vars
+
+C:\Python\Project Atrosha\Atrosha\dashboard\src\app\audit\AuditClient.tsx
+  17:34  error    Unexpected any. Specify a different type                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                              @typescript-eslint/no-explicit-any
+  50:9   error    Error: Calling setState synchronously within an effect can trigger cascading renders
+
+Effects are intended to synchronize state between React and external systems such as manually updating the DOM, state management libraries, or other platform APIs. In general, the body of an effect should do one or both of the following:
+* Update external systems with the latest state from React.
+* Subscribe for updates from some external system, calling setState in a callback function when external state changes.
+
+Calling setState synchronously within an effect body causes cascading renders that can hurt performance, and is not recommended. (https://react.dev/learn/you-might-not-need-an-effect).
+
+C:\Python\Project Atrosha\Atrosha\dashboard\src\app\audit\AuditClient.tsx:50:9
+  48 |
+  49 |     useEffect(() => {
+> 50 |         fetchAudit();
+     |         ^^^^^^^^^^ Avoid calling setState() directly within an effect
+  51 |     }, [filter, entityId, role]);
+  52 |
+  53 |     const exportCSV = () => {  react-hooks/set-state-in-effect
+  51:8   warning  React Hook useEffect has a missing dependency: 'fetchAudit'. Either include it or remove the dependency array                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                         react-hooks/exhaustive-deps
+
+C:\Python\Project Atrosha\Atrosha\dashboard\src\app\batch\BatchClient.tsx
+    4:70  warning  'Zap' is defined but never used           @typescript-eslint/no-unused-vars
+    9:15  error    Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+   66:37  error    Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+   66:42  warning  'i' is defined but never used             @typescript-eslint/no-unused-vars
+  133:70  error    Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+C:\Python\Project Atrosha\Atrosha\dashboard\src\app\components\Sidebar.tsx
+  43:13  warning  'user' is assigned a value but never used     @typescript-eslint/no-unused-vars
+  43:57  warning  'setUser' is assigned a value but never used  @typescript-eslint/no-unused-vars
+
+C:\Python\Project Atrosha\Atrosha\dashboard\src\app\context\UserContext.tsx
+  27:24  error  Error: Calling setState synchronously within an effect can trigger cascading renders
+
+Effects are intended to synchronize state between React and external systems such as manually updating the DOM, state management libraries, or other platform APIs. In general, the body of an effect should do one or both of the following:
+* Update external systems with the latest state from React.
+* Subscribe for updates from some external system, calling setState in a callback function when external state changes.
+
+Calling setState synchronously within an effect body causes cascading renders that can hurt performance, and is not recommended. (https://react.dev/learn/you-might-not-need-an-effect).
+
+C:\Python\Project Atrosha\Atrosha\dashboard\src\app\context\UserContext.tsx:27:24
+  25 |         const savedRole = localStorage.getItem("atrosha_role");
+  26 |
+> 27 |         if (savedUser) setUser(savedUser);
+     |                        ^^^^^^^ Avoid calling setState() directly within an effect
+  28 |         if (savedEntity) setEntityId(parseInt(savedEntity));
+  29 |         if (savedRole) setRole(savedRole);
+  30 |     }, []);  react-hooks/set-state-in-effect
+  32:66  error  Unexpected any. Specify a different type                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                @typescript-eslint/no-explicit-any
+
+C:\Python\Project Atrosha\Atrosha\dashboard\src\app\expenses\ExpenseClient.tsx
+   8:46  error    Unexpected any. Specify a different type    @typescript-eslint/no-explicit-any
+  37:19  warning  'token' is assigned a value but never used  @typescript-eslint/no-unused-vars
+  54:18  warning  'error' is defined but never used           @typescript-eslint/no-unused-vars
+
+C:\Python\Project Atrosha\Atrosha\dashboard\src\app\export\ExportClient.tsx
+  31:45  error  `'` can be escaped with `&apos;`, `&lsquo;`, `&#39;`, `&rsquo;`  react/no-unescaped-entities
+
+C:\Python\Project Atrosha\Atrosha\dashboard\src\app\payroll\PayrollClient.tsx
+   3:27  warning  'useEffect' is defined but never used   @typescript-eslint/no-unused-vars
+   9:5   warning  'DollarSign' is defined but never used  @typescript-eslint/no-unused-vars
+  10:5   warning  'BarChart3' is defined but never used   @typescript-eslint/no-unused-vars
+  47:18  warning  'error' is defined but never used       @typescript-eslint/no-unused-vars
+  65:18  warning  'error' is defined but never used       @typescript-eslint/no-unused-vars
+
+C:\Python\Project Atrosha\Atrosha\dashboard\src\app\rules\RulesClient.tsx
+   3:62  warning  'Play' is defined but never used                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                   @typescript-eslint/no-unused-vars
+  11:22  error    Unexpected any. Specify a different type                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                           @typescript-eslint/no-explicit-any
+  24:48  error    Unexpected any. Specify a different type                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                           @typescript-eslint/no-explicit-any
+  40:9   error    Error: Calling setState synchronously within an effect can trigger cascading renders
+
+Effects are intended to synchronize state between React and external systems such as manually updating the DOM, state management libraries, or other platform APIs. In general, the body of an effect should do one or both of the following:
+* Update external systems with the latest state from React.
+* Subscribe for updates from some external system, calling setState in a callback function when external state changes.
+
+Calling setState synchronously within an effect body causes cascading renders that can hurt performance, and is not recommended. (https://react.dev/learn/you-might-not-need-an-effect).
+
+C:\Python\Project Atrosha\Atrosha\dashboard\src\app\rules\RulesClient.tsx:40:9
+  38 |
+  39 |     useEffect(() => {
+> 40 |         fetchRules();
+     |         ^^^^^^^^^^ Avoid calling setState() directly within an effect
+  41 |     }, [entityId, role]);
+  42 |
+  43 |     const handleSimulate = () => {  react-hooks/set-state-in-effect
+
+C:\Python\Project Atrosha\Atrosha\dashboard\src\app\settings\auth\AuthSettingsClient.tsx
+   7:46  error    Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  45:18  warning  'error' is defined but never used         @typescript-eslint/no-unused-vars
+  55:18  warning  'error' is defined but never used         @typescript-eslint/no-unused-vars
+
+C:\Python\Project Atrosha\Atrosha\dashboard\src\app\transactions\TransactionsClient.tsx
+   5:10  warning  'CreditCard' is defined but never used                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                   @typescript-eslint/no-unused-vars
+  38:9   error    Error: Calling setState synchronously within an effect can trigger cascading renders
+
+Effects are intended to synchronize state between React and external systems such as manually updating the DOM, state management libraries, or other platform APIs. In general, the body of an effect should do one or both of the following:
+* Update external systems with the latest state from React.
+* Subscribe for updates from some external system, calling setState in a callback function when external state changes.
+
+Calling setState synchronously within an effect body causes cascading renders that can hurt performance, and is not recommended. (https://react.dev/learn/you-might-not-need-an-effect).
+
+C:\Python\Project Atrosha\Atrosha\dashboard\src\app\transactions\TransactionsClient.tsx:38:9
+  36 |
+  37 |     useEffect(() => {
+> 38 |         fetchTransactions();
+     |         ^^^^^^^^^^^^^^^^^ Avoid calling setState() directly within an effect
+  39 |     }, [entityId, role]);
+  40 |
+  41 |     return (  react-hooks/set-state-in-effect
+
+C:\Python\Project Atrosha\Atrosha\dashboard\src\app\vendors\VendorClient.tsx
+  36:9  error  Error: Calling setState synchronously within an effect can trigger cascading renders
+
+Effects are intended to synchronize state between React and external systems such as manually updating the DOM, state management libraries, or other platform APIs. In general, the body of an effect should do one or both of the following:
+* Update external systems with the latest state from React.
+* Subscribe for updates from some external system, calling setState in a callback function when external state changes.
+
+Calling setState synchronously within an effect body causes cascading renders that can hurt performance, and is not recommended. (https://react.dev/learn/you-might-not-need-an-effect).
+
+C:\Python\Project Atrosha\Atrosha\dashboard\src\app\vendors\VendorClient.tsx:36:9
+  34 |
+  35 |     useEffect(() => {
+> 36 |         fetchVendors();
+     |         ^^^^^^^^^^^^ Avoid calling setState() directly within an effect
+  37 |     }, [entityId, role]); // Refetch when entity or role changes
+  38 |
+  39 |     const handleSaveThreshold = async (id: number) => {  react-hooks/set-state-in-effect
+
+C:\Python\Project Atrosha\Atrosha\dashboard\src\app\webhooks\WebhookClient.tsx
+  35:9  error  Error: Calling setState synchronously within an effect can trigger cascading renders
+
+Effects are intended to synchronize state between React and external systems such as manually updating the DOM, state management libraries, or other platform APIs. In general, the body of an effect should do one or both of the following:
+* Update external systems with the latest state from React.
+* Subscribe for updates from some external system, calling setState in a callback function when external state changes.
+
+Calling setState synchronously within an effect body causes cascading renders that can hurt performance, and is not recommended. (https://react.dev/learn/you-might-not-need-an-effect).
+
+C:\Python\Project Atrosha\Atrosha\dashboard\src\app\webhooks\WebhookClient.tsx:35:9
+  33 |
+  34 |     useEffect(() => {
+> 35 |         fetchWebhooks();
+     |         ^^^^^^^^^^^^^ Avoid calling setState() directly within an effect
+  36 |     }, [entityId, role]);
+  37 |
+  38 |     const addWebhook = async () => {  react-hooks/set-state-in-effect
+
+Γ£û 33 problems (16 errors, 17 warnings)
+

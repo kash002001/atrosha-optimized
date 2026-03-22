@@ -22,8 +22,6 @@ export async function POST(req: Request) {
 
     try {
         if (!sig || !endpointSecret) {
-            // Development mode: Allow bypassing signature if secret is missing (optional, but risky in prod)
-            // Ideally, just fail
             console.error('Missing Stripe signature or secret');
             return NextResponse.json({ error: 'Missing Stripe signature or secret' }, { status: 400 });
         }

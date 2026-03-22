@@ -44,7 +44,6 @@ async def lock_intent(req: IntentLockReq):
     We verify the signature, then store the prompt in Redis
     keyed by session_id with a TTL so it auto-expires.
     """
-    # verify the ed25519 signature
     try:
         pub_bytes = bytes.fromhex(req.pub_key)
         sig_bytes = bytes.fromhex(req.signature)
@@ -119,8 +118,6 @@ async def issue_permit(req: permitreq):
         "exp": int(time.time()) + 300,
         "iat": int(time.time()),
     }
-
-    # embed session_id if the agent provided one — links this permit to a locked intent
     if req.session_id:
         payload["session_id"] = req.session_id
 

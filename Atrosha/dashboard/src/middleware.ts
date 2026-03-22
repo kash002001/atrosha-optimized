@@ -34,11 +34,16 @@ export async function middleware(req: NextRequest) {
         }
     );
 
-    const {
-        data: { user }
-    } = await supabase.auth.getUser();
+    let user = null;
+    try {
+        const fetchUser = supabase.auth.getUser();
+        const timeout = new Promise<never>((_, reject) => setTimeout(() => reject(new Error('timeout')), 1000));
+        const resObj = await Promise.race([fetchUser, timeout]);
+        user = resObj.data?.user;
+    } catch {
+        // edge timeout fallback
+    }
 
-    // no session → bounce to landing page login
     const loginUrl = process.env.NEXT_PUBLIC_LOGIN_URL || "https://atrosha.bond/login";
     if (!user) {
         return NextResponse.redirect(loginUrl);

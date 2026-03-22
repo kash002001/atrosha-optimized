@@ -11,7 +11,6 @@ export async function POST(req: Request) {
             return NextResponse.json({ error: "Missing priceId or orgId" }, { status: 400 });
         }
 
-        // Verify user owns the org (security check)
         const cookieStore = await cookies();
         const supabase = createClient(cookieStore);
         const { data: { user } } = await supabase.auth.getUser();
@@ -20,7 +19,6 @@ export async function POST(req: Request) {
             return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
         }
 
-        // Create Checkout Session
         const session = await stripe.checkout.sessions.create({
             mode: "subscription",
             payment_method_types: ["card"],

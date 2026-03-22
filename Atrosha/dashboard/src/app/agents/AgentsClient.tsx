@@ -172,12 +172,12 @@ export default function AgentsClient() {
                                 </div>
                                 <span style={{
                                     fontSize: 10, fontWeight: 700, padding: "2px 6px", borderRadius: 4,
-                                    background: a.is_active !== 0 ? "rgba(34,197,94,0.1)" : "rgba(239,68,68,0.1)",
-                                    color: a.is_active !== 0 ? "#22c55e" : "#ef4444",
-                                    border: `1px solid ${a.is_active !== 0 ? "rgba(34,197,94,0.2)" : "rgba(239,68,68,0.2)"}`,
+                                    background: a.is_active ? "rgba(34,197,94,0.1)" : "rgba(239,68,68,0.1)",
+                                    color: a.is_active ? "#22c55e" : "#ef4444",
+                                    border: `1px solid ${a.is_active ? "rgba(34,197,94,0.2)" : "rgba(239,68,68,0.2)"}`,
                                     textTransform: 'uppercase'
                                 }}>
-                                    {a.is_active !== 0 ? "Active" : "Revoked"}
+                                    {a.is_active ? "Active" : "Revoked"}
                                 </span>
                             </div>
                             <div style={{ display: "flex", gap: 16, marginTop: 12, borderTop: '1px solid var(--border)', paddingTop: 12 }}>

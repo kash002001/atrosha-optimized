@@ -1,6 +1,6 @@
 import re
 import uuid
-from typing import dict, any, optional
+from typing import Dict, Any, Optional
 from qdrant_client import qdrantclient
 from qdrant_client.http import models as qdrant_models
 from sentence_transformers import sentencetransformer
@@ -29,15 +29,15 @@ class refundfirewall:
     def __init__(
         self,
         model:sentencetransformer,
-        qdrant_client:optional[qdrantclient]=None,
+        qdrant_client:Optional[qdrantclient]=None,
     ):
         self.model=model
         self.qdrant=qdrant_client
         self._compiled_patterns=[
-            re.compile(p, re.ignorecase) for p in refund_trigger_patterns
+            re.compile(p, re.IGNORECASE) for p in refund_trigger_patterns
         ]
         self._suspicious_patterns=[
-            (re.compile(p, re.ignorecase), reason) for p, reason in suspicious_patterns
+            (re.compile(p, re.IGNORECASE), reason) for p, reason in suspicious_patterns
         ]
     def initialize_templates(self) -> None:
         if self.qdrant is None:
@@ -85,7 +85,7 @@ class refundfirewall:
         if not results:
             return 0.0
         return float(results[0].score)
-    def check(self, task_desc:str) -> dict[str, any]:
+    def check(self, task_desc:str) -> Dict[str, Any]:
         if not self._is_refund_related(task_desc):
             return {"blocked":False, "reason":None, "similarity":None}
         similarity=self._search_similarity(task_desc)
@@ -106,8 +106,7 @@ class refundfirewall:
              pass
         return {"blocked":False, "reason":None, "similarity":similarity}
 class infrafirewall:
-    aws/cloud infrastructure safety layers.
-    prevents over-provisioning and dangerous resource deletion.
+
     def __init__(self):
         self._dangerous_patterns=[
             (r"delete.*(database|cluster|instance)", "dangerous resource deletion detected"),
@@ -117,9 +116,9 @@ class infrafirewall:
 
         ]
         self._compiled=[
-            (re.compile(p, re.ignorecase), r) for p, r in self._dangerous_patterns
+            (re.compile(p, re.IGNORECASE), r) for p, r in self._dangerous_patterns
         ]
-    def check(self, task_desc:str) -> dict[str, any]:
+    def check(self, task_desc:str) -> Dict[str, Any]:
         for pattern, reason in self._compiled:
             if pattern.search(task_desc):
                 return {

@@ -4,7 +4,6 @@ import { stripe } from "@/lib/stripe";
 import Stripe from "stripe";
 import { createClient } from "@supabase/supabase-js";
 
-// Helper to get admin client
 function getAdmin() {
     return createClient(
         process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -39,7 +38,6 @@ export async function POST(req: Request) {
 
                 if (orgId) {
                     console.log(`Processing checkout for Org: ${orgId}`);
-                    // Update Org status to active
                     const { error } = await admin
                         .from("organizations")
                         .update({
@@ -67,7 +65,6 @@ export async function POST(req: Request) {
                 const stripeCustomerId = subscription.customer;
 
                 console.log(`Subscription canceled: ${subscription.id}`);
-                // Downgrade to 'canceled' or 'explorer'
                 const { error } = await admin
                     .from("organizations")
                     .update({

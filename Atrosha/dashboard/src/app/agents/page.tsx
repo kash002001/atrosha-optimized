@@ -1,5 +1,7 @@
 "use client";
 
+export const dynamic = "force-dynamic";
+
 import AgentsClient from "./AgentsClient";
 
 export default function AgentsPage() {
