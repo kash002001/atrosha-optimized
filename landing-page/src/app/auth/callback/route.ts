@@ -9,6 +9,10 @@ export async function GET(req: Request) {
     const code = searchParams.get("code");
 
     if (code) {
+        const hostname = req.headers.get('host') || 'localhost';
+        const isProd = hostname.includes('atrosha.bond');
+        const cookieDomain = isProd ? '.atrosha.bond' : undefined;
+        
         const cookieStore = await cookies();
         const supabase = createServerClient(
             process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -18,7 +22,13 @@ export async function GET(req: Request) {
                     getAll() { return cookieStore.getAll(); },
                     setAll(cookiesToSet) {
                         cookiesToSet.forEach(({ name, value, options }) => {
-                            cookieStore.set(name, value, options);
+                            cookieStore.set(name, value, {
+                                ...options,
+                                domain: cookieDomain,
+                                path: '/',
+                                sameSite: 'lax',
+                                secure: isProd,
+                            });
                         });
                     },
                 },
