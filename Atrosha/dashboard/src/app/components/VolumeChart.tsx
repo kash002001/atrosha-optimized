@@ -62,69 +62,41 @@ export default function VolumeChart({ data, totalTransactions }: VolumeChartProp
                             <stop offset="0%" stopColor="#ef4444" stopOpacity={0.3} />
                             <stop offset="100%" stopColor="#ef4444" stopOpacity={0} />
                         </linearGradient>
-                        {/* Gradients for Skeleton Mode (Gray/Muted) */}
+                        {/* Gradients for Skeleton Mode (Light Theme) */}
                         <linearGradient id="gSkeleton" x1="0" y1="0" x2="0" y2="1">
-                            <stop offset="0%" stopColor="#2e2e3e" stopOpacity={0.15} />
-                            <stop offset="100%" stopColor="#2e2e3e" stopOpacity={0.05} />
+                            <stop offset="0%" stopColor="#e2e8f0" stopOpacity={0.6} />
+                            <stop offset="100%" stopColor="#f8fafc" stopOpacity={0.1} />
                         </linearGradient>
                     </defs>
-                    <CartesianGrid strokeDasharray="3 3" stroke="#1e1e2e" vertical={false} />
+                    <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" vertical={false} />
                     <XAxis
                         dataKey="t"
-                        tick={{ fill: "#6b6b80", fontSize: 11 }}
+                        tick={{ fill: "#64748b", fontSize: 11 }}
                         axisLine={false}
                         tickLine={false}
                         dy={10}
                         interval={isEmpty ? 1 : 'preserveStartEnd'}
-                        // Hide Axis labels in skeleton mode for true "background" look? 
-                        // Or keep them for scale? Let's keep them but ensure they don't break layout.
                         hide={isEmpty}
                     />
                     <YAxis
-                        tick={{ fill: "#6b6b80", fontSize: 11 }}
+                        tick={{ fill: "#64748b", fontSize: 11 }}
                         axisLine={false}
                         tickLine={false}
-                        hide={isEmpty} // Hide Y axis for clean background look
-                        domain={isEmpty ? [0, 20] : ['auto', 'auto']} // Ensure wave fits comfortably (max ~18)
+                        hide={isEmpty}
+                        domain={isEmpty ? [0, 20] : ['auto', 'auto']}
                     />
                     {!isEmpty && (
                         <Tooltip
-                            contentStyle={{ background: "#16161f", border: "1px solid #1e1e2e", borderRadius: 8, fontSize: 12 }}
-                            labelStyle={{ color: "#e4e4ec" }}
+                            contentStyle={{ background: "#ffffff", border: "1px solid #e2e8f0", borderRadius: 8, fontSize: 12, boxShadow: "0 4px 6px rgba(0,0,0,0.05)" }}
+                            labelStyle={{ color: "#1e293b", fontWeight: 600 }}
                         />
                     )}
 
-                    {isEmpty ? (
-                        /* Skeleton Areas - Faint, dashed, full background waves */
-                        <>
-                            <Area
-                                type="monotone"
-                                dataKey="approved"
-                                stroke="#3f3f4e"
-                                fill="url(#gSkeleton)"
-                                strokeWidth={2}
-                                strokeDasharray="6 6"
-                                animationDuration={0}
-                                isAnimationActive={false}
-                            />
-                            <Area
-                                type="monotone"
-                                dataKey="denied"
-                                stroke="#3f3f4e"
-                                fill="url(#gSkeleton)"
-                                strokeWidth={2}
-                                strokeDasharray="6 6"
-                                animationDuration={0}
-                                isAnimationActive={false}
-                            />
-                        </>
-                    ) : (
-                        /* Real Data Areas */
-                        <>
-                            <Area type="monotone" dataKey="approved" stroke="#6366f1" fill="url(#gApproved)" strokeWidth={2} />
-                            <Area type="monotone" dataKey="denied" stroke="#ef4444" fill="url(#gDenied)" strokeWidth={2} />
-                        </>
-                    )}
+                    {isEmpty && <Area type="monotone" dataKey="approved" stroke="#cbd5e1" fill="url(#gSkeleton)" strokeWidth={2} strokeDasharray="6 6" animationDuration={0} isAnimationActive={false} />}
+                    {isEmpty && <Area type="monotone" dataKey="denied" stroke="#cbd5e1" fill="url(#gSkeleton)" strokeWidth={2} strokeDasharray="6 6" animationDuration={0} isAnimationActive={false} />}
+
+                    {!isEmpty && <Area type="monotone" dataKey="approved" stroke="#059669" fill="url(#gApproved)" strokeWidth={2} />}
+                    {!isEmpty && <Area type="monotone" dataKey="denied" stroke="#dc2626" fill="url(#gDenied)" strokeWidth={2} />}
                 </AreaChart>
             </ResponsiveContainer>
 
@@ -135,33 +107,33 @@ export default function VolumeChart({ data, totalTransactions }: VolumeChartProp
                     display: "flex",
                     alignItems: "center",
                     justifyContent: "center",
-                    background: "rgba(0,0,0,0.01)", // Almost transparent
+                    background: "rgba(255,255,255,0.4)",
                 }}>
                     <div style={{
                         textAlign: "center",
-                        background: "rgba(22, 22, 31, 0.85)",
+                        background: "rgba(255, 255, 255, 0.95)",
                         padding: "24px 36px",
                         borderRadius: 16,
-                        border: "1px solid #2e2e3e",
-                        backdropFilter: "blur(6px)",
-                        boxShadow: "0 12px 40px rgba(0, 0, 0, 0.3)"
+                        border: "1px solid #e2e8f0",
+                        backdropFilter: "blur(4px)",
+                        boxShadow: "0 10px 25px rgba(0, 0, 0, 0.05)"
                     }}>
-                        <p style={{ color: "#e4e4ec", fontSize: 16, fontWeight: 600, marginBottom: 6 }}>Start Monitoring</p>
-                        <p style={{ color: "#8b8b9d", fontSize: 13, marginBottom: 20 }}>Connect your first agent to see real-time transaction volume.</p>
+                        <p style={{ color: "#1e293b", fontSize: 16, fontWeight: 600, marginBottom: 6 }}>Start Monitoring</p>
+                        <p style={{ color: "#64748b", fontSize: 13, marginBottom: 20 }}>Connect your first agent to see real-time transaction volume.</p>
 
                         <Link href="/agents" style={{
-                            background: "linear-gradient(135deg, #6366f1 0%, #4f46e5 100%)",
+                            background: "var(--primary)",
                             color: "#fff",
                             padding: "12px 24px",
-                            borderRadius: 10,
+                            borderRadius: "var(--radius-sm)",
                             fontSize: 14,
                             fontWeight: 600,
                             textDecoration: "none",
                             display: "inline-flex",
                             alignItems: "center",
                             gap: 10,
-                            boxShadow: "0 4px 15px rgba(99, 102, 241, 0.35)",
-                            transition: "transform 0.2s ease"
+                            boxShadow: "0 4px 15px rgba(6, 78, 59, 0.15)",
+                            transition: "all 0.2s ease"
                         }}>
                             <span>+</span> Connect Agent
                         </Link>

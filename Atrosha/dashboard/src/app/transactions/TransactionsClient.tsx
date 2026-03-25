@@ -79,7 +79,7 @@ export default function TransactionsClient() {
                                         </div>
                                     </td>
                                     <td style={{ fontFamily: 'monospace', fontSize: 12 }}>#{tx.id}</td>
-                                    <td style={{ fontWeight: 600 }}>{tx.amount} {tx.currency}</td>
+                                    <td style={{ fontWeight: 600 }}>{new Intl.NumberFormat('en-US', { style: 'currency', currency: tx.currency || 'USD' }).format((tx.amount || 0) / 100)}</td>
                                     <td>
                                         <div style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 12 }}>
                                             <ArrowRight size={14} style={{ color: 'var(--text-muted)' }} />
