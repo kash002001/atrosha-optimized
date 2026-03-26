@@ -20,20 +20,26 @@ export default function Hero() {
                 />
             </div>
 
-            <div className="relative z-10 max-w-3xl mx-auto px-6 text-center pt-24 pb-12">
+            <div className="relative z-10 max-w-3xl mx-auto px-6 text-center">
+                <motion.div
+                    initial={{ opacity: 0, y: 12 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ duration: 0.6 }}
+                    className="inline-flex items-center gap-2 bg-primary/10 dark:bg-primary/15 border border-primary/20 text-primary text-[11px] font-semibold uppercase tracking-[0.15em] px-4 py-2 rounded-full mb-10"
+                >
+                    <span className="w-1.5 h-1.5 rounded-full bg-primary animate-pulse"></span>
+                    Agentic Finance, Secured
+                </motion.div>
 
                 <motion.h1
                     initial={{ opacity: 0, y: 24 }}
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ duration: 0.9, ease: "easeOut", delay: 0.1 }}
-                    className="font-serif text-4xl md:text-5xl lg:text-6xl tracking-tight leading-[1.12] text-text-light dark:text-white mb-8"
+                    className="font-serif text-4xl md:text-6xl lg:text-[4.25rem] tracking-tight leading-[1.12] text-text-light dark:text-white mb-8"
                 >
-                    Your AI agents spend <br />
-                    money. <br />
-                    <span className="italic text-primary">
-                        We make sure they don&apos;t go <br className="hidden sm:block" />
-                        rogue.
-                    </span>
+                    Your AI agents spend money.{" "}
+                    <br className="hidden sm:block" />
+                    <span className="italic text-primary">We make sure they don&apos;t go rogue.</span>
                 </motion.h1>
 
                 <motion.p
@@ -74,7 +80,37 @@ export default function Hero() {
                     </a>
                 </motion.div>
 
+                <motion.div
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    transition={{ duration: 1, delay: 0.7 }}
+                    className="flex flex-wrap justify-center items-center gap-x-8 gap-y-3 text-sm text-muted-light dark:text-muted-dark"
+                >
+                    {["Runs locally — no data leaves your network", "WebCrypto-signed intent", "Full audit trail"].map((item, i) => (
+                        <div key={i} className="flex items-center gap-1.5">
+                            <span className="material-symbols-outlined text-primary text-base">check_circle</span>
+                            {item}
+                        </div>
+                    ))}
+                </motion.div>
             </div>
+
+            {/* scroll hint */}
+            <motion.div
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                transition={{ delay: 1.2, duration: 1 }}
+                className="absolute bottom-8 left-1/2 -translate-x-1/2 flex flex-col items-center gap-2 text-muted-light dark:text-muted-dark"
+            >
+                <span className="text-[11px] uppercase tracking-widest">Scroll</span>
+                <motion.span
+                    animate={{ y: [0, 6, 0] }}
+                    transition={{ duration: 1.5, repeat: Infinity }}
+                    className="material-symbols-outlined text-sm"
+                >
+                    expand_more
+                </motion.span>
+            </motion.div>
         </section>
     );
 }

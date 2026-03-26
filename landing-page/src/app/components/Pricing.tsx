@@ -10,7 +10,7 @@ const plans = [
         tagline: "For exploring what Atrosha can do.",
         features: [
             "1 agent",
-            "10,000 API requests/mo",
+            "100 API requests/mo",
             "Local OCR invoice parsing",
             "WebCrypto intent signing",
             "Basic audit logs",
@@ -58,7 +58,7 @@ export default function Pricing() {
                             whileInView={{ opacity: 1, y: 0 }}
                             viewport={{ once: true }}
                             transition={{ delay: i * 0.08 }}
-                            className={`relative rounded-2xl flex flex-col h-full transition-all duration-300 overflow-hidden ${
+                            className={`relative rounded-2xl flex flex-col h-full transition-all duration-300 ${
                                 plan.highlight
                                     ? "p-8 md:p-10 bg-primary/[0.06] dark:bg-primary/[0.08] ring-1 ring-primary/30 shadow-[0_0_40px_rgba(6,78,59,0.1)]"
                                     : "p-8 md:p-10 bg-background-light/60 dark:bg-white/[0.03] hover:bg-background-light dark:hover:bg-white/[0.06]"
@@ -88,10 +88,10 @@ export default function Pricing() {
                                 </ul>
                                 <a
                                     href={plan.href}
-                                    className={`w-full block text-center py-3 rounded-xl text-sm font-semibold transition-all ${
+                                    className={`w-full block text-center py-3 rounded-xl text-sm transition-all ${
                                         plan.highlight
-                                            ? "bg-primary hover:bg-primary-hover text-white shadow-glow transform hover:-translate-y-0.5"
-                                            : "bg-white/60 dark:bg-white/[0.06] hover:bg-white dark:hover:bg-white/10 text-text-light dark:text-white font-medium"
+                                            ? "bg-primary hover:bg-primary-hover text-white font-semibold shadow-glow transform hover:-translate-y-0.5"
+                                            : "bg-white dark:bg-white/[0.06] border border-gray-200 dark:border-gray-700 shadow-[0_2px_10px_rgba(0,0,0,0.06)] hover:shadow-[0_4px_20px_rgba(0,0,0,0.1)] hover:-translate-y-0.5 font-bold text-text-light dark:text-white"
                                     }`}
                                 >
                                     {plan.cta}
