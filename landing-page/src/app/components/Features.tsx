@@ -43,13 +43,13 @@ const features = [
 
 export default function Features() {
     return (
-        <section className="py-24 bg-white dark:bg-surface-dark border-t border-gray-100 dark:border-gray-800">
-            <div className="max-w-4xl mx-auto px-4 text-center mb-20">
+        <section className="py-32 bg-white dark:bg-surface-dark">
+            <div className="max-w-4xl mx-auto px-6 text-center mb-20">
                 <motion.p
                     initial={{ opacity: 0 }}
                     whileInView={{ opacity: 1 }}
                     viewport={{ once: true }}
-                    className="text-xs uppercase tracking-widest text-primary font-semibold mb-4"
+                    className="text-xs uppercase tracking-[0.15em] text-primary font-semibold mb-5"
                 >
                     How it works
                 </motion.p>
@@ -71,9 +71,8 @@ export default function Features() {
                 >
                     Most teams bolt authentication onto an existing agent and call it secure. Atrosha wraps the entire financial execution loop — ingestion, reasoning, signing, and settlement — in a mathematically verifiable kernel.
                 </motion.p>
-                <div className="w-24 h-1 bg-primary/20 mx-auto mt-8 rounded-full"></div>
             </div>
-            <div className="max-w-7xl mx-auto px-4 grid md:grid-cols-2 lg:grid-cols-3 gap-8 relative z-10">
+            <div className="max-w-7xl mx-auto px-6 grid md:grid-cols-2 lg:grid-cols-3 gap-6">
                 {features.map((f, i) => (
                     <motion.div
                         key={f.title}
@@ -81,17 +80,13 @@ export default function Features() {
                         whileInView={{ opacity: 1, y: 0 }}
                         viewport={{ once: true }}
                         transition={{ delay: i * 0.07 }}
-                        whileHover={{ y: -5 }}
-                        className="relative group p-8 rounded-2xl border border-gray-200 dark:border-white/10 bg-white/50 dark:bg-white/5 backdrop-blur-xl hover:border-primary/50 transition-all duration-300 shadow-sm hover:shadow-[0_0_30px_rgba(6,78,59,0.15)] overflow-hidden"
+                        className="group p-8 md:p-10 rounded-2xl bg-background-light/60 dark:bg-white/[0.03] hover:bg-background-light dark:hover:bg-white/[0.06] transition-all duration-300"
                     >
-                        <div className="absolute inset-0 bg-gradient-to-br from-primary/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none"></div>
-                        <div className="relative z-10">
-                            <div className="w-12 h-12 bg-primary/10 dark:bg-primary/20 rounded-xl flex items-center justify-center mb-6 text-primary border border-primary/20">
-                                <span className="material-symbols-outlined">{f.icon}</span>
-                            </div>
-                            <h3 className="text-xl font-bold text-text-light dark:text-white mb-3">{f.title}</h3>
-                            <p className="text-muted-light dark:text-muted-dark text-sm leading-relaxed">{f.description}</p>
+                        <div className="w-11 h-11 bg-primary/10 dark:bg-primary/15 rounded-xl flex items-center justify-center mb-6 text-primary">
+                            <span className="material-symbols-outlined text-xl">{f.icon}</span>
                         </div>
+                        <h3 className="text-lg font-bold text-text-light dark:text-white mb-3">{f.title}</h3>
+                        <p className="text-muted-light dark:text-muted-dark text-sm leading-relaxed">{f.description}</p>
                     </motion.div>
                 ))}
             </div>

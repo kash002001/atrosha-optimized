@@ -32,8 +32,8 @@ export default function SocialProof() {
     return (
         <>
             {/* stats strip */}
-            <section className="py-16 border-t border-gray-100 dark:border-gray-800 bg-background-light dark:bg-background-dark">
-                <div className="max-w-6xl mx-auto px-4 grid grid-cols-2 md:grid-cols-4 gap-8 text-center">
+            <section className="py-20 bg-background-light dark:bg-background-dark">
+                <div className="max-w-6xl mx-auto px-6 grid grid-cols-2 md:grid-cols-4 gap-10 text-center">
                     {stats.map((s, i) => (
                         <motion.div
                             key={s.label}
@@ -42,7 +42,7 @@ export default function SocialProof() {
                             viewport={{ once: true }}
                             transition={{ delay: i * 0.08 }}
                         >
-                            <div className="font-serif text-3xl md:text-4xl text-primary mb-1">{s.value}</div>
+                            <div className="font-serif text-3xl md:text-4xl text-primary mb-2">{s.value}</div>
                             <div className="text-xs text-muted-light dark:text-muted-dark leading-snug">{s.label}</div>
                         </motion.div>
                     ))}
@@ -50,16 +50,16 @@ export default function SocialProof() {
             </section>
 
             {/* testimonials */}
-            <section className="py-24 bg-white dark:bg-surface-dark border-t border-gray-100 dark:border-gray-800">
-                <div className="max-w-7xl mx-auto px-4">
-                    <div className="text-center mb-16">
-                        <p className="text-xs uppercase tracking-widest text-primary font-semibold mb-4">From the field</p>
+            <section className="py-32 bg-white dark:bg-surface-dark">
+                <div className="max-w-7xl mx-auto px-6">
+                    <div className="text-center mb-20">
+                        <p className="text-xs uppercase tracking-[0.15em] text-primary font-semibold mb-5">From the field</p>
                         <h2 className="font-serif text-3xl md:text-4xl text-text-light dark:text-white">
                             What teams say after{" "}
                             <span className="italic text-primary">their first month</span>
                         </h2>
                     </div>
-                    <div className="grid md:grid-cols-3 gap-8">
+                    <div className="grid md:grid-cols-3 gap-6">
                         {quotes.map((q, i) => (
                             <motion.div
                                 key={i}
@@ -67,10 +67,10 @@ export default function SocialProof() {
                                 whileInView={{ opacity: 1, y: 0 }}
                                 viewport={{ once: true }}
                                 transition={{ delay: i * 0.1 }}
-                                className="p-8 rounded-2xl border border-gray-200 dark:border-white/10 bg-white/50 dark:bg-white/5 backdrop-blur-xl hover:border-primary/30 transition-all duration-300"
+                                className="p-8 md:p-10 rounded-2xl bg-background-light/60 dark:bg-white/[0.03] hover:bg-background-light dark:hover:bg-white/[0.06] transition-all duration-300"
                             >
-                                <div className="text-primary text-3xl font-serif leading-none mb-4">&ldquo;</div>
-                                <p className="text-sm text-muted-light dark:text-muted-dark leading-relaxed mb-6">{q.text}</p>
+                                <div className="text-primary text-3xl font-serif leading-none mb-5">&ldquo;</div>
+                                <p className="text-sm text-muted-light dark:text-muted-dark leading-relaxed mb-8">{q.text}</p>
                                 <div>
                                     <p className="text-sm font-semibold text-text-light dark:text-white">{q.name}</p>
                                     <p className="text-xs text-muted-light dark:text-muted-dark">{q.company}</p>
@@ -82,8 +82,8 @@ export default function SocialProof() {
             </section>
 
             {/* final CTA */}
-            <section className="py-24 border-t border-gray-100 dark:border-gray-800 bg-background-light dark:bg-background-dark">
-                <div className="max-w-3xl mx-auto px-4 text-center">
+            <section className="py-32 bg-background-light dark:bg-background-dark">
+                <div className="max-w-3xl mx-auto px-6 text-center">
                     <motion.div
                         initial={{ opacity: 0, y: 20 }}
                         whileInView={{ opacity: 1, y: 0 }}
@@ -93,7 +93,7 @@ export default function SocialProof() {
                             Your agents are already making decisions.{" "}
                             <span className="italic text-primary">Start controlling them.</span>
                         </h2>
-                        <p className="text-muted-light dark:text-muted-dark mb-10 text-lg leading-relaxed">
+                        <p className="text-muted-light dark:text-muted-dark mb-12 text-lg leading-relaxed">
                             Set up Atrosha in an afternoon. Free for up to 3 agents. No credit card required.
                         </p>
                         <div className="flex flex-col sm:flex-row justify-center gap-4">

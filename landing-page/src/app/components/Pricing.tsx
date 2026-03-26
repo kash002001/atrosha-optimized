@@ -72,10 +72,10 @@ const plans = [
 
 export default function Pricing() {
     return (
-        <section className="py-24 bg-white dark:bg-surface-dark border-t border-gray-100 dark:border-gray-800">
-            <div className="max-w-7xl mx-auto px-4">
-                <div className="text-center mb-16">
-                    <p className="text-xs uppercase tracking-widest text-primary font-semibold mb-4">Pricing</p>
+        <section className="py-32 bg-white dark:bg-surface-dark">
+            <div className="max-w-7xl mx-auto px-6">
+                <div className="text-center mb-20">
+                    <p className="text-xs uppercase tracking-[0.15em] text-primary font-semibold mb-5">Pricing</p>
                     <h2 className="font-serif text-3xl md:text-5xl text-text-light dark:text-white mb-4">
                         Start free. Scale when it matters.
                     </h2>
@@ -83,7 +83,7 @@ export default function Pricing() {
                         Every plan includes the core security kernel. You only pay more when your agent fleet grows.
                     </p>
                 </div>
-                <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6 relative z-10">
+                <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
                     {plans.map((plan, i) => (
                         <motion.div
                             key={plan.name}
@@ -91,26 +91,20 @@ export default function Pricing() {
                             whileInView={{ opacity: 1, y: 0 }}
                             viewport={{ once: true }}
                             transition={{ delay: i * 0.08 }}
-                            whileHover={{ y: -5 }}
                             className={`relative rounded-2xl flex flex-col h-full transition-all duration-300 overflow-hidden ${
                                 plan.highlight
-                                    ? "p-8 border-2 border-primary/50 dark:border-primary bg-white/90 dark:bg-surface-dark/95 backdrop-blur-2xl shadow-2xl shadow-primary/10 dark:shadow-[0_0_40px_rgba(6,78,59,0.2)] z-10"
-                                    : "p-6 border border-gray-200 dark:border-white/10 bg-white/50 dark:bg-white/5 backdrop-blur-xl shadow-sm hover:shadow-[0_0_30px_rgba(6,78,59,0.1)] hover:border-primary/50"
+                                    ? "p-8 md:p-10 bg-primary/[0.06] dark:bg-primary/[0.08] ring-1 ring-primary/30 shadow-[0_0_40px_rgba(6,78,59,0.1)]"
+                                    : "p-8 md:p-10 bg-background-light/60 dark:bg-white/[0.03] hover:bg-background-light dark:hover:bg-white/[0.06]"
                             }`}
                         >
                             {plan.highlight && (
-                                <>
-                                    <div className="absolute inset-0 overflow-hidden rounded-2xl pointer-events-none">
-                                        <div className="absolute top-0 right-0 w-32 h-32 bg-primary/20 blur-[50px] rounded-full"></div>
-                                    </div>
-                                    <div className="absolute -top-3 right-4 bg-primary text-white text-[10px] font-bold uppercase px-3 py-1 rounded-full tracking-wider shadow-lg">
-                                        Most Popular
-                                    </div>
-                                </>
+                                <div className="absolute -top-3 right-4 bg-primary text-white text-[10px] font-bold uppercase px-3 py-1 rounded-full tracking-wider shadow-lg">
+                                    Most Popular
+                                </div>
                             )}
                             <div className="relative z-10 flex flex-col h-full">
                                 <h3 className="text-lg font-bold text-text-light dark:text-white mb-1">{plan.name}</h3>
-                                <p className="text-xs text-muted-light dark:text-muted-dark mb-4">{plan.tagline}</p>
+                                <p className="text-xs text-muted-light dark:text-muted-dark mb-5">{plan.tagline}</p>
                                 <div className="mb-6 flex items-baseline gap-1">
                                     <span className={`font-serif text-text-light dark:text-white ${plan.price === "Custom" || plan.price === "Contact us" ? "text-2xl" : "text-4xl"}`}>
                                         {plan.price}
@@ -129,8 +123,8 @@ export default function Pricing() {
                                     href={plan.href}
                                     className={`w-full block text-center py-3 rounded-xl text-sm font-semibold transition-all ${
                                         plan.highlight
-                                            ? "bg-primary hover:bg-primary-hover text-white shadow-[0_0_20px_rgba(6,78,59,0.3)] hover:shadow-[0_0_30px_rgba(6,78,59,0.5)] transform hover:-translate-y-0.5 relative z-10"
-                                            : "border border-gray-200 dark:border-gray-700 hover:bg-white/50 dark:hover:bg-white/10 font-medium"
+                                            ? "bg-primary hover:bg-primary-hover text-white shadow-glow transform hover:-translate-y-0.5"
+                                            : "bg-white/60 dark:bg-white/[0.06] hover:bg-white dark:hover:bg-white/10 text-text-light dark:text-white font-medium"
                                     }`}
                                 >
                                     {plan.cta}
@@ -139,7 +133,7 @@ export default function Pricing() {
                         </motion.div>
                     ))}
                 </div>
-                <p className="text-center text-xs text-muted-light dark:text-muted-dark mt-8">
+                <p className="text-center text-xs text-muted-light dark:text-muted-dark mt-10">
                     All plans include the Atrosha security kernel, WebCrypto signing, and local invoice OCR.{" "}
                     <a href="/contact" className="text-primary underline underline-offset-2 hover:no-underline">Questions? Talk to us.</a>
                 </p>

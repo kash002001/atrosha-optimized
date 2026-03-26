@@ -26,10 +26,10 @@ const steps = [
 
 export default function HowItWorks() {
     return (
-        <section className="py-24 bg-background-light dark:bg-background-dark border-t border-gray-100 dark:border-gray-800">
-            <div className="max-w-5xl mx-auto px-4">
-                <div className="text-center mb-16">
-                    <p className="text-xs uppercase tracking-widest text-primary font-semibold mb-4">The flow</p>
+        <section className="py-32 bg-background-light dark:bg-background-dark">
+            <div className="max-w-5xl mx-auto px-6">
+                <div className="text-center mb-20">
+                    <p className="text-xs uppercase tracking-[0.15em] text-primary font-semibold mb-5">The flow</p>
                     <h2 className="font-serif text-3xl md:text-5xl text-text-light dark:text-white leading-tight mb-4">
                         From invoice to settlement in{" "}
                         <span className="italic text-primary">four verifiable steps</span>
@@ -38,10 +38,10 @@ export default function HowItWorks() {
                         No magic, no black box. Here&apos;s exactly what Atrosha does when a payment needs to happen.
                     </p>
                 </div>
+
                 <div className="relative">
-                    {/* vertical line */}
-                    <div className="hidden md:block absolute left-[2.25rem] top-8 bottom-8 w-px bg-gray-200 dark:bg-gray-700"></div>
-                    <div className="space-y-10">
+                    <div className="hidden md:block absolute left-[2.25rem] top-8 bottom-8 w-px bg-gray-200/60 dark:bg-gray-700/40"></div>
+                    <div className="space-y-12">
                         {steps.map((step, i) => (
                             <motion.div
                                 key={step.num}
@@ -51,7 +51,7 @@ export default function HowItWorks() {
                                 transition={{ delay: i * 0.1 }}
                                 className="flex items-start gap-6 group"
                             >
-                                <div className="flex-none w-[4.5rem] h-[4.5rem] rounded-2xl bg-primary/10 dark:bg-primary/20 border border-primary/20 flex items-center justify-center font-mono text-primary font-bold text-lg group-hover:bg-primary group-hover:text-white transition-all duration-300">
+                                <div className="flex-none w-[4.5rem] h-[4.5rem] rounded-2xl bg-primary/10 dark:bg-primary/15 flex items-center justify-center font-mono text-primary font-bold text-lg group-hover:bg-primary group-hover:text-white transition-all duration-300">
                                     {step.num}
                                 </div>
                                 <div className="pt-3">
@@ -69,10 +69,10 @@ export default function HowItWorks() {
                     whileInView={{ y: 0, opacity: 1 }}
                     viewport={{ once: true }}
                     transition={{ duration: 0.8 }}
-                    className="mt-20 relative rounded-xl overflow-hidden shadow-[0_20px_50px_rgba(0,0,0,0.4)] dark:shadow-[0_0_40px_rgba(6,78,59,0.15)] bg-[#1E1E1E] border border-gray-700/50 font-mono text-sm leading-relaxed"
+                    className="mt-24 relative rounded-xl overflow-hidden shadow-[0_20px_50px_rgba(0,0,0,0.3)] dark:shadow-[0_0_40px_rgba(6,78,59,0.1)] bg-[#1E1E1E] font-mono text-sm leading-relaxed"
                 >
                     <div className="absolute inset-0 bg-gradient-to-b from-white/5 to-transparent pointer-events-none"></div>
-                    <div className="relative bg-[#2D2D2D]/90 backdrop-blur-sm px-4 py-3 flex items-center gap-2 border-b border-gray-700/50">
+                    <div className="relative bg-[#2D2D2D]/90 backdrop-blur-sm px-4 py-3 flex items-center gap-2 border-b border-gray-700/30">
                         <div className="flex gap-1.5">
                             <div className="w-3 h-3 rounded-full bg-red-500"></div>
                             <div className="w-3 h-3 rounded-full bg-yellow-500"></div>
@@ -102,7 +102,7 @@ export default function HowItWorks() {
                             <br />
                             result = agent.<span style={{ color: "var(--code-function)" }}>pay</span>(permit=signed_permit)
                         </div>
-                        <div className="mt-6 bg-[#252526] p-4 rounded border border-gray-700/50">
+                        <div className="mt-6 bg-[#252526] p-4 rounded border border-gray-700/30">
                             <span className="text-gray-500">&gt; Agent registered: invoice-bot [OK]</span><br />
                             <span className="text-gray-500">&gt; Spend cap locked: $5,000 USD [OK]</span><br />
                             <span className="text-gray-500">&gt; Permit signature verified [OK]</span><br />
