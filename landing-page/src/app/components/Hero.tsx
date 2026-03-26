@@ -28,11 +28,9 @@ export default function Hero() {
                     transition={{ duration: 0.9, ease: "easeOut", delay: 0.1 }}
                     className="font-serif text-4xl md:text-5xl lg:text-6xl tracking-tight leading-[1.12] text-text-light dark:text-white mb-8"
                 >
-                    Your AI agents spend <br />
-                    money. <br />
+                    Code hallucinates. <br className="hidden sm:block" />
                     <span className="italic text-primary">
-                        We make sure they don&apos;t go <br className="hidden sm:block" />
-                        rogue.
+                        Capital shouldn&apos;t.
                     </span>
                 </motion.h1>
 
@@ -42,7 +40,7 @@ export default function Hero() {
                     transition={{ duration: 0.8, delay: 0.3 }}
                     className="text-base md:text-lg text-muted-light dark:text-muted-dark max-w-xl mx-auto mb-12 leading-relaxed"
                 >
-                    Atrosha is a financial firewall for autonomous AI agents. It reads invoices locally, verifies intent with your cryptographic signature, and only then executes the payment — on your hardware, with a full audit trail.
+                    AI agents are now making financial decisions. Atrosha provides the essential security layer. Our 7M-parameter Semantic Firewall analyzes every payload&apos;s intent in real-time, blocking hallucinations and prompt injections before the money leaves your network.
                 </motion.p>
 
                 <motion.div
