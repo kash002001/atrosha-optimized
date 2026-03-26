@@ -51,8 +51,9 @@ export default function HowItWorks() {
                                 transition={{ delay: i * 0.1 }}
                                 className="flex items-start gap-6 group"
                             >
-                                <div className="flex-none w-[4.5rem] h-[4.5rem] rounded-2xl bg-primary/10 dark:bg-primary/15 flex items-center justify-center font-mono text-primary font-bold text-lg group-hover:bg-primary group-hover:text-white transition-all duration-300">
-                                    {step.num}
+                                <div className="relative z-10 flex-none w-[4.5rem] h-[4.5rem] rounded-2xl bg-white dark:bg-[#111] overflow-hidden flex items-center justify-center font-mono text-primary font-bold text-lg group-hover:text-white transition-all duration-300 shadow-sm">
+                                    <div className="absolute inset-0 bg-primary/10 dark:bg-primary/15 group-hover:bg-primary transition-all duration-300"></div>
+                                    <span className="relative z-20">{step.num}</span>
                                 </div>
                                 <div className="pt-3">
                                     <h3 className="text-lg font-bold text-text-light dark:text-white mb-1">{step.title}</h3>

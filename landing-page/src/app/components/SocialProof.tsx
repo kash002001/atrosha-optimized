@@ -3,24 +3,6 @@
 import { motion } from "framer-motion";
 import Link from "next/link";
 
-const quotes = [
-    {
-        text: "We run 12 invoicing agents across three subsidiaries. Before Atrosha, a single hallucinated payee could cost us six figures. Now every transaction is signed and logged — compliance loves it.",
-        name: "Head of Finance Automation",
-        company: "Series B SaaS company",
-    },
-    {
-        text: "The local OCR was the deal-breaker for us. Our invoices contain sensitive supplier data that can't leave our network. Atrosha was the only tool that made that a hard guarantee, not a policy.",
-        name: "VP Engineering",
-        company: "Enterprise logistics firm",
-    },
-    {
-        text: "Setting up a spend cap with a cryptographic lock sounds complex, but the API is genuinely simple. We had it running in our staging environment within an afternoon.",
-        name: "Senior Backend Engineer",
-        company: "Fintech startup",
-    },
-];
-
 const stats = [
     { value: "$0", label: "to get started" },
     { value: "< 5min", label: "to first integration" },
@@ -33,7 +15,7 @@ export default function SocialProof() {
         <>
             {/* stats strip */}
             <section className="py-20 bg-background-light dark:bg-background-dark">
-                <div className="max-w-6xl mx-auto px-6 grid grid-cols-2 md:grid-cols-4 gap-10 text-center">
+                <div className="max-w-6xl mx-auto px-6 grid grid-cols-2 lg:grid-cols-4 gap-6 text-center">
                     {stats.map((s, i) => (
                         <motion.div
                             key={s.label}
@@ -41,43 +23,12 @@ export default function SocialProof() {
                             whileInView={{ opacity: 1, y: 0 }}
                             viewport={{ once: true }}
                             transition={{ delay: i * 0.08 }}
+                            className="bg-primary/[0.03] dark:bg-white/[0.02] p-8 rounded-2xl border border-primary/5 dark:border-white/5"
                         >
-                            <div className="font-serif text-3xl md:text-4xl text-primary mb-2">{s.value}</div>
+                            <div className="font-serif text-3xl md:text-4xl text-primary mb-3">{s.value}</div>
                             <div className="text-xs text-muted-light dark:text-muted-dark leading-snug">{s.label}</div>
                         </motion.div>
                     ))}
-                </div>
-            </section>
-
-            {/* testimonials */}
-            <section className="py-32 bg-white dark:bg-surface-dark">
-                <div className="max-w-7xl mx-auto px-6">
-                    <div className="text-center mb-20">
-                        <p className="text-xs uppercase tracking-[0.15em] text-primary font-semibold mb-5">From the field</p>
-                        <h2 className="font-serif text-3xl md:text-4xl text-text-light dark:text-white">
-                            What teams say after{" "}
-                            <span className="italic text-primary">their first month</span>
-                        </h2>
-                    </div>
-                    <div className="grid md:grid-cols-3 gap-6">
-                        {quotes.map((q, i) => (
-                            <motion.div
-                                key={i}
-                                initial={{ opacity: 0, y: 20 }}
-                                whileInView={{ opacity: 1, y: 0 }}
-                                viewport={{ once: true }}
-                                transition={{ delay: i * 0.1 }}
-                                className="p-8 md:p-10 rounded-2xl bg-background-light/60 dark:bg-white/[0.03] hover:bg-background-light dark:hover:bg-white/[0.06] transition-all duration-300"
-                            >
-                                <div className="text-primary text-3xl font-serif leading-none mb-5">&ldquo;</div>
-                                <p className="text-sm text-muted-light dark:text-muted-dark leading-relaxed mb-8">{q.text}</p>
-                                <div>
-                                    <p className="text-sm font-semibold text-text-light dark:text-white">{q.name}</p>
-                                    <p className="text-xs text-muted-light dark:text-muted-dark">{q.company}</p>
-                                </div>
-                            </motion.div>
-                        ))}
-                    </div>
                 </div>
             </section>
 
@@ -94,7 +45,7 @@ export default function SocialProof() {
                             <span className="italic text-primary">Start controlling them.</span>
                         </h2>
                         <p className="text-muted-light dark:text-muted-dark mb-12 text-lg leading-relaxed">
-                            Set up Atrosha in an afternoon. Free for up to 3 agents. No credit card required.
+                            Set up Atrosha.
                         </p>
                         <div className="flex flex-col sm:flex-row justify-center gap-4">
                             <Link

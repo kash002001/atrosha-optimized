@@ -20,7 +20,7 @@ export default function Hero() {
                 />
             </div>
 
-            <div className="relative z-10 max-w-3xl mx-auto px-6 text-center">
+            <div className="relative z-10 max-w-3xl mx-auto px-6 text-center pt-24 pb-12">
                 <motion.div
                     initial={{ opacity: 0, y: 12 }}
                     animate={{ opacity: 1, y: 0 }}
@@ -35,7 +35,7 @@ export default function Hero() {
                     initial={{ opacity: 0, y: 24 }}
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ duration: 0.9, ease: "easeOut", delay: 0.1 }}
-                    className="font-serif text-4xl md:text-6xl lg:text-[4.25rem] tracking-tight leading-[1.12] text-text-light dark:text-white mb-8"
+                    className="font-serif text-4xl md:text-5xl lg:text-6xl tracking-tight leading-[1.12] text-text-light dark:text-white mb-8"
                 >
                     Your AI agents spend money.{" "}
                     <br className="hidden sm:block" />
@@ -48,7 +48,7 @@ export default function Hero() {
                     transition={{ duration: 0.8, delay: 0.3 }}
                     className="text-base md:text-lg text-muted-light dark:text-muted-dark max-w-xl mx-auto mb-12 leading-relaxed"
                 >
-                    Atrosha is a financial firewall for autonomous AI agents. It reads invoices locally, verifies intent with your cryptographic signature, and only then executes the payment — on your hardware, with a full audit trail.
+                    The financial firewall for autonomous AI agents. We verify intent, cryptographically sign transactions, and guarantee your AI only spends what you approve.
                 </motion.p>
 
                 <motion.div
@@ -86,7 +86,7 @@ export default function Hero() {
                     transition={{ duration: 1, delay: 0.7 }}
                     className="flex flex-wrap justify-center items-center gap-x-8 gap-y-3 text-sm text-muted-light dark:text-muted-dark"
                 >
-                    {["Runs locally — no data leaves your network", "WebCrypto-signed intent", "Full audit trail"].map((item, i) => (
+                    {["Runs locally", "WebCrypto intent", "Full audit trail"].map((item, i) => (
                         <div key={i} className="flex items-center gap-1.5">
                             <span className="material-symbols-outlined text-primary text-base">check_circle</span>
                             {item}
