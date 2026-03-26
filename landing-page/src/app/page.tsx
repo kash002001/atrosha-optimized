@@ -4,6 +4,7 @@ import Navbar from "./components/Navbar";
 import Hero from "./components/Hero";
 import Features from "./components/Features";
 import CodeDemo from "./components/CodeDemo";
+import SocialProof from "./components/SocialProof";
 import Pricing from "./components/Pricing";
 import Footer from "./components/Footer";
 
@@ -17,6 +18,7 @@ export default function Home() {
           <Features />
         </section>
         <CodeDemo />
+        <SocialProof />
         <section id="pricing">
           <Pricing />
         </section>

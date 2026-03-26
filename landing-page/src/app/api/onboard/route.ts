@@ -26,10 +26,14 @@ export async function POST(req: Request) {
     if (blocked) return blocked;
 
     try {
-        const { user_id, org_name, slug, email, plan_tier } = await req.json();
+        let { user_id, org_name, slug, email, plan_tier } = await req.json();
+
+        // Sanitize
+        org_name = org_name?.replace(/<[^>]*>?/gm, "")?.trim();
+        slug = slug?.toLowerCase()?.replace(/[^a-z0-9]+/g, "-")?.replace(/(^-|-$)/g, "");
 
         if (!org_name || !slug) {
-            return NextResponse.json({ error: "org_name and slug required" }, { status: 400 });
+            return NextResponse.json({ error: "Valid org_name and slug required" }, { status: 400 });
         }
 
         const rawKey = `atrosha_${randomBytes(24).toString("hex")}`;

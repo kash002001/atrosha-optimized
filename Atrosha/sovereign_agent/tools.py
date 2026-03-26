@@ -4,7 +4,11 @@ import os
 from schemas import PaymentStatus  # type: ignore
 from db import AtroshaDB  # type: ignore
 
-PROXY_URL = os.getenv("PROXY_URL", "http://localhost:8080")  # atrosha kernel
+from dotenv import load_dotenv
+
+load_dotenv()
+PROXY_URL = os.getenv("PROXY_URL", "http://localhost:8080")
+STRIPE_KEY = os.getenv("STRIPE_API_KEY")
 
 db = AtroshaDB()
 
@@ -12,12 +16,11 @@ db = AtroshaDB()
 def _idempotency_key(session_id: str, vendor: str, amount: float) -> str:
     raw = f"{session_id}:{vendor}:{amount:.2f}"
     digest: str = hashlib.sha256(raw.encode()).hexdigest()
-    return digest[:32]  # type: ignore
+    return digest[:32]
 
 
 def execute_payment(vendor: str, amount: float, session_id: str, permit: str, currency: str = "USD") -> dict:
     idem_key = _idempotency_key(session_id, vendor, amount)
-
 
     existing = db.get_execution(idem_key)
     if existing and existing["status"] in ("submitted", "confirmed"):
@@ -28,19 +31,21 @@ def execute_payment(vendor: str, amount: float, session_id: str, permit: str, cu
             "idempotency_key": idem_key,
         }
 
-
     db.save_execution(session_id, idem_key, vendor, amount, PaymentStatus.SUBMITTED.value)
 
     url = f"{PROXY_URL}/proxy/charges"
     headers = {
         "Content-Type": "application/json",
-        "X-Atrosha-Target": "https://api.stripe.com/v1",
+        "X-Atrosha-Target": "https://api.stripe.com/v1/charges",  # Specific endpoint
         "X-Atrosha-Agent-ID": "sovereign-agent-v1",
         "X-Atrosha-Amount": str(amount),
         "X-Atrosha-Session-ID": session_id,
         "X-Idempotency-Key": idem_key,
         "X-Atrosha-Permit": permit,
     }
+
+    if STRIPE_KEY:
+        headers["Authorization"] = f"Bearer {STRIPE_KEY}"
 
     payload = {"vendor": vendor, "amount": amount, "currency": currency}
 

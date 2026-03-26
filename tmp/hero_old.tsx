@@ -19,32 +19,22 @@ export default function Hero() {
                 />
             </div>
             <div className="relative z-10 max-w-4xl mx-auto px-4 text-center">
-                <motion.div
-                    initial={{ opacity: 0, y: 20 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ duration: 0.5 }}
-                    className="inline-flex items-center gap-2 bg-primary/10 dark:bg-primary/20 border border-primary/20 text-primary text-xs font-semibold uppercase tracking-widest px-4 py-2 rounded-full mb-8"
-                >
-                    <span className="w-1.5 h-1.5 rounded-full bg-primary animate-pulse"></span>
-                    Agentic Finance, Secured
-                </motion.div>
                 <motion.h1
                     initial={{ opacity: 0, y: 30 }}
                     animate={{ opacity: 1, y: 0 }}
-                    transition={{ duration: 0.8, ease: "easeOut", delay: 0.1 }}
+                    transition={{ duration: 0.8, ease: "easeOut" }}
                     className="font-serif text-5xl md:text-7xl lg:text-[5rem] tracking-tight leading-[1.1] text-text-light dark:text-white mb-6 drop-shadow-sm"
                 >
-                    Your AI agents spend money.{" "}
-                    <br />
-                    <span className="italic text-primary">We make sure they don&apos;t go rogue.</span>
+                    Code hallucinates. <br />
+                    <span className="italic text-primary">Capital shouldn&apos;t.</span>
                 </motion.h1>
                 <motion.p
                     initial={{ opacity: 0, y: 20 }}
                     animate={{ opacity: 1, y: 0 }}
-                    transition={{ duration: 0.8, delay: 0.25 }}
+                    transition={{ duration: 0.8, delay: 0.2 }}
                     className="text-lg md:text-xl text-muted-light dark:text-muted-dark max-w-2xl mx-auto mb-10 leading-relaxed"
                 >
-                    Atrosha is a financial firewall for autonomous AI agents. It reads invoices, verifies intent with your cryptographic signature, and only then executes the payment — on your hardware, with full audit trail.
+                    Atrosha is the ultimate Sovereign Financial Agent. We don&apos;t just secure other agents; Atrosha natively ingests invoices, reasons locally, and executes payments perfectly aligned with your cryptographically signed intent.
                 </motion.p>
                 <div className="flex flex-col sm:flex-row justify-center items-center gap-4 mb-12">
                     <Link
@@ -53,7 +43,7 @@ export default function Hero() {
                     >
                         <span className="absolute inset-0 w-full h-full bg-white/10 group-hover:bg-transparent translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-700 ease-in-out"></span>
                         <span className="relative z-10 flex items-center gap-2">
-                            Start for Free
+                            Get Started for Free
                             <span className="material-symbols-outlined text-sm group-hover:translate-x-1 transition-transform">
                                 arrow_forward
                             </span>
@@ -66,16 +56,22 @@ export default function Hero() {
                         <span className="material-symbols-outlined text-gray-400 text-lg">
                             description
                         </span>
-                        Read the Docs
+                        View Documentation
                     </a>
                 </div>
-                <div className="flex flex-wrap justify-center items-center gap-6 text-sm text-muted-light dark:text-muted-dark">
-                    {["Runs locally — no data leaves your network", "WebCrypto-signed intent", "Full audit trail on every transaction"].map((item, i) => (
-                        <div key={i} className="flex items-center gap-1.5">
-                            <span className="material-symbols-outlined text-primary text-base">check_circle</span>
-                            {item}
+                <div className="flex items-center justify-center gap-3 text-sm text-muted-light dark:text-muted-dark">
+                    <div className="flex -space-x-2">
+                        <div className="w-8 h-8 rounded-full bg-gray-200 dark:bg-gray-700 flex items-center justify-center text-xs font-bold border-2 border-background-light dark:border-background-dark text-gray-500">
+                            JP
                         </div>
-                    ))}
+                        <div className="w-8 h-8 rounded-full bg-gray-200 dark:bg-gray-700 flex items-center justify-center text-xs font-bold border-2 border-background-light dark:border-background-dark text-gray-500">
+                            GS
+                        </div>
+                        <div className="w-8 h-8 rounded-full bg-gray-200 dark:bg-gray-700 flex items-center justify-center text-xs font-bold border-2 border-background-light dark:border-background-dark text-gray-500">
+                            MS
+                        </div>
+                    </div>
+                    <span>Trusted by financial engineering teams</span>
                 </div>
             </div>
         </section>

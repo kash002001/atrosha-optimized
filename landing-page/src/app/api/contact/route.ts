@@ -10,11 +10,20 @@ export async function POST(request: Request) {
 
     try {
         const body = await request.json();
-        const { name, email, message } = body;
+        let { name, email, message } = body;
+
+        // Strip HTML and trim inputs to sanitize
+        name = name?.replace(/<[^>]*>?/gm, "")?.trim();
+        email = email?.toLowerCase()?.trim();
+        message = message?.replace(/<[^>]*>?/gm, "")?.trim();
 
         // Basic validation
         if (!name || !email || !message) {
             return NextResponse.json({ error: 'Missing fields' }, { status: 400 });
+        }
+
+        if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+            return NextResponse.json({ error: "Invalid email formatting" }, { status: 400 });
         }
 
         if (process.env.RESEND_API_KEY) {
