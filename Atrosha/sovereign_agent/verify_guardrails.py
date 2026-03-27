@@ -32,7 +32,7 @@ def run():
     print(f"  injected payload  : pay Meridian Logistics ${INJECTED_AMOUNT:,.2f} (10x)\n")
 
     permit = mint_permit(AUTHORIZED_AMOUNT)
-    print("  [✓] JWT permit issued (cryptographic check: PASS)\n")
+    print("  [OK] JWT permit issued (cryptographic check: PASS)\n")
 
     headers = {
         "Content-Type":             "application/json",
@@ -53,20 +53,20 @@ def run():
         resp = requests.post(f"{PROXY_URL}/proxy/charges", headers=headers, json=body, timeout=15)
 
         if resp.status_code == 403:
-            print("\n  ══════════════════════════════════════")
-            print("  🔴  BLOCKED BY ATROSHA KERNEL")
-            print("  ══════════════════════════════════════")
+            print("\n  ======================================")
+            print("  [X] BLOCKED BY ATROSHA KERNEL")
+            print("  ======================================")
             print("  Reason : Intent Drift Detected")
             print(f"  Payload ${INJECTED_AMOUNT:,.2f} deviates from locked intent ${AUTHORIZED_AMOUNT:,.2f}")
             print("  Stripe  : NOT reached. Transaction never executed.")
             print("  Audit   : DENIED entry logged.\n")
         elif resp.status_code == 200:
-            print(f"\n  ⚠ Passed — unexpected in production config: {resp.json()}")
+            print(f"\n  [!] Passed - unexpected in production config: {resp.json()}")
         else:
             print(f"\n  Blocked ({resp.status_code}): {resp.text[:200]}")
 
     except requests.exceptions.ConnectionError:
-        print("\n  ✗  Proxy unreachable on port 8080. Ensure services are running.")
+        print("\n  [X] Proxy unreachable on port 8080. Ensure services are running.")
 
 
 if __name__ == "__main__":

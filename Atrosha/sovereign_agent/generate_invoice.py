@@ -23,7 +23,7 @@ def build():
     LIGHT   = colors.HexColor("#f8fafc")
     MUTED   = colors.HexColor("#64748b")
 
-    head_style   = ParagraphStyle("head",   fontName="Helvetica-Bold",   fontSize=22, textColor=DARK,   spaceAfter=2)
+    head_style   = ParagraphStyle("head",   fontName="Helvetica-Bold",   fontSize=22, leading=26, textColor=DARK, spaceAfter=8)
     tag_style    = ParagraphStyle("tag",    fontName="Helvetica",         fontSize=10, textColor=MUTED)
     label_style  = ParagraphStyle("label",  fontName="Helvetica-Bold",   fontSize=9,  textColor=MUTED,  spaceBefore=6)
     value_style  = ParagraphStyle("value",  fontName="Helvetica",         fontSize=10, textColor=DARK)
@@ -70,7 +70,7 @@ def build():
     # line items table
     table_data = [
         ["DESCRIPTION", "QTY", "UNIT PRICE", "AMOUNT"],
-        ["Dedicated Freight Lane — Chicago to Newark (Q1 2026)", "1", "$18,000.00", "$18,000.00"],
+        ["Dedicated Freight Lane - Chicago to Newark (Q1 2026)", "1", "$18,000.00", "$18,000.00"],
         ["Fuel Surcharge (6.5%)", "1", "$1,170.00",  "$1,170.00"],
         ["Expedited Handling & Last-Mile Delivery", "2", "$1,665.00", "$3,330.00"],
         ["Customs Documentation & Compliance Fee", "1", "$1,200.00", "$1,200.00"],
@@ -97,7 +97,7 @@ def build():
     # totals block (right-aligned)
     totals_data = [
         ["Subtotal:", "$24,500.00"],
-        ["Tax (0% — B2B exempt):", "$0.00"],
+        ["Tax (0% - B2B exempt):", "$0.00"],
         ["", ""],
         ["TOTAL DUE:", "$24,500.00"],
     ]
@@ -137,7 +137,7 @@ def build():
     ))
 
     doc.build(story)
-    print(f"✓  Invoice saved to: {OUT}")
+    print(f"[OK] Invoice saved to: {OUT}")
 
 if __name__ == "__main__":
     build()

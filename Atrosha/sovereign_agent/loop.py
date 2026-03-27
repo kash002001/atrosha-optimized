@@ -1,15 +1,29 @@
 import sys
+import os
+import time
+import jwt
 from ocr import extract_invoice_data
 from brain import parse_invoice_with_fallback
 from tools import execute_payment
 from db import AtroshaDB
 
 db = AtroshaDB()
+PERMIT_SECRET = os.getenv("PERMIT_SECRET", "super-secret-key-change-me")
 
+def mint_permit(amount: float, vendor: str, session_id: str) -> str:
+    payload = {
+        "sub":        "sovereign-agent-v1",
+        "intent":     f"Process invoice for {vendor} for ${amount:.2f}",
+        "rail":       "stripe",
+        "session_id": session_id,
+        "exp":        int(time.time()) + 300,
+        "iat":        int(time.time()),
+    }
+    return jwt.encode(payload, PERMIT_SECRET, algorithm="HS256")
 
 def run_agent_loop(invoice_path: str, session_id: str, auto_confirm: bool = False):
     print(f"\n{'='*50}")
-    print(f"  SOVEREIGN AGENT — Processing Invoice")
+    print(f"  SOVEREIGN AGENT - Processing Invoice")
     print(f"{'='*50}\n")
 
     # step 1: local ocr
@@ -31,6 +45,9 @@ def run_agent_loop(invoice_path: str, session_id: str, auto_confirm: bool = Fals
     print(f"     inv#    = {parsed.invoice_number or 'N/A'}")
     print(f"     conf    = {parsed.confidence.value} ({parsed.source})\n")
 
+    # Lock intent in local agent DB before saving invoice to satisfy FK constraints
+    db.lock_intent(session_id, f"Process invoice for {parsed.vendor} for ${parsed.amount:.2f}")
+
     # save invoice to db
     inv_id = db.save_invoice(
         vendor=parsed.vendor, amount=parsed.amount, currency=parsed.currency,
@@ -47,7 +64,7 @@ def run_agent_loop(invoice_path: str, session_id: str, auto_confirm: bool = Fals
     if not auto_confirm:
         confirm = input(f"\n     Authorize ${parsed.amount:.2f} to '{parsed.vendor}'? (y/n): ").strip().lower()
         if confirm != "y":
-            print("     ✗ Payment rejected by operator.")
+            print("     [X] Payment rejected by operator.")
             db.log("payment_rejected", session_id, f"vendor={parsed.vendor} amount={parsed.amount}")
             return {"status": "rejected", "reason": "operator rejected"}
     else:
@@ -55,9 +72,10 @@ def run_agent_loop(invoice_path: str, session_id: str, auto_confirm: bool = Fals
 
     # step 4: execute via kernel
     print("[4/4] Executing via Atrosha Kernel...")
-    result = execute_payment(parsed.vendor, parsed.amount, session_id)
+    permit = mint_permit(parsed.amount, parsed.vendor, session_id)
+    result = execute_payment(parsed.vendor, parsed.amount, session_id, permit=permit)
 
-    status_icon = "✓" if result["status"] == "confirmed" else "✗"
+    status_icon = "[OK]" if result["status"] == "confirmed" else "[X]"
     print(f"\n     {status_icon} Result: {result['status']}")
     if result.get("tx_ref"):
         print(f"     tx_ref: {result['tx_ref']}")

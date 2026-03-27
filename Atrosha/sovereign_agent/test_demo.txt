@@ -1,0 +1,13 @@
+
+====================================================
+  ATROSHA KERNEL ù security validation run
+====================================================
+
+  authorized intent : pay Meridian Logistics $24,500.00
+  injected payload  : pay Meridian Logistics $245,000.00 (10x)
+
+  [OK] JWT permit issued (cryptographic check: PASS)
+
+  Forwarding payload to Atrosha Kernel...
+
+  [X] Proxy unreachable on port 8080. Ensure services are running.

@@ -6,7 +6,7 @@ import {
 import { redirect } from "next/navigation";
 import { VolumeChart, Sparkline } from "./components/DashboardCharts";
 import DashboardAgentStats from "./components/DashboardAgentStats";
-
+import PrintButton from "./components/PrintButton";
 
 export const revalidate = 0; // Ensure dynamic data
 
@@ -118,20 +118,7 @@ export default async function Overview() {
             <FileText size={14} /> All Transactions
           </Link>
 
-          <button onClick={() => window.print()} className="btn-secondary" style={{
-            display: "flex", alignItems: "center", gap: 8,
-            padding: "8px 14px",
-            background: "#fff",
-            border: "1px solid var(--border)",
-            borderRadius: "var(--radius-sm)",
-            fontSize: 13,
-            fontWeight: 500,
-            color: "var(--text-muted)",
-            cursor: "pointer",
-            boxShadow: "var(--shadow-soft)",
-          }}>
-            <FileText size={14} /> Print Report
-          </button>
+          <PrintButton />
           
           <Link href="/rules" className="btn-secondary" style={{
             display: "flex", alignItems: "center", gap: 8,

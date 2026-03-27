@@ -1,0 +1,30 @@
+
+==================================================
+  SOVEREIGN AGENT - Processing Invoice
+==================================================
+
+[1/4] Zero-Knowledge Ingestion...
+     extracted 1042 chars of text
+
+[2/4] Deterministic Invoice Parsing...
+     vendor  = Meridian Logistics LLC
+     amount  = $24500.00
+     due     = April 10, 2026
+     inv#    = BILL
+     conf    = high (regex)
+
+[3/4] Human Review Required
+     auto-confirm enabled, proceeding...
+
+[4/4] Executing via Atrosha Kernel...
+Traceback (most recent call last):
+  File "C:\Python\Project Atrosha\Atrosha\sovereign_agent\process_invoice.py", line 3, in <module>
+    run_agent_loop("meridian_invoice.pdf", session_id="ml-session-24500", auto_confirm=True)
+    ~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Python\Project Atrosha\Atrosha\sovereign_agent\loop.py", line 79, in run_agent_loop
+    print(f"\n     {status_icon} Result: {result['status']}")
+    ~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Python314\Lib\encodings\cp1252.py", line 19, in encode
+    return codecs.charmap_encode(input,self.errors,encoding_table)[0]
+           ~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+UnicodeEncodeError: 'charmap' codec can't encode character '\u2717' in position 7: character maps to <undefined>
