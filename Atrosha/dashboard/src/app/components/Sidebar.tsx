@@ -99,10 +99,6 @@ export default function Sidebar() {
             }}>
                 <div className="sidebar-brand">
                     <h1>Atrosha</h1>
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
-                        <span style={{ fontSize: '0.6rem', color: 'var(--accent)' }}>ENTITY: {entityId}</span>
-                        <span style={{ fontSize: '0.6rem', opacity: 0.6 }}>ROLE: {role}</span>
-                    </div>
                 </div>
                 <nav className="sidebar-nav">
                     <div className="sidebar-section">Main</div>
