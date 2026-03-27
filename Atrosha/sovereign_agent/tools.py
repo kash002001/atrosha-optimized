@@ -33,24 +33,30 @@ def execute_payment(vendor: str, amount: float, session_id: str, permit: str, cu
 
     db.save_execution(session_id, idem_key, vendor, amount, PaymentStatus.SUBMITTED.value)
 
-    url = f"{PROXY_URL}/proxy/charges"
+    url = f"{PROXY_URL}/proxy/v1/charges"
     headers = {
-        "Content-Type": "application/json",
-        "X-Atrosha-Target": "https://api.stripe.com/v1/charges",  # Specific endpoint
+        "Content-Type": "application/x-www-form-urlencoded",
+        "X-Atrosha-Target": "https://api.stripe.com",  # BASE URL
         "X-Atrosha-Agent-ID": "sovereign-agent-v1",
         "X-Atrosha-Amount": str(amount),
         "X-Atrosha-Session-ID": session_id,
         "X-Idempotency-Key": idem_key,
         "X-Atrosha-Permit": permit,
+        "X-Atrosha-Shadow-Mode": "true",
     }
 
     if STRIPE_KEY:
         headers["Authorization"] = f"Bearer {STRIPE_KEY}"
 
-    payload = {"vendor": vendor, "amount": amount, "currency": currency}
+    payload = {
+        "amount": int(amount * 100),
+        "currency": currency.lower(),
+        "source": "tok_visa",
+        "description": f"Payment to {vendor}"
+    }
 
     try:
-        resp = requests.post(url, headers=headers, json=payload, timeout=15)
+        resp = requests.post(url, headers=headers, data=payload, timeout=15)
 
         if resp.status_code == 200:
             key_slice: str = idem_key[:8]  # type: ignore

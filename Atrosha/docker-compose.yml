@@ -29,6 +29,8 @@ services:
     environment:
       ATROSHA_MODEL_PATH: /app/export/atrosha_engine.onnx
       ATROSHA_TOKENIZER_PATH: /app/tokenizer/tokenizer.json
+      SUPABASE_URL: "https://kyocxszsoqwgtqglfmmh.supabase.co"
+      SUPABASE_SERVICE_KEY: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imt5b2N4c3pzb3F3Z3RxZ2xmbW1oIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc2NjEyOTkxNiwiZXhwIjoyMDgxNzA1OTE2fQ.l3EQkHDVg7DT5MFe4_2hTQTsoHQIE5itI8n14SsJJXU"
     volumes:
       - ./semantic_engine/export:/app/export:ro
       - ./semantic_engine/tokenizer:/app/tokenizer:ro
