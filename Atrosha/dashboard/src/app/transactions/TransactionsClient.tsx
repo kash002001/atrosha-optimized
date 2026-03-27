@@ -5,7 +5,7 @@
 import { CreditCard, ArrowRight, CheckCircle2, AlertCircle, Search, Filter } from "lucide-react";
 import { useState, useEffect, useCallback } from "react";
 import { useUser } from "../context/UserContext";
-import { atroshaFetch } from "@/lib/api-client";
+import { createClient } from "@/lib/supabase-client";
 
 interface Transaction {
     id: number;
@@ -24,7 +24,9 @@ export default function TransactionsClient() {
 
     const fetchTransactions = useCallback(async () => {
         try {
-            const data = await atroshaFetch("/transactions");
+            const supabase = createClient();
+            const { data, error } = await supabase.from('transactions').select('*').order('created_at', { ascending: false });
+            if (error) throw error;
             setTransactions(data || []);
         } catch (e) {
             console.error(e);

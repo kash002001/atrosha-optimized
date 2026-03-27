@@ -3,7 +3,8 @@
 import { Shield, DollarSign, Clock, Users, AlertTriangle, Plus, HardDrive } from "lucide-react";
 import { useState, useEffect } from "react";
 import { useUser } from "../context/UserContext";
-import { atroshaFetch } from "@/lib/api-client";
+import { createClient } from "@/lib/supabase-client";
+import { createAgent } from "./actions";
 
 interface Agent {
     id: string;
@@ -26,7 +27,9 @@ export default function AgentsClient() {
     const fetchAgents = async () => {
         setLoading(true);
         try {
-            const data = await atroshaFetch("/agents");
+            const supabase = createClient();
+            const { data, error } = await supabase.from('agents').select('*').order('created_at', { ascending: false });
+            if (error) throw error;
             setAgents(data || []);
         } catch (e) {
             console.error(e);
@@ -50,17 +53,15 @@ export default function AgentsClient() {
         if (!newName.trim()) return;
         setCreating(true);
         try {
-            const result = await atroshaFetch("/agents", {
-                method: "POST",
-                body: JSON.stringify({ name: newName })
-            });
+            // Using the server action which safely interacts with the DB and Proxy
+            const result = await createAgent(newName, 5000000); 
 
-            if (result.error) {
-                alert("Failed to create agent: " + result.error);
+            if (result.error || !result.data) {
+                alert("Failed to create agent: " + (result.error || "Unknown Error"));
                 return;
             }
 
-            setNewAgentKey({ name: newName, priv: result._privateKey });
+            setNewAgentKey({ name: newName, priv: result.data._privateKey });
             setShowNewAgent(false);
             setNewName("");
             fetchAgents();
