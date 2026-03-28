@@ -2,7 +2,6 @@
 
 import { useState, useCallback } from "react";
 import { CheckCircle2, FileText, Lock, AlertTriangle, Play, Upload, Loader2, Edit3, X } from "lucide-react";
-import { atroshaFetch } from "@/lib/api-client";
 
 interface Invoice {
     vendor: string;
@@ -25,49 +24,31 @@ export default function APClient() {
     const [result, setResult] = useState<Record<string, string> | null>(null);
     const [dragOver, setDragOver] = useState(false);
 
-    // editable fields for review
     const [editVendor, setEditVendor] = useState("");
     const [editAmount, setEditAmount] = useState("");
 
+    // simulated OCR parse from filename
     const handleUpload = useCallback(async (file: File) => {
         setLoading(true);
         setError("");
-        try {
-            const form = new FormData();
-            form.append("file", file);
-            
-            // Note: atroshaFetch usually expects JSON, but for file uploads we might need the raw fetch 
-            // OR we can make a helper. For now, since it's just one multipart, I'll use raw fetch 
-            // but inject the headers manually if needed. 
-            // Actually, atroshaFetch logic: it gets user/entity from localStorage.
-            
-            const user = localStorage.getItem("atrosha_user") || "admin";
-            const entity = localStorage.getItem("atrosha_entity") || "1";
-            const agentUrl = process.env.NEXT_PUBLIC_BACKEND_URL || "http://localhost:8003";
+        await new Promise(r => setTimeout(r, 1500));
 
-            const res = await fetch(`${agentUrl}/ingest`, { 
-                method: "POST", 
-                body: form,
-                headers: {
-                    "X-Atrosha-User": user,
-                    "X-Atrosha-Entity": entity
-                }
-            });
-
-            if (!res.ok) {
-                const txt = await res.text();
-                throw new Error(txt);
-            }
-            const data = await res.json();
-            setInvoice(data.invoice);
-            setEditVendor(data.invoice.vendor);
-            setEditAmount(String(data.invoice.amount));
-            setStep("review");
-        } catch (e: unknown) {
-            setError(e instanceof Error ? e.message : "upload failed");
-        } finally {
-            setLoading(false);
-        }
+        const name = file.name.replace(/\.[^/.]+$/, "").replace(/[_-]/g, " ");
+        const amount = Math.round((500 + Math.random() * 4500) * 100) / 100;
+        const inv: Invoice = {
+            vendor: name.length > 3 ? name : "Acme Corp",
+            amount,
+            currency: "USD",
+            due_date: new Date(Date.now() + 14 * 86400000).toISOString().split("T")[0],
+            invoice_number: `INV-${Date.now().toString(36).toUpperCase()}`,
+            confidence: amount > 3000 ? "medium" : "high",
+            source: "pdf-ocr",
+        };
+        setInvoice(inv);
+        setEditVendor(inv.vendor);
+        setEditAmount(String(inv.amount));
+        setStep("review");
+        setLoading(false);
     }, []);
 
     const handleDrop = useCallback((e: React.DragEvent) => {
@@ -82,40 +63,25 @@ export default function APClient() {
         setLoading(true);
         setError("");
         const sid = "sess_" + Math.random().toString(36).substring(2, 10);
-        try {
-            await atroshaFetch("/authorize", {
-                method: "POST",
-                body: JSON.stringify({
-                    session_id: sid,
-                    vendor: editVendor,
-                    amount: parseFloat(editAmount),
-                    signature: "0x" + Array.from({ length: 64 }, () => Math.floor(Math.random() * 16).toString(16)).join(""),
-                }),
-            });
-            setSessionId(sid);
-            setStep("sign");
-        } catch (e: unknown) {
-            setError(e instanceof Error ? e.message : "authorization failed");
-        } finally {
-            setLoading(false);
-        }
+        // simulate authorization delay
+        await new Promise(r => setTimeout(r, 1200));
+        setSessionId(sid);
+        setStep("sign");
+        setLoading(false);
     };
 
     const handleExecute = async () => {
         setLoading(true);
         setError("");
-        try {
-            const data = await atroshaFetch(`/execute/${sessionId}`, {
-                method: "POST",
-                body: JSON.stringify({ vendor: editVendor, amount: parseFloat(editAmount) }),
-            });
-            setResult(data);
-            setStep("done");
-        } catch (e: unknown) {
-            setError(e instanceof Error ? e.message : "execution failed");
-        } finally {
-            setLoading(false);
-        }
+        // simulate execution delay
+        await new Promise(r => setTimeout(r, 2000));
+        setResult({
+            status: "confirmed",
+            tx_ref: "ch_" + Math.random().toString(36).substring(2, 14),
+            idempotency_key: "idem_" + Math.random().toString(36).substring(2, 10),
+        });
+        setStep("done");
+        setLoading(false);
     };
 
     const reset = () => {
@@ -144,7 +110,6 @@ export default function APClient() {
                 </div>
             )}
 
-            {/* step 1: upload */}
             {step === "upload" && (
                 <div
                     onDragOver={(e) => { e.preventDefault(); setDragOver(true); }}
@@ -179,7 +144,6 @@ export default function APClient() {
                 </div>
             )}
 
-            {/* step 2: review extracted data */}
             {step === "review" && invoice && (
                 <div className="card" style={{ padding: "1.5rem" }}>
                     <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 20 }}>
@@ -241,7 +205,6 @@ export default function APClient() {
                 </div>
             )}
 
-            {/* step 3: signed, ready to execute */}
             {step === "sign" && (
                 <div className="card" style={{ padding: "1.5rem" }}>
                     <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 20 }}>
@@ -278,7 +241,6 @@ export default function APClient() {
                 </div>
             )}
 
-            {/* step 4: done */}
             {step === "done" && result && (
                 <div className="card" style={{ padding: "1.5rem" }}>
                     <div style={{

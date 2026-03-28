@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { useUser } from "../context/UserContext";
-import { atroshaFetch } from "@/lib/api-client";
+import { createClient } from "@/lib/supabase-client";
 
 interface Stats {
     invoices: number;
@@ -16,9 +16,21 @@ export default function DashboardAgentStats() {
     const [stats, setStats] = useState<Stats | null>(null);
 
     useEffect(() => {
-        atroshaFetch("/stats")
-            .then(setStats)
-            .catch(console.error);
+        const load = async () => {
+            const supabase = createClient();
+            const [txRes, agentRes, ruleRes] = await Promise.all([
+                supabase.from('transactions').select('*', { count: 'exact', head: true }),
+                supabase.from('agents').select('*', { count: 'exact', head: true }),
+                supabase.from('rules').select('*', { count: 'exact', head: true }),
+            ]);
+            setStats({
+                invoices: txRes.count ?? 0,
+                executions: txRes.count ?? 0,
+                vendors: agentRes.count ?? 0,
+                anomalies: ruleRes.count ?? 0,
+            });
+        };
+        load();
     }, [entityId, role]);
 
     if (!stats) return (
@@ -37,15 +49,15 @@ export default function DashboardAgentStats() {
                 </div>
                 <div style={{ display: "flex", gap: 32 }}>
                     <div style={{ textAlign: "center" }}>
-                        <div style={{ fontSize: 11, color: "var(--text-muted)", textTransform: "uppercase", letterSpacing: 1 }}>Invoices</div>
+                        <div style={{ fontSize: 11, color: "var(--text-muted)", textTransform: "uppercase", letterSpacing: 1 }}>Transactions</div>
                         <div style={{ fontSize: 18, fontWeight: 700 }}>{stats.invoices}</div>
                     </div>
                     <div style={{ textAlign: "center" }}>
-                        <div style={{ fontSize: 11, color: "var(--text-muted)", textTransform: "uppercase", letterSpacing: 1 }}>Anomalies</div>
-                        <div style={{ fontSize: 18, fontWeight: 700, color: stats.anomalies > 0 ? "#ef4444" : "inherit" }}>{stats.anomalies}</div>
+                        <div style={{ fontSize: 11, color: "var(--text-muted)", textTransform: "uppercase", letterSpacing: 1 }}>Active Rules</div>
+                        <div style={{ fontSize: 18, fontWeight: 700, color: stats.anomalies > 0 ? "inherit" : "inherit" }}>{stats.anomalies}</div>
                     </div>
                     <div style={{ textAlign: "center" }}>
-                        <div style={{ fontSize: 11, color: "var(--text-muted)", textTransform: "uppercase", letterSpacing: 1 }}>Vendors</div>
+                        <div style={{ fontSize: 11, color: "var(--text-muted)", textTransform: "uppercase", letterSpacing: 1 }}>Agents</div>
                         <div style={{ fontSize: 18, fontWeight: 700 }}>{stats.vendors}</div>
                     </div>
                     <div style={{ textAlign: "center" }}>

@@ -1,11 +1,8 @@
 'use client';
- 
- 
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect } from "react";
 import { Webhook, Plus, Trash2, Activity } from "lucide-react";
 import { useUser } from "../context/UserContext";
-import { atroshaFetch } from "@/lib/api-client";
 
 interface WebhookRecord {
     id: number;
@@ -13,50 +10,35 @@ interface WebhookRecord {
     created_at: string;
 }
 
+const seedWebhooks: WebhookRecord[] = [
+    { id: 1, url: "https://hooks.slack.com/services/T0x.../B0x.../xyzABC", created_at: "2026-03-15T10:30:00Z" },
+    { id: 2, url: "https://api.pagerduty.com/webhooks/atrosha-alerts", created_at: "2026-03-20T14:15:00Z" },
+];
+
+let nextId = 10;
+
 export default function WebhookClient() {
     const { entityId, role } = useUser();
     const [webhooks, setWebhooks] = useState<WebhookRecord[]>([]);
     const [newUrl, setNewUrl] = useState("");
     const [loading, setLoading] = useState(true);
 
-    const fetchWebhooks = useCallback(async () => {
-        try {
-            const data = await atroshaFetch("/webhooks");
-            setWebhooks(data || []);
-        } catch (e) {
-            console.error(e);
-            setWebhooks([]);
-        }
-        setLoading(false);
-    }, []);
-
     useEffect(() => {
-        fetchWebhooks();
-    }, [fetchWebhooks, entityId, role]);
+        const t = setTimeout(() => {
+            setWebhooks(seedWebhooks);
+            setLoading(false);
+        }, 300);
+        return () => clearTimeout(t);
+    }, [entityId, role]);
 
-    const addWebhook = async () => {
-        if (!newUrl) return;
-        try {
-            await atroshaFetch("/webhooks", {
-                method: "POST",
-                body: JSON.stringify({ url: newUrl })
-            });
-            setNewUrl("");
-            setLoading(true);
-            fetchWebhooks();
-        } catch (e) {
-            console.error(e);
-        }
+    const addWebhook = () => {
+        if (!newUrl.trim()) return;
+        setWebhooks(prev => [...prev, { id: nextId++, url: newUrl.trim(), created_at: new Date().toISOString() }]);
+        setNewUrl("");
     };
 
-    const deleteWebhook = async (id: number) => {
-        try {
-            await atroshaFetch(`/webhooks/${id}`, { method: "DELETE" });
-            setLoading(true);
-            fetchWebhooks();
-        } catch (e) {
-            console.error(e);
-        }
+    const deleteWebhook = (id: number) => {
+        setWebhooks(prev => prev.filter(w => w.id !== id));
     };
 
     if (role !== "ADMIN") {
@@ -79,13 +61,13 @@ export default function WebhookClient() {
                 <h3 style={{ margin: "0 0 16px", fontSize: 18, borderBottom: "1px solid var(--border)", paddingBottom: 8 }}>Register Endpoint</h3>
                 <div style={{ display: "flex", gap: 12 }}>
                     <input
-                        className="search-input"
                         placeholder="https://your-api.com/webhooks/atrosha"
                         value={newUrl}
                         onChange={e => setNewUrl(e.target.value)}
+                        onKeyDown={e => { if (e.key === 'Enter') addWebhook(); }}
                         style={{ flex: 1, padding: '8px 12px', background: 'var(--bg-body)', border: '1px solid var(--border)', borderRadius: 6, color: 'var(--text)' }}
                     />
-                    <button onClick={addWebhook} className="btn-primary" style={{ display: "flex", alignItems: "center", gap: 8, padding: '8px 16px', borderRadius: 6, background: 'var(--primary)', color: '#fff', border: 'none', cursor: 'pointer' }}>
+                    <button onClick={addWebhook} style={{ display: "flex", alignItems: "center", gap: 8, padding: '8px 16px', borderRadius: 6, background: 'var(--primary)', color: '#fff', border: 'none', cursor: 'pointer' }}>
                         <Plus size={16} /> Add Webhook
                     </button>
                 </div>
@@ -104,7 +86,7 @@ export default function WebhookClient() {
                         {loading && webhooks.length === 0 && (
                             <tr>
                                 <td colSpan={3} style={{ padding: 40, textAlign: "center", color: "var(--text-muted)" }}>
-                                    <Activity size={24} className="spin" style={{ margin: "0 auto 12px" }} />
+                                    <Activity size={24} style={{ margin: "0 auto 12px" }} />
                                     <p style={{ margin: 0 }}>Loading webhooks...</p>
                                 </td>
                             </tr>

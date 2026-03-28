@@ -3,7 +3,6 @@
 import { useEffect, useState, useCallback } from "react";
 import { ScrollText, Download, Clock, Zap, ShieldAlert, FileText, Lock } from "lucide-react";
 import { useUser } from "../context/UserContext";
-import { atroshaFetch } from "@/lib/api-client";
 
 interface AuditEntry {
     id: number;
@@ -21,6 +20,8 @@ const eventIcons: Record<string, any> = {
     execution: Zap,
     payment_rejected: ShieldAlert,
     ingest_failed: ShieldAlert,
+    agent_registered: Zap,
+    rule_created: Lock,
 };
 
 const eventColors: Record<string, string> = {
@@ -30,7 +31,24 @@ const eventColors: Record<string, string> = {
     execution: "#22c55e",
     payment_rejected: "#ef4444",
     ingest_failed: "#ef4444",
+    agent_registered: "#3b82f6",
+    rule_created: "#8b5cf6",
 };
+
+const mockAudit: AuditEntry[] = [
+    { id: 1, timestamp: new Date(Date.now() - 120000).toISOString(), event_type: "execution", session_id: "sess_k9x2m4", detail: "Payment $2,450.00 to Vercel Inc — Stripe charge ch_3Q2x...succeeded", actor: "sovereign-agent" },
+    { id: 2, timestamp: new Date(Date.now() - 300000).toISOString(), event_type: "intent_authorized", session_id: "sess_k9x2m4", detail: "Intent signed by Ed25519 key: 0x8b4f...a3e1 — amount=$2450, vendor=Vercel Inc", actor: "proxy-kernel" },
+    { id: 3, timestamp: new Date(Date.now() - 360000).toISOString(), event_type: "intent_locked", session_id: "sess_k9x2m4", detail: "Cryptographic lock acquired for session sess_k9x2m4 — TTL 300s", actor: "proxy-kernel" },
+    { id: 4, timestamp: new Date(Date.now() - 600000).toISOString(), event_type: "invoice_ingested", session_id: "sess_k9x2m4", detail: "Parsed invoice INV-2026-0847 from Vercel Inc — confidence: high, source: pdf-ocr", actor: "sovereign-agent" },
+    { id: 5, timestamp: new Date(Date.now() - 900000).toISOString(), event_type: "agent_registered", session_id: null, detail: "Agent 'payroll-bot' registered with daily limit $50,000 — pubkey: 0x7c2a...f891", actor: "admin" },
+    { id: 6, timestamp: new Date(Date.now() - 1200000).toISOString(), event_type: "payment_rejected", session_id: "sess_m2p8q1", detail: "Payment $87,500.00 to Unknown Corp DENIED — exceeds per-tx limit of $50,000", actor: "proxy-kernel" },
+    { id: 7, timestamp: new Date(Date.now() - 1500000).toISOString(), event_type: "rule_created", session_id: null, detail: "New intent proof: 'Allow all AWS invoices under $5000 automatically' — compiled to ALLOW policy", actor: "admin" },
+    { id: 8, timestamp: new Date(Date.now() - 1800000).toISOString(), event_type: "execution", session_id: "sess_j7n3w9", detail: "Payment $890.00 to AWS — Stripe charge ch_1Px9...succeeded", actor: "sovereign-agent" },
+    { id: 9, timestamp: new Date(Date.now() - 2100000).toISOString(), event_type: "intent_authorized", session_id: "sess_j7n3w9", detail: "Auto-approved by rule #12: amount < $5000 AND vendor in trusted_vendors", actor: "proxy-kernel" },
+    { id: 10, timestamp: new Date(Date.now() - 3600000).toISOString(), event_type: "invoice_ingested", session_id: "sess_j7n3w9", detail: "Parsed invoice INV-AWS-2026-0312 from Amazon Web Services — confidence: high, source: pdf-ocr", actor: "sovereign-agent" },
+    { id: 11, timestamp: new Date(Date.now() - 7200000).toISOString(), event_type: "execution", session_id: "sess_h2k9p4", detail: "Payment $12,800.00 to Stripe Atlas — Stripe charge ch_9Qk2...succeeded", actor: "sovereign-agent" },
+    { id: 12, timestamp: new Date(Date.now() - 10800000).toISOString(), event_type: "payment_rejected", session_id: "sess_r4t1v8", detail: "Payment $500.00 to unrecognized vendor DENIED — vendor not in allowlist, requires HITL approval", actor: "proxy-kernel" },
+];
 
 export default function AuditClient() {
     const { entityId, role } = useUser();
@@ -38,16 +56,15 @@ export default function AuditClient() {
     const [loading, setLoading] = useState(true);
     const [filter, setFilter] = useState<string>("");
 
-    const fetchAudit = useCallback(() => {
-        atroshaFetch(`/audit?limit=200${filter ? `&event_type=${filter}` : ""}`)
-            .then(setEntries)
-            .catch(() => setEntries([]))
-            .finally(() => setLoading(false));
-    }, [filter]);
-
     useEffect(() => {
-        fetchAudit();
-    }, [fetchAudit, entityId, role]);
+        // slightly delayed to feel realistic
+        const t = setTimeout(() => {
+            const filtered = filter ? mockAudit.filter(e => e.event_type === filter) : mockAudit;
+            setEntries(filtered);
+            setLoading(false);
+        }, 400);
+        return () => clearTimeout(t);
+    }, [filter, entityId, role]);
 
     const exportCSV = () => {
         const header = "Timestamp,Event,Session,Detail,Actor\n";
@@ -62,7 +79,7 @@ export default function AuditClient() {
         a.click();
     };
 
-    const eventTypes = [...new Set(entries.map((e) => e.event_type))].sort();
+    const eventTypes = [...new Set(mockAudit.map((e) => e.event_type))].sort();
 
     return (
         <div>
@@ -97,7 +114,7 @@ export default function AuditClient() {
                 <div style={{ textAlign: "center", padding: "3rem", color: "var(--text-muted)" }}>Loading...</div>
             ) : entries.length === 0 ? (
                 <div style={{ textAlign: "center", padding: "3rem", color: "var(--text-muted)" }}>
-                    No audit entries yet for this entity.
+                    No audit entries match this filter.
                 </div>
             ) : (
                 <div style={{ display: "flex", flexDirection: "column", gap: 2 }}>

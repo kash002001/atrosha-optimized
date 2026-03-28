@@ -1,12 +1,12 @@
 'use client';
- 
- import { Shield, Hammer, ToggleLeft, Trash2, Cpu, FileJson, Play } from "lucide-react";
+
+import { Shield, Hammer, ToggleLeft, Trash2, Cpu, FileJson, Play } from "lucide-react";
 import { useState, useEffect, useCallback } from "react";
 import { useUser } from "../context/UserContext";
-import { atroshaFetch } from "@/lib/api-client";
+import { createClient } from "@/lib/supabase-client";
 
 interface Rule {
-    id: number;
+    id: string;
     nl_text: string;
     compiled_policy: any;
     agent_id?: string;
@@ -26,7 +26,9 @@ export default function RulesClient() {
 
     const fetchRules = useCallback(async () => {
         try {
-            const data = await atroshaFetch("/rules");
+            const supabase = createClient();
+            const { data, error } = await supabase.from('rules').select('*').order('created_at', { ascending: false });
+            if (error) throw error;
             setRules(data || []);
         } catch (e) {
             console.error(e);
@@ -42,7 +44,6 @@ export default function RulesClient() {
     const handleSimulate = () => {
         if (!prompt.trim()) return;
         setSimulating(true);
-        // Modernized local simulation
         setTimeout(() => {
             setSimResult({
                 intent: prompt,
@@ -61,14 +62,15 @@ export default function RulesClient() {
     const handleCommit = async () => {
         if (!simResult) return;
         try {
-            await atroshaFetch("/rules", {
-                method: "POST",
-                body: JSON.stringify({
-                    nl_text: simResult.intent,
-                    compiled_policy: JSON.stringify(simResult.policy),
-                    agent_id: null
-                })
+            const supabase = createClient();
+            const { error } = await supabase.from('rules').insert({
+                nl_text: simResult.intent,
+                compiled_policy: simResult.policy,
+                status: 'active',
+                effect: 'allow',
+                priority: 100,
             });
+            if (error) throw error;
             setShowSimulate(false);
             setSimResult(null);
             setPrompt("");
@@ -80,10 +82,12 @@ export default function RulesClient() {
         }
     };
 
-    const handleDelete = async (id: number) => {
+    const handleDelete = async (id: string) => {
         if (!confirm("Are you sure?")) return;
         try {
-            await atroshaFetch(`/rules/${id}`, { method: "DELETE" });
+            const supabase = createClient();
+            const { error } = await supabase.from('rules').delete().eq('id', id);
+            if (error) throw error;
             setLoading(true);
             fetchRules();
         } catch (e) {
@@ -189,7 +193,7 @@ export default function RulesClient() {
                                             <FileJson size={14} /> Compiled
                                         </div>
                                     </td>
-                                    <td style={{ fontSize: 12 }}>{r.agent?.name || "Global"}</td>
+                                    <td style={{ fontSize: 12 }}>{r.agent_id ? "Agent" : "Global"}</td>
                                     <td style={{ fontSize: 12 }}>{new Date(r.created_at).toLocaleDateString()}</td>
                                     <td>
                                         <span style={{ fontSize: 10, fontWeight: 700, padding: "2px 6px", borderRadius: 4, background: "rgba(34,197,94,0.1)", color: "#22c55e", border: "1px solid rgba(34,197,94,0.2)" }}>

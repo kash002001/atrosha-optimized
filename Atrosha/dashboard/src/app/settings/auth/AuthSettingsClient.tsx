@@ -1,81 +1,78 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { atroshaFetch } from '@/lib/api-client';
+import { Shield, Trash2, Plus } from 'lucide-react';
+
+interface AuthSetting {
+    id: number;
+    provider_type: string;
+    metadata_url?: string;
+    client_id?: string;
+    created_at: string;
+}
+
+const seedSettings: AuthSetting[] = [
+    { id: 1, provider_type: "SAML", metadata_url: "https://login.microsoftonline.com/tenant/FederationMetadata/2007-06/FederationMetadata.xml", created_at: "2026-02-10T09:00:00Z" },
+    { id: 2, provider_type: "OIDC", client_id: "atrosha-prod-0x8f2a...4b1c", created_at: "2026-03-01T14:30:00Z" },
+];
+
+let nid = 10;
 
 export default function AuthSettingsClient() {
-    const [settings, setSettings] = useState<any[]>([]);
+    const [settings, setSettings] = useState<AuthSetting[]>([]);
     const [loading, setLoading] = useState(true);
     const [providerType, setProviderType] = useState('SAML');
     const [metadataUrl, setMetadataUrl] = useState('');
     const [clientId, setClientId] = useState('');
     const [clientSecret, setClientSecret] = useState('');
 
-    const fetchSettings = async () => {
-        try {
-            const data = await atroshaFetch('/auth/settings');
-            setSettings(data);
-        } catch (error) {
-            console.error('Failed to fetch auth settings:', error);
-        } finally {
-            setLoading(false);
-        }
-    };
-
     useEffect(() => {
-        fetchSettings();
+        const t = setTimeout(() => { setSettings(seedSettings); setLoading(false); }, 300);
+        return () => clearTimeout(t);
     }, []);
 
-    const handleAdd = async (e: React.FormEvent) => {
+    const handleAdd = (e: React.FormEvent) => {
         e.preventDefault();
-        try {
-            await atroshaFetch('/auth/settings', {
-                method: 'POST',
-                body: JSON.stringify({
-                    provider_type: providerType,
-                    metadata_url: metadataUrl,
-                    client_id: clientId,
-                    client_secret: clientSecret
-                }),
-            });
-            fetchSettings();
-            setMetadataUrl('');
-            setClientId('');
-            setClientSecret('');
-        } catch (error) {
-            alert('Failed to add auth settings');
-        }
+        const entry: AuthSetting = {
+            id: nid++,
+            provider_type: providerType,
+            metadata_url: providerType === 'SAML' ? metadataUrl : undefined,
+            client_id: providerType === 'OIDC' ? clientId : undefined,
+            created_at: new Date().toISOString(),
+        };
+        setSettings(prev => [...prev, entry]);
+        setMetadataUrl('');
+        setClientId('');
+        setClientSecret('');
     };
 
-    const handleDelete = async (id: number) => {
-        if (!confirm('Are you sure?')) return;
-        try {
-            await atroshaFetch(`/auth/settings/${id}`, { method: 'DELETE' });
-            fetchSettings();
-        } catch (error) {
-            alert('Failed to delete settings');
-        }
+    const handleDelete = (id: number) => {
+        if (!confirm('Remove this provider?')) return;
+        setSettings(prev => prev.filter(s => s.id !== id));
     };
 
     return (
-        <div className="space-y-8 animate-in fade-in duration-500">
-            <header>
-                <h1 className="text-3xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-white to-gray-500">
-                    Enterprise Auth (SSO)
-                </h1>
-                <p className="text-gray-400 mt-2">Configure SAML 2.0 or OIDC identity providers for your organization.</p>
-            </header>
+        <div style={{ maxWidth: 1100, margin: "0 auto", paddingBottom: 60 }}>
+            <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 32 }}>
+                <div style={{ padding: 10, background: "var(--bg-secondary)", borderRadius: 8, border: "1px solid var(--border)" }}>
+                    <Shield size={24} style={{ color: "var(--primary)" }} />
+                </div>
+                <div>
+                    <h2 style={{ margin: 0, fontSize: 24, fontWeight: 700 }}>Enterprise Auth (SSO)</h2>
+                    <p style={{ margin: "4px 0 0", fontSize: 14, color: "var(--text-muted)" }}>Configure SAML 2.0 or OIDC identity providers for your organization.</p>
+                </div>
+            </div>
 
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-                <form onSubmit={handleAdd} className="p-6 rounded-2xl bg-white/5 border border-white/10 backdrop-blur-md space-y-4">
-                    <h2 className="text-xl font-semibold mb-4">Add Provider</h2>
-                    
-                    <div>
-                        <label className="block text-sm font-medium text-gray-400 mb-1">Provider Type</label>
-                        <select 
+            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 24 }}>
+                <form onSubmit={handleAdd} className="chart-card" style={{ padding: 24 }}>
+                    <h3 style={{ margin: "0 0 16px", fontSize: 16, fontWeight: 600 }}>Add Provider</h3>
+
+                    <div style={{ marginBottom: 16 }}>
+                        <label style={{ fontSize: 12, color: "var(--text-muted)", display: "block", marginBottom: 6 }}>Provider Type</label>
+                        <select
                             value={providerType}
                             onChange={(e) => setProviderType(e.target.value)}
-                            className="w-full bg-black/40 border border-white/10 rounded-lg p-3 text-white focus:ring-2 focus:ring-blue-500 outline-none"
+                            style={{ width: "100%", padding: "10px 12px", borderRadius: 6, background: "var(--bg-body)", border: "1px solid var(--border)", color: "var(--text)", fontSize: 13 }}
                         >
                             <option value="SAML">SAML 2.0</option>
                             <option value="OIDC">OpenID Connect (OIDC)</option>
@@ -83,75 +80,77 @@ export default function AuthSettingsClient() {
                     </div>
 
                     {providerType === 'SAML' ? (
-                        <div>
-                            <label className="block text-sm font-medium text-gray-400 mb-1">Metadata URL</label>
-                            <input 
-                                type="url" 
+                        <div style={{ marginBottom: 16 }}>
+                            <label style={{ fontSize: 12, color: "var(--text-muted)", display: "block", marginBottom: 6 }}>Metadata URL</label>
+                            <input
+                                type="url"
                                 value={metadataUrl}
                                 onChange={(e) => setMetadataUrl(e.target.value)}
                                 placeholder="https://idp.example.com/metadata"
-                                className="w-full bg-black/40 border border-white/10 rounded-lg p-3 text-white focus:ring-2 focus:ring-blue-500 outline-none"
+                                style={{ width: "100%", padding: "10px 12px", borderRadius: 6, background: "var(--bg-body)", border: "1px solid var(--border)", color: "var(--text)", fontSize: 13 }}
                             />
                         </div>
                     ) : (
                         <>
-                            <div>
-                                <label className="block text-sm font-medium text-gray-400 mb-1">Client ID</label>
-                                <input 
-                                    type="text" 
+                            <div style={{ marginBottom: 16 }}>
+                                <label style={{ fontSize: 12, color: "var(--text-muted)", display: "block", marginBottom: 6 }}>Client ID</label>
+                                <input
+                                    type="text"
                                     value={clientId}
                                     onChange={(e) => setClientId(e.target.value)}
-                                    className="w-full bg-black/40 border border-white/10 rounded-lg p-3 text-white focus:ring-2 focus:ring-blue-500 outline-none"
+                                    style={{ width: "100%", padding: "10px 12px", borderRadius: 6, background: "var(--bg-body)", border: "1px solid var(--border)", color: "var(--text)", fontSize: 13 }}
                                 />
                             </div>
-                            <div>
-                                <label className="block text-sm font-medium text-gray-400 mb-1">Client Secret</label>
-                                <input 
-                                    type="password" 
+                            <div style={{ marginBottom: 16 }}>
+                                <label style={{ fontSize: 12, color: "var(--text-muted)", display: "block", marginBottom: 6 }}>Client Secret</label>
+                                <input
+                                    type="password"
                                     value={clientSecret}
                                     onChange={(e) => setClientSecret(e.target.value)}
-                                    className="w-full bg-black/40 border border-white/10 rounded-lg p-3 text-white focus:ring-2 focus:ring-blue-500 outline-none"
+                                    style={{ width: "100%", padding: "10px 12px", borderRadius: 6, background: "var(--bg-body)", border: "1px solid var(--border)", color: "var(--text)", fontSize: 13 }}
                                 />
                             </div>
                         </>
                     )}
 
-                    <button 
+                    <button
                         type="submit"
-                        className="w-full bg-white text-black font-bold p-3 rounded-lg hover:bg-gray-200 transition-colors"
+                        style={{ width: "100%", padding: 12, borderRadius: 6, background: "var(--primary)", color: "#fff", border: "none", fontWeight: 700, cursor: "pointer", fontSize: 13, display: "flex", alignItems: "center", justifyContent: "center", gap: 8 }}
                     >
-                        Save Configuration
+                        <Plus size={16} /> Save Configuration
                     </button>
                 </form>
 
-                <div className="space-y-4">
-                    <h2 className="text-xl font-semibold px-2">Active Providers</h2>
+                <div>
+                    <h3 style={{ margin: "0 0 16px", fontSize: 16, fontWeight: 600, padding: "0 8px" }}>Active Providers</h3>
                     {loading ? (
-                        <div className="p-8 text-center text-gray-500">Loading configurations...</div>
+                        <div style={{ padding: 40, textAlign: "center", color: "var(--text-muted)" }}>Loading configurations...</div>
                     ) : settings.length === 0 ? (
-                        <div className="p-8 text-center border border-dashed border-white/10 rounded-2xl text-gray-500">
+                        <div className="chart-card" style={{ padding: 40, textAlign: "center", color: "var(--text-muted)", border: "1px dashed var(--border)" }}>
                             No SSO providers configured yet.
                         </div>
                     ) : (
-                        settings.map((s) => (
-                            <div key={s.id} className="p-4 rounded-xl bg-white/5 border border-white/10 flex items-center justify-between group">
-                                <div>
-                                    <div className="font-medium text-white flex items-center gap-2">
-                                        <div className="w-2 h-2 rounded-full bg-green-500 animate-pulse"></div>
-                                        {s.provider_type}
+                        <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+                            {settings.map((s) => (
+                                <div key={s.id} className="chart-card" style={{ padding: 16, display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+                                    <div>
+                                        <div style={{ fontWeight: 600, display: "flex", alignItems: "center", gap: 8 }}>
+                                            <div style={{ width: 8, height: 8, borderRadius: "50%", background: "#22c55e" }} />
+                                            {s.provider_type}
+                                        </div>
+                                        <div style={{ fontSize: 12, color: "var(--text-muted)", marginTop: 4, maxWidth: 300, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                                            {s.metadata_url || s.client_id}
+                                        </div>
                                     </div>
-                                    <div className="text-sm text-gray-500 mt-1 max-w-xs truncate">
-                                        {s.metadata_url || s.client_id}
-                                    </div>
+                                    <button
+                                        onClick={() => handleDelete(s.id)}
+                                        style={{ padding: "6px 12px", borderRadius: 6, background: "rgba(239,68,68,0.1)", color: "#ef4444", border: "none", cursor: "pointer", fontSize: 12 }}
+                                    >
+                                        Remove
+                                    </button>
                                 </div>
-                                <button 
-                                    onClick={() => handleDelete(s.id)}
-                                    className="p-2 rounded-lg bg-red-500/10 text-red-500 opacity-0 group-hover:opacity-100 transition-opacity hover:bg-red-500/20"
-                                >
-                                    Remove
-                                </button>
-                            </div>
-                        ))
+                            ))}
+                        </div>
                     )}
                 </div>
             </div>

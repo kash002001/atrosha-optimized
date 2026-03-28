@@ -1,12 +1,38 @@
 "use client";
 
 import { Download, FileSpreadsheet } from "lucide-react";
-
-const AGENT_URL = process.env.NEXT_PUBLIC_AGENT_URL || "http://localhost:8003";
+import { createClient } from "@/lib/supabase-client";
 
 export default function ExportClient() {
-    const handleExport = (format: string) => {
-        window.open(`${AGENT_URL}/export/csv/${format}`, "_blank");
+    const handleExport = async (format: string) => {
+        const supabase = createClient();
+        const { data: txs } = await supabase.from('transactions').select('*').order('created_at', { ascending: false }).limit(500);
+
+        if (!txs || txs.length === 0) {
+            alert("No transactions to export.");
+            return;
+        }
+
+        let csv = "";
+        if (format === "xero") {
+            csv = "ContactName,InvoiceNumber,InvoiceDate,DueDate,Total,Currency\n";
+            txs.forEach(t => {
+                csv += `"Vendor ${t.invoice_id || 'N/A'}","INV-${t.id}","${new Date(t.created_at).toISOString().split('T')[0]}","${new Date(t.created_at).toISOString().split('T')[0]}",${((t.amount || 0) / 100).toFixed(2)},"${t.currency || 'USD'}"\n`;
+            });
+        } else {
+            csv = "Vendor,BillNo,BillDate,ExpenseAmount,Currency\n";
+            txs.forEach(t => {
+                csv += `"Vendor ${t.invoice_id || 'N/A'}","BILL-${t.id}","${new Date(t.created_at).toISOString().split('T')[0]}",${((t.amount || 0) / 100).toFixed(2)},"${t.currency || 'USD'}"\n`;
+            });
+        }
+
+        const blob = new Blob([csv], { type: "text/csv" });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement("a");
+        a.href = url;
+        a.download = `atrosha_${format}_export_${new Date().toISOString().split('T')[0]}.csv`;
+        a.click();
+        URL.revokeObjectURL(url);
     };
 
     return (

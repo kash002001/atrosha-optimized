@@ -1,11 +1,8 @@
 'use client';
- 
- 
 
 import { useEffect, useState, useCallback } from "react";
 import { Users, Search, Edit2, CheckCircle2 } from "lucide-react";
 import { useUser } from "../context/UserContext";
-import { atroshaFetch } from "@/lib/api-client";
 
 interface Vendor {
     id: number;
@@ -16,6 +13,17 @@ interface Vendor {
     total_paid: number;
 }
 
+const seedVendors: Vendor[] = [
+    { id: 1, name: "Amazon Web Services", auto_approve_below: 5000, first_seen: "2025-08-12", last_seen: "2026-03-27", total_paid: 142800 },
+    { id: 2, name: "Vercel Inc", auto_approve_below: 2000, first_seen: "2025-11-03", last_seen: "2026-03-26", total_paid: 28400 },
+    { id: 3, name: "Stripe", auto_approve_below: 10000, first_seen: "2025-06-01", last_seen: "2026-03-27", total_paid: 67200 },
+    { id: 4, name: "Google Cloud Platform", auto_approve_below: 8000, first_seen: "2025-09-15", last_seen: "2026-03-25", total_paid: 95600 },
+    { id: 5, name: "Supabase Inc", auto_approve_below: 1500, first_seen: "2026-01-10", last_seen: "2026-03-24", total_paid: 4800 },
+    { id: 6, name: "OpenAI", auto_approve_below: 3000, first_seen: "2025-12-01", last_seen: "2026-03-27", total_paid: 18900 },
+    { id: 7, name: "Cloudflare", auto_approve_below: 500, first_seen: "2025-10-20", last_seen: "2026-03-20", total_paid: 3200 },
+    { id: 8, name: "Figma", auto_approve_below: 0, first_seen: "2026-02-14", last_seen: "2026-03-15", total_paid: 1200 },
+];
+
 export default function VendorClient() {
     const { entityId, role } = useUser();
     const [vendors, setVendors] = useState<Vendor[]>([]);
@@ -24,32 +32,19 @@ export default function VendorClient() {
     const [editingId, setEditingId] = useState<number | null>(null);
     const [editValue, setEditValue] = useState<string>("");
 
-    const fetchVendors = useCallback(() => {
-        atroshaFetch("/vendors")
-            .then(setVendors)
-            .catch(console.error)
-            .finally(() => setLoading(false));
-    }, []);
-
     useEffect(() => {
-        fetchVendors();
-    }, [fetchVendors, entityId, role]); // Refetch when entity or role changes
+        const t = setTimeout(() => {
+            setVendors(seedVendors);
+            setLoading(false);
+        }, 300);
+        return () => clearTimeout(t);
+    }, [entityId, role]);
 
-    const handleSaveThreshold = async (id: number) => {
+    const handleSaveThreshold = (id: number) => {
         const val = parseFloat(editValue);
         if (isNaN(val) || val < 0) return;
-
-        try {
-            await atroshaFetch(`/vendors/${id}`, {
-                method: "PUT",
-                body: JSON.stringify({ auto_approve_below: val })
-            });
-            setEditingId(null);
-            setLoading(true);
-            fetchVendors();
-        } catch (e) {
-            console.error(e);
-        }
+        setVendors(prev => prev.map(v => v.id === id ? { ...v, auto_approve_below: val } : v));
+        setEditingId(null);
     };
 
     const filtered = vendors.filter(v => v.name.toLowerCase().includes(searchTerm.toLowerCase()));

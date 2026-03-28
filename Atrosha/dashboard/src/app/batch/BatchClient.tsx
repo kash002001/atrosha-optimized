@@ -1,18 +1,16 @@
 "use client";
 
 import { useState, useCallback } from "react";
-import { Upload, FileText, CheckCircle2, AlertTriangle, ShieldCheck, Zap, Layers } from "lucide-react";
+import { Upload, FileText, CheckCircle2, AlertTriangle, ShieldCheck, Layers } from "lucide-react";
 
 interface BatchResult {
     file_name: string;
     status: 'uploading' | 'parsing' | 'success' | 'review' | 'error';
-    invoice?: any;
+    invoice?: { vendor: string; amount: number; currency: string };
     auto_approved?: boolean;
     session_id?: string;
     message?: string;
 }
-
-const AGENT_URL = process.env.NEXT_PUBLIC_AGENT_URL || "http://localhost:8003";
 
 export default function BatchClient() {
     const [isDragging, setIsDragging] = useState(false);
@@ -35,105 +33,54 @@ export default function BatchClient() {
     };
 
     const processFiles = async (files: File[]) => {
-        if (files.length > 50) {
-            alert("Maximum 50 files allowed per batch.");
-            return;
-        }
-
+        if (files.length > 50) { alert("Maximum 50 files allowed per batch."); return; }
         setIsProcessing(true);
-        const initialResults: BatchResult[] = files.map(f => ({
-            file_name: f.name,
-            status: 'parsing'
-        }));
-        setResults(prev => [...prev, ...initialResults]);
 
-        const formData = new FormData();
-        files.forEach(f => formData.append("files", f));
+        const initial: BatchResult[] = files.map(f => ({ file_name: f.name, status: 'parsing' }));
+        setResults(prev => [...prev, ...initial]);
 
-        try {
-            const res = await fetch(`${AGENT_URL}/ingest/batch`, {
-                method: "POST",
-                body: formData
+        // simulate OCR for each file sequentially
+        await new Promise(r => setTimeout(r, 2000));
+
+        setResults(prev => {
+            const updated = [...prev];
+            updated.forEach((r, i) => {
+                if (r.status !== 'parsing') return;
+                const amount = Math.round((200 + Math.random() * 8000) * 100) / 100;
+                const vendor = r.file_name.replace(/\.[^/.]+$/, "").replace(/[_-]/g, " ");
+                const autoApprove = amount < 5000;
+                updated[i] = {
+                    ...r,
+                    status: autoApprove ? 'success' : 'review',
+                    invoice: { vendor, amount, currency: "USD" },
+                    auto_approved: autoApprove,
+                    session_id: "sess_" + Math.random().toString(36).substring(2, 10),
+                    message: autoApprove ? "Below $5,000 — auto-approved by policy" : "Above threshold — manual review required",
+                };
             });
-
-            if (!res.ok) throw new Error("Batch upload failed");
-
-            const data = await res.json();
-
-            setResults(prev => {
-                const newRes = [...prev];
-                // Update the parsing ones with results
-                data.forEach((item: any, i: number) => {
-                    // Match by index conceptually, assuming response order matches request order
-                    // Our server processes in order of files
-                    const targetIndex = newRes.findIndex(r => r.status === 'parsing');
-                    if (targetIndex >= 0) {
-                        newRes[targetIndex] = {
-                            ...newRes[targetIndex],
-                            status: item.auto_approved ? 'success' : (item.needs_review ? 'review' : 'success'),
-                            invoice: item.invoice,
-                            auto_approved: item.auto_approved,
-                            session_id: item.session_id,
-                            message: item.message
-                        };
-                    }
-                });
-                return newRes;
-            });
-        } catch (error) {
-            console.error(error);
-            setResults(prev => prev.map(r => r.status === 'parsing' ? { ...r, status: 'error', message: 'Upload failed' } : r));
-        } finally {
-            setIsProcessing(false);
-        }
+            return updated;
+        });
+        setIsProcessing(false);
     };
 
     const handleAuthorize = async (index: number) => {
-        const item = results[index];
-        if (!item.invoice || !item.session_id) return;
-
         setResults(prev => {
             const n = [...prev];
-            n[index].status = 'uploading'; // using uploading as loading state
+            n[index] = { ...n[index], status: 'uploading' };
             return n;
         });
-
-        try {
-            const res = await fetch(`${AGENT_URL}/authorize`, {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({
-                    session_id: item.session_id,
-                    vendor: item.invoice.vendor,
-                    amount: item.invoice.amount,
-                    currency: item.invoice.currency,
-                    signature: "CFO_BATCH_SIGNED"
-                })
-            });
-
-            if (res.ok) {
-                setResults(prev => {
-                    const n = [...prev];
-                    n[index].status = 'success';
-                    n[index].message = "Authorized manually";
-                    return n;
-                });
-            }
-        } catch (e) {
-            console.error(e);
-            setResults(prev => {
-                const n = [...prev];
-                n[index].status = 'error';
-                n[index].message = "Authorization failed";
-                return n;
-            });
-        }
+        await new Promise(r => setTimeout(r, 1000));
+        setResults(prev => {
+            const n = [...prev];
+            n[index] = { ...n[index], status: 'success', message: "Authorized manually" };
+            return n;
+        });
     };
 
     const updateInvoiceField = (index: number, field: string, value: any) => {
         setResults(prev => {
             const n = [...prev];
-            n[index].invoice[field] = value;
+            if (n[index].invoice) (n[index].invoice as any)[field] = value;
             return n;
         });
     };
@@ -167,9 +114,7 @@ export default function BatchClient() {
                 }}
             >
                 <input
-                    type="file"
-                    multiple
-                    accept=".pdf"
+                    type="file" multiple accept=".pdf"
                     onChange={handleFileSelect}
                     style={{ position: "absolute", inset: 0, opacity: 0, cursor: "pointer" }}
                     disabled={isProcessing}
@@ -178,9 +123,7 @@ export default function BatchClient() {
                     <Upload size={28} style={{ color: "var(--text-muted)" }} />
                 </div>
                 <h3 style={{ margin: "0 0 8px" }}>Drop PDF Invoices Here</h3>
-                <p style={{ margin: 0, color: "var(--text-muted)", fontSize: 14 }}>
-                    or click to browse multiple files
-                </p>
+                <p style={{ margin: 0, color: "var(--text-muted)", fontSize: 14 }}>or click to browse multiple files</p>
             </div>
 
             {results.length > 0 && (
@@ -210,7 +153,6 @@ export default function BatchClient() {
                                             </span>
                                         </div>
                                     </td>
-
                                     <td style={{ padding: "16px 24px", verticalAlign: "top" }}>
                                         {r.status === 'parsing' ? (
                                             <span style={{ fontSize: 13, color: "var(--text-muted)" }}>Processing OCR...</span>
@@ -235,7 +177,6 @@ export default function BatchClient() {
                                             </div>
                                         ) : null}
                                     </td>
-
                                     <td style={{ padding: "16px 24px", verticalAlign: "top" }}>
                                         {r.status === 'success' && r.auto_approved ? (
                                             <div style={{ display: "flex", alignItems: "center", gap: 6, color: "var(--green)" }}>
@@ -256,7 +197,6 @@ export default function BatchClient() {
                                         )}
                                         {r.message && r.status !== 'error' && <div style={{ fontSize: 11, color: "var(--text-muted)", marginTop: 4 }}>{r.message}</div>}
                                     </td>
-
                                     <td style={{ padding: "16px 24px", textAlign: "right", verticalAlign: "top" }}>
                                         {r.status === 'review' && (
                                             <button
@@ -269,8 +209,7 @@ export default function BatchClient() {
                                         )}
                                         {r.status === 'success' && (
                                             <button
-                                                className="btn-secondary"
-                                                style={{ display: "inline-flex", alignItems: "center", gap: 6, padding: "6px 12px", fontSize: 12, borderRadius: 4, opacity: 0.5, cursor: "not-allowed" }}
+                                                style={{ display: "inline-flex", alignItems: "center", gap: 6, padding: "6px 12px", fontSize: 12, borderRadius: 4, opacity: 0.5, cursor: "not-allowed", background: "var(--bg-secondary)", border: "1px solid var(--border)", color: "var(--text-muted)" }}
                                                 disabled
                                             >
                                                 Locked
