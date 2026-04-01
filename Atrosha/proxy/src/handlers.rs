@@ -15,6 +15,13 @@ use crate::circuit;
 use crate::permit::{compute_req_intent_hash, SpendPermit};
 use crate::adapters::RailAdapter;
 
+// max body we'll buffer before rejecting
+const MAX_BODY_BYTES: usize = 10 * 1024 * 1024;
+// for payloads larger than this, we stream intent classification in parallel with buffering
+const STREAMING_THRESHOLD: usize = 64 * 1024;
+// how many bytes to send to the intent validator for classification
+const INTENT_PREVIEW_BYTES: usize = 4096;
+
 pub async fn health_check() -> &'static str {
     "OK"
 }
@@ -31,7 +38,8 @@ pub async fn register_agent(
     headers: HeaderMap,
     axum::Json(req): axum::Json<RegisterAgentRequest>,
 ) -> Result<&'static str, StatusCode> {
-    let admin_secret = std::env::var("ADMIN_SECRET").unwrap_or_else(|_| "admin-secret-change-me".to_string());
+    let admin_secret = std::env::var("ADMIN_SECRET")
+        .expect("ADMIN_SECRET must be set in environment");
     let provided_secret = headers
         .get("X-Atrosha-Admin-Secret")
         .and_then(|v| v.to_str().ok());
@@ -137,31 +145,41 @@ pub async fn proxy_handler(
             StatusCode::BAD_REQUEST
         })?;
 
-    let shadow_mode = headers
-        .get("X-Atrosha-Observation-Mode")
-        .or_else(|| headers.get("X-Atrosha-Shadow-Mode"))
-        .and_then(|v| v.to_str().ok())
-        .map(|s| s.eq_ignore_ascii_case("true"))
-        .unwrap_or(false);
-
-    // ── egress whitelisting ──────────────────────────────────
-    if !state.egress_whitelist.is_allowed(&org_id, target_url).await && !shadow_mode {
+    // egress whitelisting — always enforced (now with in-memory cache)
+    if !state.egress_whitelist.is_allowed(&org_id, target_url).await {
         tracing::warn!(agent_id = %agent_id, target = %target_url, "EGRESS BLOCKED: target not whitelisted");
-        log_audit(&state, &org_id, agent_id, &req_id, amount, target_url, AuditDecision::Denied, start, shadow_mode, None::<String>, SignatureStatus::Missing, Some("Egress Blocked: Target not whitelisted".to_string()), 0.0, None::<String>);
+        log_audit(&state, &org_id, agent_id, &req_id, amount, target_url, AuditDecision::Denied, start, false, None::<String>, SignatureStatus::Verified, Some("Egress Blocked: Target not whitelisted".to_string()), 0.0, None::<String>);
         return Err(StatusCode::FORBIDDEN);
     }
 
-    let body_bytes = axum::body::to_bytes(body, 10 * 1024 * 1024)
-        .await
-        .map_err(|_| StatusCode::PAYLOAD_TOO_LARGE)?;
-    let body_vec = body_bytes.to_vec();
+    // --- streaming body ingestion ---
+    // we check Content-Length to decide if we should stream intent classification
+    // in parallel with body buffering
+    let content_len: usize = headers
+        .get("content-length")
+        .and_then(|v| v.to_str().ok())
+        .and_then(|s| s.parse().ok())
+        .unwrap_or(0);
 
-    // ── semantic firewall ──────────────────────────────────────
+    let session_id = headers.get("X-Atrosha-Session-ID").and_then(|v| v.to_str().ok()).map(|s| s.to_string());
+
+    let (body_vec, streamed_intent_result) = if content_len > STREAMING_THRESHOLD && session_id.is_some() {
+        // large payload: stream first chunk to validator while buffering the rest
+        stream_body_with_intent(&state, body, &session_id.as_deref().unwrap_or(""), method.as_str(), target_url).await?
+    } else {
+        // small payload or no session: buffer normally
+        let body_bytes = axum::body::to_bytes(body, MAX_BODY_BYTES)
+            .await
+            .map_err(|_| StatusCode::PAYLOAD_TOO_LARGE)?;
+        (body_bytes.to_vec(), None)
+    };
+
+    // semantic firewall — always enforced
     match state.semantic.classify(method.as_str(), target_url, &headers, &body_vec).await {
         Ok(verdict) => {
-            if verdict.verdict == "DENY" && !shadow_mode {
+            if verdict.verdict == "DENY" {
                 tracing::warn!(agent_id = %agent_id, "semantic firewall DENIED request");
-                log_audit(&state, &org_id, agent_id, &req_id, amount, target_url, AuditDecision::Denied, start, shadow_mode, None::<String>, SignatureStatus::Missing, Some(format!("Semantic Firewall: DENY (conf={:.3})", verdict.confidence)), 0.0, None::<String>);
+                log_audit(&state, &org_id, agent_id, &req_id, amount, target_url, AuditDecision::Denied, start, false, None::<String>, SignatureStatus::Verified, Some(format!("Semantic Firewall: DENY (conf={:.3})", verdict.confidence)), 0.0, None::<String>);
                 circuit::CircuitBreaker::record_denial(&state, agent_id).await;
                 return Err(StatusCode::FORBIDDEN);
             }
@@ -169,38 +187,31 @@ pub async fn proxy_handler(
         Err(_) => tracing::warn!("semantic engine unavailable — fail-open"),
     }
 
-    // ── intent verification (IVE) ─────────────────────────────
-    let session_id = headers.get("X-Atrosha-Session-ID").and_then(|v| v.to_str().ok());
-    if let Some(sid) = session_id {
-        let validator_url = std::env::var("INTENT_VALIDATOR_URL").unwrap_or_else(|_| "http://127.0.0.1:8001".into());
-        let intent_url = format!("{}/intent/{}", validator_url, sid);
-        if let Ok(resp) = reqwest::get(&intent_url).await {
-            if resp.status().is_success() {
-                if let Ok(data) = resp.json::<serde_json::Value>().await {
-                    let locked_prompt = data["prompt"].as_str().unwrap_or("");
-                    let action_desc = format!("{} {} | body: {}", method, target_url, String::from_utf8_lossy(&body_vec).chars().take(200).collect::<String>());
-                    let threshold: f64 = std::env::var("INTENT_SIMILARITY_THRESHOLD").ok().and_then(|s| s.parse().ok()).unwrap_or(0.70);
-                    match state.semantic.verify_intent(locked_prompt, &action_desc, threshold).await {
-                        Ok(result) if result.verdict == "REJECT" && !shadow_mode => {
-                            tracing::warn!(agent_id = %agent_id, "INTENT DRIFT DETECTED — blocking");
-                            log_audit(&state, &org_id, agent_id, &req_id, amount, target_url, AuditDecision::Denied, start, shadow_mode, None::<String>, SignatureStatus::Verified, Some(format!("Intent Drift: sim={:.4} < threshold={:.2}", result.similarity, result.threshold)), result.similarity as f32, None::<String>);
-                            circuit::CircuitBreaker::record_denial(&state, agent_id).await;
-                            return Err(StatusCode::FORBIDDEN);
-                        }
-                        _ => {}
-                    }
-                }
-            }
+    // intent verification (IVE)
+    // if we already streamed the intent check, use that result; otherwise do it here
+    if let Some(sid) = &session_id {
+        let intent_blocked = if let Some(streamed) = streamed_intent_result {
+            // we already got a result from the streaming path
+            streamed
+        } else {
+            check_intent_sync(&state, sid, method.as_str(), target_url, &body_vec).await
+        };
+
+        if intent_blocked {
+            tracing::warn!(agent_id = %agent_id, "INTENT DRIFT DETECTED — blocking");
+            log_audit(&state, &org_id, agent_id, &req_id, amount, target_url, AuditDecision::Denied, start, false, None::<String>, SignatureStatus::Verified, Some("Intent Drift: streamed validation rejected".to_string()), 0.0, None::<String>);
+            circuit::CircuitBreaker::record_denial(&state, agent_id).await;
+            return Err(StatusCode::FORBIDDEN);
         }
     }
 
-    if amount > 10000.0 && !shadow_mode {
-        log_audit(&state, &org_id, agent_id, &req_id, amount, target_url, AuditDecision::Denied, start, shadow_mode, None::<String>, SignatureStatus::Missing, Some("Transaction > $10k requires Human-in-the-Loop MFA".to_string()), 0.0, None::<String>);
+    if amount > 10000.0 {
+        log_audit(&state, &org_id, agent_id, &req_id, amount, target_url, AuditDecision::Denied, start, false, None::<String>, SignatureStatus::Verified, Some("Transaction > $10k requires Human-in-the-Loop MFA".to_string()), 0.0, None::<String>);
         return Err(StatusCode::PAYMENT_REQUIRED);
     }
 
-    if amount > 5000.0 && headers.get("X-Atrosha-Supervisor-Signature").is_none() && !shadow_mode {
-        log_audit(&state, &org_id, agent_id, &req_id, amount, target_url, AuditDecision::Denied, start, shadow_mode, None::<String>, SignatureStatus::Missing, Some("Transaction > $5k requires Supervisor-Signature".to_string()), 0.0, None::<String>);
+    if amount > 5000.0 && headers.get("X-Atrosha-Supervisor-Signature").is_none() {
+        log_audit(&state, &org_id, agent_id, &req_id, amount, target_url, AuditDecision::Denied, start, false, None::<String>, SignatureStatus::Verified, Some("Transaction > $5k requires Supervisor-Signature".to_string()), 0.0, None::<String>);
         return Err(StatusCode::FORBIDDEN);
     }
 
@@ -208,11 +219,8 @@ pub async fn proxy_handler(
     let (permit, permit_id, sig_status) = match verify_permit_and_intent(&state, permit_token, method.as_str(), target_url, &body_vec) {
         Ok((p, sig)) => (Some(p.clone()), Some(p.permit_id), sig),
         Err((status, sig, reason)) => {
-            if !shadow_mode {
-                log_audit(&state, &org_id, agent_id, &req_id, amount, target_url, AuditDecision::Denied, start, shadow_mode, None::<String>, sig, Some(reason), 0.0, None::<String>);
-                return Err(status);
-            }
-            (None, None, sig)
+            log_audit(&state, &org_id, agent_id, &req_id, amount, target_url, AuditDecision::Denied, start, false, None::<String>, sig, Some(reason), 0.0, None::<String>);
+            return Err(status);
         }
     };
 
@@ -223,12 +231,9 @@ pub async fn proxy_handler(
             AuditDecision::Approved
         }
         Err(e) => {
-            if !shadow_mode {
-                log_audit(&state, &org_id, agent_id, &req_id, amount, target_url, AuditDecision::Denied, start, shadow_mode, permit_id.clone(), sig_status, Some(format!("{}", e)), sim, matched_policy_id);
-                circuit::CircuitBreaker::record_denial(&state, agent_id).await;
-                return Err(match e { crate::policy::PolicyError::LimitNotDefined => StatusCode::FORBIDDEN, _ => StatusCode::PAYMENT_REQUIRED });
-            }
-            AuditDecision::ShadowDenied
+            log_audit(&state, &org_id, agent_id, &req_id, amount, target_url, AuditDecision::Denied, start, false, permit_id.clone(), sig_status, Some(format!("{}", e)), sim, matched_policy_id);
+            circuit::CircuitBreaker::record_denial(&state, agent_id).await;
+            return Err(match e { crate::policy::PolicyError::LimitNotDefined => StatusCode::FORBIDDEN, _ => StatusCode::PAYMENT_REQUIRED });
         }
     };
 
@@ -249,10 +254,169 @@ pub async fn proxy_handler(
         Err(_) => (StatusCode::GATEWAY_TIMEOUT, b"Gateway Timeout".to_vec(), HeaderMap::new()),
     };
 
-    log_audit(&state, &org_id, agent_id, &req_id, amount, target_url, decision, start, shadow_mode, permit_id, sig_status, None, sim, matched_policy_id);
+    log_audit(&state, &org_id, agent_id, &req_id, amount, target_url, decision, start, false, permit_id, sig_status, None, sim, matched_policy_id);
     let mut builder = Response::builder().status(status);
     for (k, v) in header_map.iter() { builder = builder.header(k, v); }
     builder.body(Body::from(resp_bytes)).map_err(|_| StatusCode::INTERNAL_SERVER_ERROR)
+}
+
+/// stream body ingestion: reads the first INTENT_PREVIEW_BYTES, fires off intent validation
+/// concurrently, then continues buffering the remaining body.
+/// returns (full_body, Option<bool>) where the bool = true means intent was REJECTED
+async fn stream_body_with_intent(
+    state: &AppState,
+    body: Body,
+    session_id: &str,
+    method: &str,
+    target_url: &str,
+) -> Result<(Vec<u8>, Option<bool>), StatusCode> {
+    use http_body_util::BodyExt;
+
+    let mut collected = Vec::with_capacity(STREAMING_THRESHOLD);
+    let mut body = body;
+    let mut preview_sent = false;
+    let mut intent_handle: Option<tokio::task::JoinHandle<bool>> = None;
+
+    // collect body frame-by-frame
+    loop {
+        match body.frame().await {
+            Some(Ok(frame)) => {
+                if let Ok(data) = frame.into_data() {
+                    collected.extend_from_slice(&data);
+
+                    if collected.len() > MAX_BODY_BYTES {
+                        return Err(StatusCode::PAYLOAD_TOO_LARGE);
+                    }
+
+                    // once we have enough for a preview, fire off intent validation
+                    if !preview_sent && collected.len() >= INTENT_PREVIEW_BYTES {
+                        preview_sent = true;
+                        let preview = collected[..INTENT_PREVIEW_BYTES.min(collected.len())].to_vec();
+                        let sem = state.semantic.clone();
+                        let sid = session_id.to_string();
+                        let m = method.to_string();
+                        let t = target_url.to_string();
+
+                        intent_handle = Some(tokio::spawn(async move {
+                            stream_intent_check(&sem, &sid, &m, &t, &preview).await
+                        }));
+                    }
+                }
+            }
+            Some(Err(_)) => return Err(StatusCode::BAD_REQUEST),
+            None => break,
+        }
+    }
+
+    // if body was too small for streaming, send intent check now
+    if !preview_sent && !session_id.is_empty() {
+        let preview = collected.clone();
+        let sem = state.semantic.clone();
+        let sid = session_id.to_string();
+        let m = method.to_string();
+        let t = target_url.to_string();
+
+        intent_handle = Some(tokio::spawn(async move {
+            stream_intent_check(&sem, &sid, &m, &t, &preview).await
+        }));
+    }
+
+    // wait for intent validation result
+    let intent_rejected = match intent_handle {
+        Some(handle) => handle.await.unwrap_or(false),
+        None => false,
+    };
+
+    Ok((collected, Some(intent_rejected)))
+}
+
+/// fire the intent verification call using a body preview
+async fn stream_intent_check(
+    semantic: &Arc<crate::semantic::SemanticClient>,
+    session_id: &str,
+    method: &str,
+    target_url: &str,
+    body_preview: &[u8],
+) -> bool {
+    let validator_url = std::env::var("INTENT_VALIDATOR_URL").unwrap_or_else(|_| "http://127.0.0.1:8001".into());
+    let intent_url = format!("{}/intent/{}", validator_url, session_id);
+
+    let resp = match reqwest::get(&intent_url).await {
+        Ok(r) if r.status().is_success() => r,
+        _ => return false, // fail open
+    };
+
+    let data: serde_json::Value = match resp.json().await {
+        Ok(d) => d,
+        Err(_) => return false,
+    };
+
+    let locked_prompt = data["prompt"].as_str().unwrap_or("");
+    if locked_prompt.is_empty() { return false; }
+
+    let action_desc = format!(
+        "{} {} | body: {}",
+        method, target_url,
+        String::from_utf8_lossy(body_preview).chars().take(200).collect::<String>()
+    );
+
+    let threshold: f64 = std::env::var("INTENT_SIMILARITY_THRESHOLD")
+        .ok()
+        .and_then(|s| s.parse().ok())
+        .unwrap_or(0.70);
+
+    match semantic.verify_intent(locked_prompt, &action_desc, threshold).await {
+        Ok(result) if result.verdict == "REJECT" => {
+            tracing::warn!(
+                similarity = %result.similarity,
+                threshold = %result.threshold,
+                "streamed intent check: REJECT"
+            );
+            true
+        }
+        _ => false,
+    }
+}
+
+/// synchronous intent check for small payloads (original behavior)
+async fn check_intent_sync(
+    state: &AppState,
+    session_id: &str,
+    method: &str,
+    target_url: &str,
+    body: &[u8],
+) -> bool {
+    let validator_url = std::env::var("INTENT_VALIDATOR_URL").unwrap_or_else(|_| "http://127.0.0.1:8001".into());
+    let intent_url = format!("{}/intent/{}", validator_url, session_id);
+
+    let resp = match reqwest::get(&intent_url).await {
+        Ok(r) if r.status().is_success() => r,
+        _ => return false,
+    };
+
+    let data: serde_json::Value = match resp.json().await {
+        Ok(d) => d,
+        Err(_) => return false,
+    };
+
+    let locked_prompt = data["prompt"].as_str().unwrap_or("");
+    if locked_prompt.is_empty() { return false; }
+
+    let action_desc = format!(
+        "{} {} | body: {}",
+        method, target_url,
+        String::from_utf8_lossy(body).chars().take(200).collect::<String>()
+    );
+
+    let threshold: f64 = std::env::var("INTENT_SIMILARITY_THRESHOLD")
+        .ok()
+        .and_then(|s| s.parse().ok())
+        .unwrap_or(0.70);
+
+    match state.semantic.verify_intent(locked_prompt, &action_desc, threshold).await {
+        Ok(result) if result.verdict == "REJECT" => true,
+        _ => false,
+    }
 }
 
 fn verify_permit_and_intent(

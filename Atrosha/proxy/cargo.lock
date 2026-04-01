@@ -109,6 +109,7 @@ dependencies = [
  "ed25519-dalek",
  "ethers",
  "hex",
+ "http-body-util",
  "jsonwebtoken 9.3.1",
  "once_cell",
  "prometheus",

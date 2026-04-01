@@ -1,4 +1,4 @@
-use redis::{AsyncCommands, Client, Script};
+use redis::{Client, Script};
 use thiserror::Error;
 
 #[derive(Error, Debug)]

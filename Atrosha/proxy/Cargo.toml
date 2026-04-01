@@ -30,4 +30,5 @@ prometheus = "0.13"
 ethers = { version = "2.0", features = ["rustls", "ws"] }
 regex = "1"
 url = "2.5"
+http-body-util = "0.1"
 

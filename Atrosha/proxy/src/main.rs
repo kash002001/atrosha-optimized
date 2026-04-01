@@ -44,12 +44,20 @@ async fn main() -> anyhow::Result<()> {
         .with(tracing_subscriber::fmt::layer())
         .init();
 
-    tracing::info!("Atrosha Proxy v2.2 (MODULAR) starting...");
+    tracing::info!("Atrosha Proxy v3.0 (PRODUCTION) starting...");
     dotenvy::dotenv().ok();
 
+    // mandatory config — panic if missing
     let redis_url = std::env::var("REDIS_URL").unwrap_or_else(|_| "redis://127.0.0.1:6379/".into());
+    let permit_secret = std::env::var("PERMIT_SECRET")
+        .expect("PERMIT_SECRET must be set — run `openssl rand -hex 32` to generate");
+    let _admin_secret = std::env::var("ADMIN_SECRET")
+        .expect("ADMIN_SECRET must be set — run `openssl rand -hex 32` to generate");
+
+    // clickhouse audit config
     let clickhouse_url = std::env::var("CLICKHOUSE_URL").unwrap_or_else(|_| "http://127.0.0.1:8123/".into());
-    let permit_secret = std::env::var("PERMIT_SECRET").unwrap_or_else(|_| "super-secret-key-change-me".into());
+    let clickhouse_user = std::env::var("CLICKHOUSE_USER").ok();
+    let clickhouse_password = std::env::var("CLICKHOUSE_PASSWORD").ok();
 
     let redis_client = match Client::open(redis_url.clone()) {
         Ok(client) => {
@@ -60,15 +68,15 @@ async fn main() -> anyhow::Result<()> {
             client
         }
         Err(e) => {
-            tracing::warn!(error = %e, "failed to create redis client - using dummy");
-            Client::open("redis://127.0.0.1:6379/").expect("dummy redis client")
+            tracing::error!(error = %e, "failed to create redis client — cannot start");
+            return Err(anyhow::anyhow!("redis connection required"));
         }
     };
 
     let policy_engine = Arc::new(PolicyEngine::new(redis_client.clone()));
     let registry = Arc::new(AgentRegistry::new(redis_client.clone()));
     let permit_validator = Arc::new(PermitValidator::new(permit_secret.as_bytes()));
-    let audit = spawn_audit_system(clickhouse_url);
+    let audit = spawn_audit_system(clickhouse_url, clickhouse_user, clickhouse_password);
 
     let base_http_client = reqwest::Client::builder()
         .use_rustls_tls()
@@ -97,6 +105,9 @@ async fn main() -> anyhow::Result<()> {
         semantic: Arc::new(SemanticClient::new(&semantic_url)),
         egress_whitelist: Arc::new(EgressWhitelist::new(redis_client.clone())),
     };
+
+    // warm the egress whitelist cache and start background refresh
+    state.egress_whitelist.spawn_refresh();
 
     let proxy_routes = Router::new()
         .route("/*path", any(proxy_handler))
