@@ -10,7 +10,7 @@ RUN apt-get update && apt-get install -y \
     && rm -rf /var/lib/apt/lists/*
 
 # Cache dependencies
-COPY Cargo.toml Cargo.lock* ./
+COPY Cargo.toml [Cc]argo.lock* ./
 # Create dummy src to build dependencies
 RUN mkdir src && echo "fn main() {println!(\"dummy\")}" > src/main.rs
 RUN cargo build --release

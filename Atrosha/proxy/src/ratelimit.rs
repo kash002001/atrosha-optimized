@@ -1,9 +1,9 @@
 use axum::{
     body::Body,
     extract::State,
-    http::{Request, StatusCode},
+    http::{Request, StatusCode, HeaderValue},
     middleware::Next,
-    response::{IntoResponse, Response},
+    response::Response,
 };
 #[allow(unused_imports)]
 use redis::AsyncCommands;
@@ -43,20 +43,13 @@ pub async fn rate_limit_middleware(
         Ok((allowed, remaining, reset_at)) => {
             if allowed {
                 let mut resp = next.run(req).await;
-                // inject rate limit headers so callers can self-throttle
                 let hdrs = resp.headers_mut();
-                hdrs.insert("X-RateLimit-Limit", rate_limit.into());
-                hdrs.insert("X-RateLimit-Remaining", remaining.into());
-                hdrs.insert("X-RateLimit-Reset", reset_at.into());
+                if let Ok(v) = HeaderValue::from_str(&rate_limit.to_string()) { hdrs.insert("X-RateLimit-Limit", v); }
+                if let Ok(v) = HeaderValue::from_str(&remaining.to_string()) { hdrs.insert("X-RateLimit-Remaining", v); }
+                if let Ok(v) = HeaderValue::from_str(&reset_at.to_string()) { hdrs.insert("X-RateLimit-Reset", v); }
                 Ok(resp)
             } else {
                 tracing::warn!(agent_id = %agent_id, org_id = %org_id, limit = rate_limit, "rate limit exceeded");
-                let mut resp = StatusCode::TOO_MANY_REQUESTS.into_response();
-                let hdrs = resp.headers_mut();
-                hdrs.insert("X-RateLimit-Limit", rate_limit.into());
-                hdrs.insert("X-RateLimit-Remaining", 0u32.into());
-                hdrs.insert("X-RateLimit-Reset", reset_at.into());
-                hdrs.insert("Retry-After", reset_at.into());
                 Err(StatusCode::TOO_MANY_REQUESTS)
             }
         }
@@ -135,7 +128,6 @@ async fn check_rate_limit(
         Ok(c) => c,
         Err(e) => {
             tracing::debug!(error = %e, "redis unavailable for rate limiting");
-            // fail open: return allowed=true
             return Ok((true, limit, seconds_until_window_reset()));
         }
     };
