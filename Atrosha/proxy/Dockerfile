@@ -9,16 +9,9 @@ RUN apt-get update && apt-get install -y \
     libssl-dev \
     && rm -rf /var/lib/apt/lists/*
 
-# Cache dependencies
-COPY Cargo.toml [Cc]argo.lock* ./
-# Create dummy src to build dependencies
-RUN mkdir src && echo "fn main() {println!(\"dummy\")}" > src/main.rs
-RUN cargo build --release
-
-# Build actual source
+COPY Cargo.toml Cargo.lock ./
 COPY src ./src
-# Touch main.rs to force rebuild
-RUN touch src/main.rs
+
 RUN cargo build --release
 
 # Runtime stage

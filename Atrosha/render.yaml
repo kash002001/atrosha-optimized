@@ -21,6 +21,8 @@ services:
         value: atrosha_proxy=info
       - key: PERMIT_SECRET
         generateValue: true
+      - key: ADMIN_SECRET
+        generateValue: true
 
   # 2. Semantic Engine sidecar (Private)
   - type: worker
