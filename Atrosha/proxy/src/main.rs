@@ -14,6 +14,7 @@ mod validation;
 mod state;
 mod handlers;
 mod whitelist;
+mod zkp;
 
 use std::net::SocketAddr;
 use std::sync::Arc;
