@@ -1,0 +1,12 @@
+ Atrosha/dashboard/src/app/api/agent-stats/route.ts |  85 +++
+ Atrosha/dashboard/src/app/api/payroll/route.ts     | 110 ++++
+ .../src/app/components/DashboardAgentStats.tsx     | 188 +++++--
+ .../dashboard/src/app/payroll/PayrollClient.tsx    | 579 +++++++++++++++------
+ Atrosha/proxy/Cargo.toml                           |   1 +
+ Atrosha/proxy/cargo.lock                           |   1 +
+ Atrosha/proxy/src/handlers.rs                      | 276 ++++++++--
+ Atrosha/proxy/src/main.rs                          |  21 +-
+ Atrosha/proxy/src/policy.rs                        |   2 +-
+ Atrosha/proxy/src/ratelimit.rs                     | 140 +++--
+ Atrosha/proxy/src/whitelist.rs                     | 122 ++++-
+ 11 files changed, 1217 insertions(+), 308 deletions(-)

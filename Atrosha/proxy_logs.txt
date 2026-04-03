@@ -1,0 +1,5 @@
+[2m2026-03-27T10:49:20.964868Z[0m [32m INFO[0m [2matrosha_proxy[0m[2m:[0m Atrosha Proxy v2.2 (MODULAR) starting...
+[2m2026-03-27T10:49:20.981901Z[0m [32m INFO[0m [2matrosha_proxy[0m[2m:[0m redis connection verified
+[2m2026-03-27T10:49:21.000182Z[0m [33m WARN[0m [2matrosha_proxy::adapters[0m[2m:[0m EVM provider unreachable (error sending request for url (http://127.0.0.1:8545/): error trying to connect: tcp connect error: Connection refused (os error 111)), defaulting chain_id to 31337
+[2m2026-03-27T10:49:21.002112Z[0m [32m INFO[0m [2matrosha_proxy[0m[2m:[0m listening [3maddr[0m[2m=[0m0.0.0.0:10000
+[2m2026-03-27T13:11:52.155382Z[0m [33m WARN[0m [2matrosha_proxy::middleware[0m[2m:[0m missing sig header [3magent_id[0m[2m=[0msovereign-agent-v1 [3msig_status[0m[2m=[0mMissing

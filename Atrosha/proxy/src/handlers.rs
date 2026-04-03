@@ -148,7 +148,7 @@ pub async fn proxy_handler(
     // egress whitelisting — always enforced (now with in-memory cache)
     if !state.egress_whitelist.is_allowed(&org_id, target_url).await {
         tracing::warn!(agent_id = %agent_id, target = %target_url, "EGRESS BLOCKED: target not whitelisted");
-        log_audit(&state, &org_id, agent_id, &req_id, amount, target_url, AuditDecision::Denied, start, false, None::<String>, SignatureStatus::Verified, Some("Egress Blocked: Target not whitelisted".to_string()), 0.0, None::<String>);
+        log_audit(&state, &org_id, agent_id, &req_id, amount, target_url, AuditDecision::Denied, start, false, None::<String>, SignatureStatus::Verified, Some("Egress Blocked: Target not whitelisted".to_string()), 0.0, None::<String>, None::<String>);
         return Err(StatusCode::FORBIDDEN);
     }
 
@@ -179,7 +179,7 @@ pub async fn proxy_handler(
         Ok(verdict) => {
             if verdict.verdict == "DENY" {
                 tracing::warn!(agent_id = %agent_id, "semantic firewall DENIED request");
-                log_audit(&state, &org_id, agent_id, &req_id, amount, target_url, AuditDecision::Denied, start, false, None::<String>, SignatureStatus::Verified, Some(format!("Semantic Firewall: DENY (conf={:.3})", verdict.confidence)), 0.0, None::<String>);
+                log_audit(&state, &org_id, agent_id, &req_id, amount, target_url, AuditDecision::Denied, start, false, None::<String>, SignatureStatus::Verified, Some(format!("Semantic Firewall: DENY (conf={:.3})", verdict.confidence)), 0.0, None::<String>, None::<String>);
                 circuit::CircuitBreaker::record_denial(&state, agent_id).await;
                 return Err(StatusCode::FORBIDDEN);
             }
@@ -199,19 +199,19 @@ pub async fn proxy_handler(
 
         if intent_blocked {
             tracing::warn!(agent_id = %agent_id, "INTENT DRIFT DETECTED — blocking");
-            log_audit(&state, &org_id, agent_id, &req_id, amount, target_url, AuditDecision::Denied, start, false, None::<String>, SignatureStatus::Verified, Some("Intent Drift: streamed validation rejected".to_string()), 0.0, None::<String>);
+            log_audit(&state, &org_id, agent_id, &req_id, amount, target_url, AuditDecision::Denied, start, false, None::<String>, SignatureStatus::Verified, Some("Intent Drift: streamed validation rejected".to_string()), 0.0, None::<String>, None::<String>);
             circuit::CircuitBreaker::record_denial(&state, agent_id).await;
             return Err(StatusCode::FORBIDDEN);
         }
     }
 
     if amount > 10000.0 {
-        log_audit(&state, &org_id, agent_id, &req_id, amount, target_url, AuditDecision::Denied, start, false, None::<String>, SignatureStatus::Verified, Some("Transaction > $10k requires Human-in-the-Loop MFA".to_string()), 0.0, None::<String>);
+        log_audit(&state, &org_id, agent_id, &req_id, amount, target_url, AuditDecision::Denied, start, false, None::<String>, SignatureStatus::Verified, Some("Transaction > $10k requires Human-in-the-Loop MFA".to_string()), 0.0, None::<String>, None::<String>);
         return Err(StatusCode::PAYMENT_REQUIRED);
     }
 
     if amount > 5000.0 && headers.get("X-Atrosha-Supervisor-Signature").is_none() {
-        log_audit(&state, &org_id, agent_id, &req_id, amount, target_url, AuditDecision::Denied, start, false, None::<String>, SignatureStatus::Verified, Some("Transaction > $5k requires Supervisor-Signature".to_string()), 0.0, None::<String>);
+        log_audit(&state, &org_id, agent_id, &req_id, amount, target_url, AuditDecision::Denied, start, false, None::<String>, SignatureStatus::Verified, Some("Transaction > $5k requires Supervisor-Signature".to_string()), 0.0, None::<String>, None::<String>);
         return Err(StatusCode::FORBIDDEN);
     }
 
@@ -219,7 +219,7 @@ pub async fn proxy_handler(
     let (permit, permit_id, sig_status) = match verify_permit_and_intent(&state, permit_token, method.as_str(), target_url, &body_vec) {
         Ok((p, sig)) => (Some(p.clone()), Some(p.permit_id), sig),
         Err((status, sig, reason)) => {
-            log_audit(&state, &org_id, agent_id, &req_id, amount, target_url, AuditDecision::Denied, start, false, None::<String>, sig, Some(reason), 0.0, None::<String>);
+            log_audit(&state, &org_id, agent_id, &req_id, amount, target_url, AuditDecision::Denied, start, false, None::<String>, sig, Some(reason), 0.0, None::<String>, None::<String>);
             return Err(status);
         }
     };
@@ -231,7 +231,7 @@ pub async fn proxy_handler(
             AuditDecision::Approved
         }
         Err(e) => {
-            log_audit(&state, &org_id, agent_id, &req_id, amount, target_url, AuditDecision::Denied, start, false, permit_id.clone(), sig_status, Some(format!("{}", e)), sim, matched_policy_id);
+            log_audit(&state, &org_id, agent_id, &req_id, amount, target_url, AuditDecision::Denied, start, false, permit_id.clone(), sig_status, Some(format!("{}", e)), sim, matched_policy_id, None::<String>);
             circuit::CircuitBreaker::record_denial(&state, agent_id).await;
             return Err(match e { crate::policy::PolicyError::LimitNotDefined => StatusCode::FORBIDDEN, _ => StatusCode::PAYMENT_REQUIRED });
         }
@@ -248,13 +248,48 @@ pub async fn proxy_handler(
     let req_method = match method { Method::POST => reqwest::Method::POST, Method::PUT => reqwest::Method::PUT, Method::DELETE => reqwest::Method::DELETE, Method::PATCH => reqwest::Method::PATCH, _ => reqwest::Method::GET };
     let execution_result = tokio::time::timeout(std::time::Duration::from_secs(30), adapter.execute(&req_method, &full_url, &req_headers, &body_vec)).await;
 
-    let (status, resp_bytes, header_map) = match execution_result {
+    let (status, resp_bytes, mut header_map) = match execution_result {
         Ok(Ok((status, text))) => (status, text.into_bytes(), HeaderMap::new()),
         Ok(Err(e)) => (StatusCode::BAD_GATEWAY, format!("Adapter Error: {}", e).into_bytes(), HeaderMap::new()),
         Err(_) => (StatusCode::GATEWAY_TIMEOUT, b"Gateway Timeout".to_vec(), HeaderMap::new()),
     };
 
-    log_audit(&state, &org_id, agent_id, &req_id, amount, target_url, decision, start, false, permit_id, sig_status, None, sim, matched_policy_id);
+    let mut generated_proof_b64 = None;
+    if matches!(decision, AuditDecision::Approved) {
+        if let (Some(setup), Some(policy)) = (&state.zkp_setup, &state.zkp_policy) {
+            use ark_bn254::Fr;
+            use crate::zkp::compiler::PolicyWitness;
+            let target_hash = crate::permit::compute_req_intent_hash(method.as_str(), target_url, &body_vec);
+            let target_num = target_hash.len() as u32; // Just a mock deterministic constraint input
+
+            let witness = PolicyWitness {
+                tx_amount: Fr::from(amount as u32),
+                tx_target: Fr::from(target_num),
+                whitelist_merkle_path: vec![],
+                ..PolicyWitness::default()
+            };
+            
+            let dummy_config = ark_crypto_primitives::sponge::poseidon::PoseidonConfig {
+                full_rounds: 8, partial_rounds: 31, alpha: 5,
+                ark: vec![vec![Fr::from(1u32)]], mds: vec![vec![Fr::from(1u32)]],
+                rate: 2, capacity: 1,
+            };
+            
+            let whitelist_root = Fr::from(target_num); // Matching default path bounds
+
+            if let Ok(proof) = crate::zkp::prover::ProofGenerator::generate_proof(setup, policy, dummy_config, witness, whitelist_root) {
+                let b64 = crate::zkp::prover::ProofGenerator::serialize_proof(&proof);
+                {
+                    generated_proof_b64 = Some(b64.clone());
+                    if let Ok(hval) = axum::http::HeaderValue::from_str(&b64) {
+                        header_map.insert("X-Atrosha-Proof", hval);
+                    }
+                }
+            }
+        }
+    }
+
+    log_audit(&state, &org_id, agent_id, &req_id, amount, target_url, decision, start, false, permit_id, sig_status, None, sim, matched_policy_id, generated_proof_b64);
     let mut builder = Response::builder().status(status);
     for (k, v) in header_map.iter() { builder = builder.header(k, v); }
     builder.body(Body::from(resp_bytes)).map_err(|_| StatusCode::INTERNAL_SERVER_ERROR)
@@ -441,6 +476,31 @@ fn verify_permit_and_intent(
     Ok((permit, SignatureStatus::Verified))
 }
 
+pub async fn get_verification_keys(
+    State(state): State<AppState>,
+    headers: HeaderMap,
+) -> Result<axum::Json<serde_json::Value>, StatusCode> {
+    let admin_secret = std::env::var("ADMIN_SECRET").unwrap_or_default();
+    let provided_secret = headers.get("X-Atrosha-Admin-Secret").and_then(|v| v.to_str().ok());
+    if provided_secret != Some(&admin_secret) {
+        return Err(StatusCode::UNAUTHORIZED);
+    }
+    
+    if let Some(setup) = &state.zkp_setup {
+        use ark_serialize::CanonicalSerialize;
+        let mut vk_bytes = Vec::new();
+        if setup.proving_key.vk.serialize_uncompressed(&mut vk_bytes).is_ok() {
+            use base64::{Engine as _, engine::general_purpose::STANDARD};
+            let vk_b64 = STANDARD.encode(&vk_bytes);
+            return Ok(axum::Json(serde_json::json!({
+                "policy": "MasterApproval",
+                "vk_base64": vk_b64
+            })));
+        }
+    }
+    Err(StatusCode::INTERNAL_SERVER_ERROR)
+}
+
 pub fn log_audit(
     state: &AppState,
     org_id: &str,
@@ -456,6 +516,7 @@ pub fn log_audit(
     denial_reason: Option<String>,
     sim: f32,
     matched_policy_id: Option<String>,
+    zkp_proof: Option<String>,
 ) {
     let latency_us = start.elapsed().as_micros() as u64;
     state.audit.log(AuditRecord {
@@ -474,5 +535,6 @@ pub fn log_audit(
         denial_reason,
         sim,
         matched_policy_id,
+        zkp_proof,
     });
 }

@@ -48,14 +48,6 @@ impl AgentRegistry {
                 tracing::warn!("redis connection failed: {}", e);
             }
         }
-        
-        // Fallback for local demo (agent-007)
-        if agent_id == "agent-007" {
-             tracing::info!("using fallback key for agent-007");
-             return Ok(hex::decode("b2af326cf56ef5fa669c4ac36d5292c368383be57715511828bd3b061399d446").unwrap());
-        } else {
-             tracing::warn!(agent_id = %agent_id, "fallback did not match agent-007");
-        }
 
         Err(RegistryError::AgentNotFound(agent_id.to_string()))
     }
@@ -76,16 +68,8 @@ impl AgentRegistry {
             }
         }
 
-        // Fallback for demo
-        if agent_id == "agent-007" {
-            return Ok("agent".to_string());
-        }
-        
-        // If Redis failed and not demo agent, technically we might default to "agent" or fail.
-        // Let's default to "agent" to be permissive in degraded mode?
-        // Or fail safe?
-        // Given this is a demo/dev environment, defaulting to "agent" is helpful.
-        Ok("agent".to_string())
+        // fail-safe: deny if redis is down and role can't be resolved
+        Err(RegistryError::AgentNotFound(agent_id.to_string()))
     }
 
     pub async fn register_agent(&self, org_id: &str, agent_id: &str, pub_hex: &str, role: Option<&str>) -> Result<(), RegistryError> {

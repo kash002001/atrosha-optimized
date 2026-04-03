@@ -167,11 +167,15 @@ impl fmt::Display for ParseError {
 }
 
 #[derive(Clone)]
-struct Lexer<'a> {
+pub struct Lexer<'a> {
     input: &'a str,
     pos: usize,
     line: usize,
     col: usize,
+}
+
+pub fn parse(input: &str) -> Result<Policy, ParseError> {
+    Parser::new(input)?.parse_policy()
 }
 
 #[derive(Debug, Clone, PartialEq)]

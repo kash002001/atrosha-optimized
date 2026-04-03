@@ -1,0 +1,28 @@
+
+==================================================
+  SOVEREIGN AGENT - Processing Invoice
+==================================================
+
+[1/4] Zero-Knowledge Ingestion...
+     extracted 1042 chars of text
+
+[2/4] Deterministic Invoice Parsing...
+     vendor  = Meridian Logistics LLC
+     amount  = $24500.00
+     due     = April 10, 2026
+     inv#    = BILL
+     conf    = high (regex)
+
+[3/4] Human Review Required
+     auto-confirm enabled, proceeding...
+
+[4/4] Executing via Atrosha Kernel...
+
+     [X] Result: failed
+     reason: {
+  "error": {
+    "message": "Invalid request (check that your POST content type is application/x-www-form-urlencoded). If you have any questions, we can help at https://support.stripe.com/.",
+    "t
+
+==================================================
+

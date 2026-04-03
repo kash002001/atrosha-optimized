@@ -20,4 +20,6 @@ pub struct AppState {
     pub ach_adapter: Arc<AchAdapter>,
     pub semantic: Arc<SemanticClient>,
     pub egress_whitelist: Arc<EgressWhitelist>,
+    pub zkp_setup: Option<Arc<crate::zkp::prover::Groth16Setup>>,
+    pub zkp_policy: Option<Arc<crate::zkp::policy_lang::Policy>>,
 }

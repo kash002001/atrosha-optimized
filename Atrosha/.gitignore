@@ -4,3 +4,16 @@ semantic_engine/data/*.jsonl
 semantic_engine/tokenizer/_tok_train_tmp.txt
 semantic_engine/training/checkpoints/
 # semantic_engine/export/*.onnx
+
+# secrets — NEVER commit
+.env
+*.env
+!.env.example
+
+# build artifacts
+proxy/target/
+sovereign_agent/__pycache__/
+sovereign_agent/*.db
+
+# temp files
+_secrets.txt

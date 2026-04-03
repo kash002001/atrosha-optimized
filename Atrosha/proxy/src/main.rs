@@ -35,6 +35,8 @@ use crate::semantic::SemanticClient;
 use crate::state::AppState;
 use crate::whitelist::EgressWhitelist;
 use crate::handlers::{health_check, register_agent, rotate_key_handler, proxy_handler};
+use ark_crypto_primitives::sponge::poseidon::PoseidonConfig;
+use ark_bn254::Fr;
 
 #[tokio::main]
 async fn main() -> anyhow::Result<()> {
@@ -88,6 +90,25 @@ async fn main() -> anyhow::Result<()> {
     let semantic_url = std::env::var("SEMANTIC_ENGINE_URL")
         .unwrap_or_else(|_| "http://127.0.0.1:8002".into());
 
+    // Initialize ZKP Global Proving Context
+    tracing::info!("Initializing Atrosha Zero-Knowledge Prove Setup...");
+    let zkp_policy_tree = crate::zkp::policy_lang::parse(r#"
+        policy MasterApproval {
+            require tx.amount <= 9999999
+        }
+    "#).unwrap();
+    let poseidon_config = PoseidonConfig {
+        full_rounds: 8,
+        partial_rounds: 31,
+        alpha: 5,
+        ark: vec![vec![Fr::from(1u32)]],
+        mds: vec![vec![Fr::from(1u32)]],
+        rate: 2,
+        capacity: 1,
+    };
+    let global_zkp_setup = Arc::new(crate::zkp::prover::ProofGenerator::trusted_setup(&zkp_policy_tree, poseidon_config));
+    let zkp_policy = Arc::new(zkp_policy_tree);
+
     let state = AppState {
         policy_engine,
         registry,
@@ -105,6 +126,8 @@ async fn main() -> anyhow::Result<()> {
         ach_adapter: Arc::new(AchAdapter::new()),
         semantic: Arc::new(SemanticClient::new(&semantic_url)),
         egress_whitelist: Arc::new(EgressWhitelist::new(redis_client.clone())),
+        zkp_setup: Some(global_zkp_setup),
+        zkp_policy: Some(zkp_policy),
     };
 
     // warm the egress whitelist cache and start background refresh
@@ -120,8 +143,10 @@ async fn main() -> anyhow::Result<()> {
     let app = Router::new()
         .route("/health", get(health_check))
         .route("/admin/agents", post(register_agent))
+        .route("/admin/verification-keys", get(crate::handlers::get_verification_keys))
         .route("/rotate-key", post(rotate_key_handler).layer(axum_middleware::from_fn_with_state(state.clone(), verify_sig)))
         .nest("/proxy", proxy_routes)
+        .route("/verify-proof", post(crate::zkp::verifier::verify_proof_endpoint))
         .with_state(state)
         .route("/metrics", metrics::metrics_route());
 

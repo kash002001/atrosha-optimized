@@ -1,0 +1,36 @@
+warning: unused variable: `diff`
+   --> src\zkp\compiler.rs:253:9
+    |
+253 | ...et diff = b - a;
+    |       ^^^^ help: if this is intentional, prefix it with an underscore: `_diff`
+    |
+    = note: `#[warn(unused_variables)]` (part of `#[warn(unused)]`) on by default
+
+warning: unused variable: `config`
+   --> src\zkp\compiler.rs:294:5
+    |
+294 |     config: &Pose...
+    |     ^^^^^^ help: if this is intentional, prefix it with an underscore: `_config`
+
+warning: `atrosha-proxy` (bin "atrosha-proxy" test) generated 2 warnings (run `cargo fix --bin "atrosha-proxy" -p atrosha-proxy --tests` to apply 2 suggestions)
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 1.36s
+warning: the following packages contain code that will be rejected by a future version of Rust: redis v0.24.0
+note: to see what the problems were, use the option `--future-incompat-report`, or run `cargo report future-incompatibilities --id 1`
+     Running unittests src\main.rs (target\debug\deps\atrosha_proxy-bf271413e45ba2cf.exe)
+
+running 1 test
+Constraint trace requires enabling `ConstraintLayer`
+
+thread 'zkp::prover::tests::test_proof_generation_and_serialization' (12048) panicked at C:\Users\kashy\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\ark-groth16-0.4.0\src\prover.rs:197:9:
+assertion failed: cs.is_satisfied().unwrap()
+note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace
+test zkp::prover::tests::test_proof_generation_and_serialization ... FAILED
+
+failures:
+
+failures:
+    zkp::prover::tests::test_proof_generation_and_serialization
+
+test result: FAILED. 0 passed; 1 failed; 0 ignored; 0 measured; 35 filtered out; finished in 0.09s
+
+error: test failed, to rerun pass `--bin atrosha-proxy`

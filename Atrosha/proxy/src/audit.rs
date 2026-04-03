@@ -31,6 +31,7 @@ pub struct AuditRecord {
     pub denial_reason: Option<String>,
     pub sim: f32,
     pub matched_policy_id: Option<String>,
+    pub zkp_proof: Option<String>,
 }
 
 #[derive(Debug, Clone, Serialize)]
@@ -62,6 +63,7 @@ impl AuditLogger {
 
 pub struct AuditWorker {
     rx: mpsc::Receiver<AuditRecord>,
+    client: reqwest::Client,
     clickhouse_url: String,
     batch_size: usize,
     flush_interval_ms: u64,
@@ -71,11 +73,28 @@ impl AuditWorker {
     pub fn new(
         rx: mpsc::Receiver<AuditRecord>,
         clickhouse_url: String,
+        clickhouse_user: Option<String>,
+        clickhouse_password: Option<String>,
         batch_size: usize,
         flush_interval_ms: u64,
     ) -> Self {
+        let mut headers = reqwest::header::HeaderMap::new();
+        if let Some(user) = &clickhouse_user {
+            headers.insert("X-ClickHouse-User", user.parse().expect("invalid clickhouse user header"));
+        }
+        if let Some(pass) = &clickhouse_password {
+            headers.insert("X-ClickHouse-Key", pass.parse().expect("invalid clickhouse key header"));
+        }
+
+        let client = reqwest::Client::builder()
+            .default_headers(headers)
+            .timeout(std::time::Duration::from_secs(10))
+            .build()
+            .expect("failed to build clickhouse http client");
+
         Self {
             rx,
+            client,
             clickhouse_url,
             batch_size,
             flush_interval_ms,
@@ -110,14 +129,12 @@ impl AuditWorker {
         }
 
         if let Err(e) = self.insert_records(batch).await {
-            tracing::error!(error = %e, "failed to flush audit batch");
+            tracing::error!(error = %e, count = batch.len(), "failed to flush audit batch");
         }
         batch.clear();
     }
 
     async fn ensure_schema(&self) -> Result<(), AuditError> {
-        let client = reqwest::Client::new();
-        // create transaction_logs if it doesn't exist; idempotent
         let ddl = r#"CREATE TABLE IF NOT EXISTS transaction_logs (
             ts DateTime64(3) DEFAULT now64(3),
             org_id LowCardinality(String) DEFAULT '',
@@ -135,19 +152,30 @@ impl AuditWorker {
             sig_status LowCardinality(String) DEFAULT 'MISSING',
             denial_reason String DEFAULT '',
             sim_score Float32 DEFAULT 0.0,
-            matched_policy_id Nullable(String)
+            matched_policy_id Nullable(String),
+            zkp_proof String DEFAULT ''
         ) ENGINE = MergeTree()
         PARTITION BY toYYYYMMDD(ts)
         ORDER BY (org_id, agent_id, ts)
         TTL ts + INTERVAL 365 DAY
         SETTINGS index_granularity = 8192"#;
-        let _ = client.post(&self.clickhouse_url).body(ddl).send().await;
+        let resp = self.client.post(&self.clickhouse_url).body(ddl).send().await;
+        match resp {
+            Ok(r) if r.status().is_success() => {
+                tracing::info!("clickhouse schema verified");
+            }
+            Ok(r) => {
+                let body = r.text().await.unwrap_or_default();
+                tracing::warn!(error = %body, "clickhouse schema creation returned non-200");
+            }
+            Err(e) => {
+                tracing::warn!(error = %e, "clickhouse unreachable during schema init");
+            }
+        }
         Ok(())
     }
 
     async fn insert_records(&self, records: &[AuditRecord]) -> Result<(), AuditError> {
-        let client = reqwest::Client::new();
-
         let mut values = Vec::new();
         for r in records {
             let decision_str = match r.decision {
@@ -181,22 +209,26 @@ impl AuditWorker {
                 .map(|id| format!("'{}'", id))
                 .unwrap_or_else(|| "NULL".to_string());
 
-            // amount_cents = amount * 100, truncated
             let amount_cents = (r.amount * 100.0) as i64;
 
-            // rule_ids: matched_policy_id wrapped in an array, or empty
             let rule_ids_sql = r.matched_policy_id
                 .as_ref()
                 .map(|id| format!("['{}']" , id))
                 .unwrap_or_else(|| "[]".to_string());
 
+            let zkp_proof_sql = r
+                .zkp_proof
+                .as_ref()
+                .map(|p| format!("'{}'", p.replace("'", "''")))
+                .unwrap_or_else(|| "''".to_string());
+
             values.push(format!(
-                "('{}', '{}', '{}', '{}', '{}', '{}', {}, 'USD', '{}', {}, {}, {}, {}, '{}', {}, {}, {})",
+                "('{}', '{}', '{}', '{}', '{}', '{}', {}, 'USD', '{}', {}, {}, {}, {}, '{}', {}, {}, {}, {})",
                 r.ts.format("%Y-%m-%d %H:%M:%S.%3f"),
                 r.org_id,
                 r.agent_id,
                 r.req_id,
-                r.action,       // maps to 'method'
+                r.action,
                 r.target_url,
                 amount_cents,
                 decision_str,
@@ -207,16 +239,17 @@ impl AuditWorker {
                 sig_status_str,
                 denial_reason_sql,
                 r.sim,
-                matched_policy_id_sql
+                matched_policy_id_sql,
+                zkp_proof_sql
             ));
         }
 
         let query = format!(
-            "INSERT INTO transaction_logs (ts, org_id, agent_id, req_id, method, target_url, amount_cents, currency, decision, latency_us, rule_ids, shadow_mode, permit_id, sig_status, denial_reason, sim_score, matched_policy_id) VALUES {}",
+            "INSERT INTO transaction_logs (ts, org_id, agent_id, req_id, method, target_url, amount_cents, currency, decision, latency_us, rule_ids, shadow_mode, permit_id, sig_status, denial_reason, sim_score, matched_policy_id, zkp_proof) VALUES {}",
             values.join(",")
         );
 
-        let resp = client
+        let resp = self.client
             .post(&self.clickhouse_url)
             .body(query)
             .send()
@@ -232,10 +265,13 @@ impl AuditWorker {
     }
 }
 
-pub fn spawn_audit_system(clickhouse_url: String) -> Arc<AuditLogger> {
+pub fn spawn_audit_system(
+    clickhouse_url: String,
+    clickhouse_user: Option<String>,
+    clickhouse_password: Option<String>,
+) -> Arc<AuditLogger> {
     let (tx, rx) = mpsc::channel(10000);
-    // Spawning with a dummy flush interval and batch size for now
-    let worker = AuditWorker::new(rx, clickhouse_url, 100, 1000);
+    let worker = AuditWorker::new(rx, clickhouse_url, clickhouse_user, clickhouse_password, 100, 1000);
     tokio::spawn(worker.run());
     Arc::new(AuditLogger::new(tx))
 }

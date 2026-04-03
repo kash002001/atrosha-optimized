@@ -24,21 +24,11 @@ pub async fn verify_sig(
     next: Next,
 ) -> Result<Response, StatusCode> {
     let headers = req.headers().clone();
-    
-    let shadow_mode = headers
-        .get("X-Atrosha-Shadow-Mode")
-        .and_then(|v| v.to_str().ok())
-        .map(|s| s.eq_ignore_ascii_case("true"))
-        .unwrap_or(false);
 
     let agent_id = match headers.get("X-Atrosha-Agent-ID").and_then(|h| h.to_str().ok()) {
         Some(id) => id.to_string(),
         None => {
-            if shadow_mode {
-                tracing::warn!(sig_status = ?SignatureStatus::Missing, "VIOLATION: missing agent ID header [shadow bypass]");
-                return Ok(next.run(req).await);
-            }
-            tracing::warn!(sig_status = ?SignatureStatus::Missing, "missing agent ID header");
+            tracing::warn!(sig_status = ?SignatureStatus::Missing, "rejected: missing agent ID header");
             return Err(StatusCode::UNAUTHORIZED);
         }
     };
@@ -46,11 +36,7 @@ pub async fn verify_sig(
     let sig_hex = match headers.get("X-Atrosha-Signature").and_then(|h| h.to_str().ok()) {
         Some(sig) => sig.to_string(),
         None => {
-            if shadow_mode {
-                tracing::warn!(agent_id = %agent_id, sig_status = ?SignatureStatus::Missing, "VIOLATION: missing sig header [shadow bypass]");
-                return Ok(next.run(req).await);
-            }
-            tracing::warn!(agent_id = %agent_id, sig_status = ?SignatureStatus::Missing, "missing sig header");
+            tracing::warn!(agent_id = %agent_id, sig_status = ?SignatureStatus::Missing, "rejected: missing signature header");
             return Err(StatusCode::UNAUTHORIZED);
         }
     };
@@ -64,14 +50,20 @@ pub async fn verify_sig(
     let ts = match headers.get("X-Atrosha-Timestamp").and_then(|h| h.to_str().ok()) {
         Some(ts) => ts.to_string(),
         None => {
-            if shadow_mode {
-                tracing::warn!(agent_id = %agent_id, sig_status = ?SignatureStatus::Missing, "VIOLATION: missing ts header [shadow bypass]");
-                return Ok(next.run(req).await);
-            }
-            tracing::warn!(agent_id = %agent_id, sig_status = ?SignatureStatus::Missing, "missing ts header");
+            tracing::warn!(agent_id = %agent_id, sig_status = ?SignatureStatus::Missing, "rejected: missing timestamp header");
             return Err(StatusCode::UNAUTHORIZED);
         }
     };
+
+    // replay protection: reject timestamps older than 5 minutes
+    if let Ok(ts_epoch) = ts.parse::<i64>() {
+        let now = chrono::Utc::now().timestamp();
+        let drift = (now - ts_epoch).abs();
+        if drift > 300 {
+            tracing::warn!(agent_id = %agent_id, drift_secs = drift, "rejected: timestamp too old (replay?)");
+            return Err(StatusCode::UNAUTHORIZED);
+        }
+    }
 
     let (mut parts, body) = req.into_parts();
     parts.extensions.insert(org_id.clone());
@@ -81,18 +73,13 @@ pub async fn verify_sig(
         Err(_) => return Err(StatusCode::PAYLOAD_TOO_LARGE),
     };
 
-    // Reconstruct signature payload: ts + "." + body
+    // signature payload: ts + "." + body
     let data = [ts.as_bytes(), b".", &bytes].concat();
 
     let pub_bytes = match state.registry.get_pub(&org_id, &agent_id).await {
         Ok(bytes) => bytes,
         Err(e) => {
-            if shadow_mode {
-                tracing::warn!(org_id = %org_id, agent_id = %agent_id, error = %e, sig_status = ?SignatureStatus::KeyNotFound, "VIOLATION: agent key lookup failed [shadow bypass]");
-                let new_req = Request::from_parts(parts, Body::from(bytes));
-                return Ok(next.run(new_req).await);
-            }
-            tracing::warn!(org_id = %org_id, agent_id = %agent_id, error = %e, sig_status = ?SignatureStatus::KeyNotFound, "agent key lookup failed");
+            tracing::warn!(org_id = %org_id, agent_id = %agent_id, error = %e, sig_status = ?SignatureStatus::KeyNotFound, "rejected: agent key lookup failed");
             return Err(StatusCode::UNAUTHORIZED);
         }
     };
@@ -116,15 +103,7 @@ pub async fn verify_sig(
     let sig_bytes = match hex::decode(&sig_hex) {
         Ok(b) => b,
         Err(_) => {
-            tracing::warn!(
-                agent_id = %agent_id,
-                sig_status = ?SignatureStatus::Invalid,
-                "malformed sig hex"
-            );
-            if shadow_mode {
-                let new_req = Request::from_parts(parts, Body::from(bytes));
-                return Ok(next.run(new_req).await);
-            }
+            tracing::warn!(agent_id = %agent_id, sig_status = ?SignatureStatus::Invalid, "rejected: malformed signature hex");
             return Err(StatusCode::BAD_REQUEST);
         }
     };
@@ -132,31 +111,17 @@ pub async fn verify_sig(
     let sig = match Signature::from_slice(&sig_bytes) {
         Ok(s) => s,
         Err(_) => {
-            if shadow_mode {
-                tracing::warn!(agent_id = %agent_id, sig_status = ?SignatureStatus::Invalid, "VIOLATION: invalid sig format [shadow bypass]");
-                let new_req = Request::from_parts(parts, Body::from(bytes));
-                return Ok(next.run(new_req).await);
-            }
-            tracing::warn!(agent_id = %agent_id, sig_status = ?SignatureStatus::Invalid, "invalid sig format");
+            tracing::warn!(agent_id = %agent_id, sig_status = ?SignatureStatus::Invalid, "rejected: invalid signature format");
             return Err(StatusCode::BAD_REQUEST);
         }
     };
 
     if verifying_key.verify(&data, &sig).is_ok() {
-        tracing::debug!(
-            agent_id = %agent_id,
-            sig_status = ?SignatureStatus::Verified,
-            "sig verified"
-        );
+        tracing::debug!(agent_id = %agent_id, sig_status = ?SignatureStatus::Verified, "sig verified");
         let new_req = Request::from_parts(parts, Body::from(bytes));
         Ok(next.run(new_req).await)
     } else {
-        if shadow_mode {
-            tracing::warn!(agent_id = %agent_id, sig_status = ?SignatureStatus::Invalid, "VIOLATION: sig verification failed [shadow bypass]");
-            let new_req = Request::from_parts(parts, Body::from(bytes));
-            return Ok(next.run(new_req).await);
-        }
-        tracing::warn!(agent_id = %agent_id, sig_status = ?SignatureStatus::Invalid, "sig verification failed");
+        tracing::warn!(agent_id = %agent_id, sig_status = ?SignatureStatus::Invalid, "rejected: signature verification failed");
         Err(StatusCode::FORBIDDEN)
     }
 }

@@ -1,0 +1,74 @@
+warning: method `to_field_index` is never used
+  --> src\zkp\policy_lang.rs:46:12
+   |
+44 | impl AgentRole {
+   | -------------- method in this implementation
+45 |     // deterministic mapping to field element for circuit encoding
+46 |     pub fn to_field_index(&self) -> u64 {
+   |            ^^^^^^^^^^^^^^
+   |
+   = note: `#[warn(dead_code)]` (part of `#[warn(unused)]`) on by default
+
+warning: `atrosha-proxy` (bin "atrosha-proxy" test) generated 1 warning
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 1.03s
+warning: the following packages contain code that will be rejected by a future version of Rust: redis v0.24.0
+note: to see what the problems were, use the option `--future-incompat-report`, or run `cargo report future-incompatibilities --id 1`
+     Running unittests src\main.rs (target\debug\deps\atrosha_proxy-c8f193fb7c3d5dfa.exe)
+
+running 24 tests
+test zkp::policy_lang::tests::test_comments_ignored ... ok
+test zkp::policy_lang::tests::test_and_combinator ... ok
+test zkp::policy_lang::tests::test_addition_in_comparison ... ok
+test zkp::policy_lang::tests::test_causal_score_function ... ok
+test zkp::policy_lang::tests::test_constraint_estimation ... ok
+test zkp::policy_lang::tests::test_consecutive_denial_counter ... FAILED
+test zkp::policy_lang::tests::test_empty_policy_rejected ... ok
+test zkp::policy_lang::tests::test_deeply_nested_arithmetic ... FAILED
+test zkp::policy_lang::tests::test_implies ... ok
+test zkp::policy_lang::tests::test_full_enterprise_policy ... ok
+test zkp::policy_lang::tests::test_literal_set ... ok
+test zkp::policy_lang::tests::test_equality_check ... ok
+test zkp::policy_lang::tests::test_multiple_rules ... ok
+test zkp::policy_lang::tests::test_multiplication ... ok
+test zkp::policy_lang::tests::test_nested_boolean_logic ... ok
+test zkp::policy_lang::tests::test_not_combinator ... ok
+test zkp::policy_lang::tests::test_not_in ... ok
+test zkp::policy_lang::tests::test_set_membership ... ok
+test zkp::policy_lang::tests::test_or_combinator ... ok
+test zkp::policy_lang::tests::test_simple_amount_check ... ok
+test zkp::policy_lang::tests::test_type_mismatch_rejected ... ok
+test zkp::policy_lang::tests::test_unknown_field_rejected ... ok
+test zkp::policy_lang::tests::test_unknown_function_rejected ... ok
+test zkp::policy_lang::tests::test_within_temporal ... ok
+
+failures:
+
+---- zkp::policy_lang::tests::test_consecutive_denial_counter stdout ----
+
+thread 'zkp::policy_lang::tests::test_consecutive_denial_counter' (23060) panicked at src\zkp\policy_lang.rs:894:29:
+failed to parse:
+
+            policy ThreeStrikes {
+                require agent.consecutive_denials < 3
+            }
+        : "validation error at 3:17: type mismatch: cannot compare Counter with Amount"
+note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace
+
+---- zkp::policy_lang::tests::test_deeply_nested_arithmetic stdout ----
+
+thread 'zkp::policy_lang::tests::test_deeply_nested_arithmetic' (18820) panicked at src\zkp\policy_lang.rs:894:29:
+failed to parse:
+
+            policy DeepMath {
+                require (agent.daily_spent + tx.amount) * 2 <= agent.daily_limit
+            }
+        : "line 3:55: expected comparison operator, got RParen"
+
+
+failures:
+    zkp::policy_lang::tests::test_consecutive_denial_counter
+    zkp::policy_lang::tests::test_deeply_nested_arithmetic
+
+test result: FAILED. 22 passed; 2 failed; 0 ignored; 0 measured; 1 filtered out; finished in 0.00s
+
+error: test failed, to rerun pass `--bin atrosha-proxy`

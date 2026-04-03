@@ -1,0 +1,4 @@
+C:\Python\Project Atrosha\Atrosha\dashboard\src\app\api\auth\regenerate-key\route.ts
+C:\Python\Project Atrosha\Atrosha\dashboard\src\app\api\billing\portal\route.ts
+C:\Python\Project Atrosha\Atrosha\dashboard\src\app\api\billing\webhook\route.ts
+C:\Python\Project Atrosha\Atrosha\dashboard\src\app\api\diagnose\route.ts

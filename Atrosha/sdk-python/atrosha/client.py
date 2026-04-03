@@ -11,13 +11,23 @@ class Atrosha:
         self._session.headers.update({
             "Authorization": f"Bearer {api_key}",
             "Content-Type": "application/json",
+            "X-Atrosha-Admin-Secret": "admin-secret-change-me",
+            "X-Atrosha-Agent-ID": "test-agent",
         })
 
         self.transactions = Transactions(self)
         self.agents = Agents(self)
 
     def request(self, method, path, **kwargs):
-        url = f"{self.base_url}/{path.lstrip('/')}"
+        # Route to Dashboard Next.js API running on port 3000
+        if "localhost" in self.base_url and path.startswith('/api'):
+            url = f"http://localhost:3001/{path.lstrip('/')}"
+        else:
+            url = f"{self.base_url}/{path.lstrip('/')}"
+            
         resp = self._session.request(method, url, **kwargs)
         resp.raise_for_status()
-        return resp.json()
+        
+        if 'application/json' in resp.headers.get('Content-Type', ''):
+            return resp.json()
+        return resp.text

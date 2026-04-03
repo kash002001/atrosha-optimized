@@ -1,0 +1,60 @@
+On branch main
+Your branch is ahead of 'upstream/main' by 6 commits.
+  (use "git push" to publish your local commits)
+
+Changes not staged for commit:
+  (use "git add <file>..." to update what will be committed)
+  (use "git restore <file>..." to discard changes in working directory)
+	modified:   .gitignore
+	modified:   docker_compose_ps.txt
+	modified:   proxy/.env.example
+	modified:   proxy/build_output.txt
+	modified:   proxy/src/audit.rs
+	modified:   proxy/src/main.rs
+	modified:   proxy/src/middleware.rs
+	modified:   proxy/src/registry.rs
+	modified:   sdk-python/atrosha/__pycache__/__init__.cpython-314.pyc
+	modified:   sdk-python/atrosha/__pycache__/client.cpython-314.pyc
+	modified:   sdk-python/atrosha/client.py
+	modified:   sdk-python/atrosha/resources/__init__.py
+	modified:   sdk-python/atrosha/resources/__pycache__/__init__.cpython-314.pyc
+	modified:   sovereign_agent/atrosha.db
+	modified:   sovereign_agent/loop.py
+	modified:   sovereign_agent/meridian_invoice.pdf
+	modified:   sovereign_agent/output.txt
+	modified:   sovereign_agent/test_demo.txt
+	modified:   sovereign_agent/tools.py
+	modified:   sovereign_agent/verify_guardrails.py
+
+Untracked files:
+  (use "git add <file>..." to include in what will be committed)
+	docker_build.txt
+	git_staged.txt
+	git_status.txt
+	logs.txt
+	out3.txt
+	out_atrosha.txt
+	out_atrosha2.txt
+	proxy/check.txt
+	proxy/commit_output.txt
+	proxy/src/zkp/
+	proxy/test_output.txt
+	proxy_logs.txt
+	proxy_logs_new.txt
+	sovereign_agent/out3.txt
+	sovereign_agent/out4.txt
+	sovereign_agent/out5.txt
+	sovereign_agent/out6.txt
+	sovereign_agent/out_final.txt
+	sovereign_agent/out_final2.txt
+	sovereign_agent/out_final3.txt
+	sovereign_agent/seed_supabase.py
+	sovereign_agent/test_demo2.txt
+	test_atrosha.py
+	tmp_docker.txt
+	tmp_files.txt
+	tmp_proxy.txt
+	../history.txt
+	../output.txt
+
+no changes added to commit (use "git add" and/or "git commit -a")

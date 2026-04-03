@@ -1,0 +1,128 @@
+    Checking ark-crypto-primitives v0.4.0
+    Checking ark-groth16 v0.4.0
+    Checking atrosha-proxy v0.2.0 (C:\Python\Project Atrosha\Atrosha\proxy)
+error[E0308]: mismatched types
+   --> src\zkp\policy_lang.rs:178:17
+    |
+178 |     Parser::new(Lexer::new(input))?.parse()
+    |     ----------- ^^^^^^^^^^^^^^^^^ expected `&str`, found `Lexer<'_>`
+    |     |
+    |     arguments to this function are incorrect
+    |
+note: associated function defined here
+   --> src\zkp\policy_lang.rs:383:12
+    |
+383 |     pub fn new(input: &'a str) -> Result<Self, ParseError> {
+    |            ^^^ --------------
+
+error[E0599]: no method named `parse` found for struct `policy_lang::Parser<'a>` in the current scope
+   --> src\zkp\policy_lang.rs:178:37
+    |
+178 |     Parser::new(Lexer::new(input))?.parse()
+    |                                     ^^^^^
+...
+376 | pub struct Parser<'a> {
+    | --------------------- method `parse` not found for this struct
+    |
+    = help: items from traits can only be used if the trait is implemented and in scope
+    = note: the following traits define an item `parse`, perhaps you need to implement one of them:
+            candidate #1: `combine::parser::ParseMode`
+            candidate #2: `combine::parser::Parser`
+            candidate #3: `syn::parse::Parse`
+            candidate #4: `syn::parse::Parser`
+            candidate #5: `syn::parse_quote::ParseQuote`
+            candidate #6: `time::parsing::parsable::sealed::Sealed`
+            candidate #7: `winnow::parser::Parser`
+help: there is a method `parse_or` with a similar name
+    |
+178 |     Parser::new(Lexer::new(input))?.parse_or()
+    |                                          +++
+
+error[E0599]: no method named `into_bigint` found for struct `ark_ff::fields::models::fp::Fp<P, N>` in the current scope
+   --> src\zkp\compiler.rs:268:51
+    |
+268 |         let val_a = a.value().unwrap_or_default().into_bigint();
+    |                                                   ^^^^^^^^^^^ method not found in `Fp<MontBackend<FrConfig, 4>, 4>`
+    |
+   ::: C:\Users\kashy\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\ark-ff-0.4.2\src\fields\prime.rs:58:8
+    |
+ 58 |     fn into_bigint(self) -> Self::BigInt;
+    |        ----------- the method is available for `ark_ff::fields::models::fp::Fp<ark_ff::fields::models::fp::montgomery_backend::MontBackend<FrConfig, 4>, 4>` here
+    |
+    = help: items from traits can only be used if the trait is in scope
+    = note: the full name for the type has been written to 'C:\Python\Project Atrosha\Atrosha\proxy\target\debug\deps\atrosha_proxy-69e185a92453ddfa.long-type-6802181623508604976.txt'
+    = note: consider using `--verbose` to print the full type name to the console
+help: trait `PrimeField` which provides `into_bigint` is implemented but not in scope; perhaps you want to import it
+    |
+  1 + use ark_ff::fields::prime::PrimeField;
+    |
+
+error[E0599]: no method named `into_bigint` found for struct `ark_ff::fields::models::fp::Fp<P, N>` in the current scope
+   --> src\zkp\compiler.rs:269:51
+    |
+269 |         let val_b = b.value().unwrap_or_default().into_bigint();
+    |                                                   ^^^^^^^^^^^ method not found in `Fp<MontBackend<FrConfig, 4>, 4>`
+    |
+   ::: C:\Users\kashy\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\ark-ff-0.4.2\src\fields\prime.rs:58:8
+    |
+ 58 |     fn into_bigint(self) -> Self::BigInt;
+    |        ----------- the method is available for `ark_ff::fields::models::fp::Fp<ark_ff::fields::models::fp::montgomery_backend::MontBackend<FrConfig, 4>, 4>` here
+    |
+    = help: items from traits can only be used if the trait is in scope
+    = note: the full name for the type has been written to 'C:\Python\Project Atrosha\Atrosha\proxy\target\debug\deps\atrosha_proxy-69e185a92453ddfa.long-type-6802181623508604976.txt'
+    = note: consider using `--verbose` to print the full type name to the console
+help: trait `PrimeField` which provides `into_bigint` is implemented but not in scope; perhaps you want to import it
+    |
+  1 + use ark_ff::fields::prime::PrimeField;
+    |
+
+error[E0599]: no method named `into_bigint` found for struct `ark_ff::fields::models::fp::Fp<P, N>` in the current scope
+   --> src\zkp\compiler.rs:281:51
+    |
+281 |         let val_a = a.value().unwrap_or_default().into_bigint();
+    |                                                   ^^^^^^^^^^^ method not found in `Fp<MontBackend<FrConfig, 4>, 4>`
+    |
+   ::: C:\Users\kashy\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\ark-ff-0.4.2\src\fields\prime.rs:58:8
+    |
+ 58 |     fn into_bigint(self) -> Self::BigInt;
+    |        ----------- the method is available for `ark_ff::fields::models::fp::Fp<ark_ff::fields::models::fp::montgomery_backend::MontBackend<FrConfig, 4>, 4>` here
+    |
+    = help: items from traits can only be used if the trait is in scope
+    = note: the full name for the type has been written to 'C:\Python\Project Atrosha\Atrosha\proxy\target\debug\deps\atrosha_proxy-69e185a92453ddfa.long-type-6802181623508604976.txt'
+    = note: consider using `--verbose` to print the full type name to the console
+help: trait `PrimeField` which provides `into_bigint` is implemented but not in scope; perhaps you want to import it
+    |
+  1 + use ark_ff::fields::prime::PrimeField;
+    |
+
+error[E0599]: no method named `into_bigint` found for struct `ark_ff::fields::models::fp::Fp<P, N>` in the current scope
+   --> src\zkp\compiler.rs:282:51
+    |
+282 |         let val_b = b.value().unwrap_or_default().into_bigint();
+    |                                                   ^^^^^^^^^^^ method not found in `Fp<MontBackend<FrConfig, 4>, 4>`
+    |
+   ::: C:\Users\kashy\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\ark-ff-0.4.2\src\fields\prime.rs:58:8
+    |
+ 58 |     fn into_bigint(self) -> Self::BigInt;
+    |        ----------- the method is available for `ark_ff::fields::models::fp::Fp<ark_ff::fields::models::fp::montgomery_backend::MontBackend<FrConfig, 4>, 4>` here
+    |
+    = help: items from traits can only be used if the trait is in scope
+    = note: the full name for the type has been written to 'C:\Python\Project Atrosha\Atrosha\proxy\target\debug\deps\atrosha_proxy-69e185a92453ddfa.long-type-6802181623508604976.txt'
+    = note: consider using `--verbose` to print the full type name to the console
+help: trait `PrimeField` which provides `into_bigint` is implemented but not in scope; perhaps you want to import it
+    |
+  1 + use ark_ff::fields::prime::PrimeField;
+    |
+
+warning: unused variable: `config`
+   --> src\zkp\compiler.rs:293:5
+    |
+293 |     config: &PoseidonConfig<Fr>
+    |     ^^^^^^ help: if this is intentional, prefix it with an underscore: `_config`
+    |
+    = note: `#[warn(unused_variables)]` (part of `#[warn(unused)]`) on by default
+
+Some errors have detailed explanations: E0308, E0599.
+For more information about an error, try `rustc --explain E0308`.
+warning: `atrosha-proxy` (bin "atrosha-proxy") generated 1 warning
+error: could not compile `atrosha-proxy` (bin "atrosha-proxy") due to 6 previous errors; 1 warning emitted

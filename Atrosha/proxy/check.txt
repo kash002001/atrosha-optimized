@@ -1,0 +1,77 @@
+    Checking atrosha-proxy v0.2.0 (C:\Python\Project Atrosha\Atrosha\proxy)
+error[E0432]: unresolved import `ark_groth16::generate_random_parameters`
+ --> src\zkp\prover.rs:1:47
+  |
+1 | use ark_groth16::{Groth16, ProvingKey, Proof, generate_random_parameters};
+  |                                               ^^^^^^^^^^^^^^^^^^^^^^^^^^ no `generate_random_parameters` in the root
+
+error[E0432]: unresolved import `ark_snark`
+ --> src\zkp\prover.rs:3:5
+  |
+3 | use ark_snark::SNARK;
+  |     ^^^^^^^^^ use of unresolved module or unlinked crate `ark_snark`
+  |
+  = help: if you wanted to use a crate named `ark_snark`, use `cargo add ark_snark` to add it to your `Cargo.toml`
+
+warning: use of deprecated function `base64::encode`: Use Engine::encode
+  --> src\zkp\prover.rs:76:17
+   |
+76 |         base64::encode(&bytes)
+   |                 ^^^^^^
+   |
+   = note: `#[warn(deprecated)]` on by default
+
+warning: use of deprecated function `base64::decode`: Use Engine::decode
+  --> src\zkp\prover.rs:81:29
+   |
+81 |         let bytes = base64::decode(b64).map_err(|_| "Invalid base64 encoding")?;
+   |                             ^^^^^^
+
+error[E0599]: no function or associated item named `prove` found for struct `Groth16<E, QAP>` in the current scope
+  --> src\zkp\prover.rs:63:39
+   |
+63 |         let proof = Groth16::<Bn254>::prove(&setup.proving_key, circuit, &mut rng)
+   |                                       ^^^^^ function or associated item not found in `Groth16<ark_ec::models::bn::Bn<ark_bn254::Config>>`
+   |
+   = help: items from traits can only be used if the trait is in scope
+help: trait `SNARK` which provides `prove` is implemented but not in scope; perhaps you want to import it
+   |
+ 1 + use ark_crypto_primitives::snark::SNARK;
+   |
+
+error[E0308]: mismatched types
+  --> src\zkp\prover.rs:82:9
+   |
+80 |       pub fn deserialize_proof(b64: &str) -> Result<Proof<Bn254>, String> {
+   |                                              ---------------------------- expected `std::result::Result<Proof<ark_ec::models::bn::Bn<ark_bn254::Config>>, std::string::String>` because of return type
+81 |           let bytes = base64::decode(b64).map_err(|_| "Invalid base64 encoding")?;
+82 | /         Proof::<Bn254>::deserialize_compressed(&bytes[..])
+83 | |             .map_err(|_| "Invalid proof binary format")
+   | |_______________________________________________________^ expected `Result<Proof<Bn<Config>>, String>`, found `Result<Proof<Bn<Config>>, &str>`
+   |
+   = note: expected enum `std::result::Result<_, std::string::String>`
+              found enum `std::result::Result<_, &str>`
+help: use `?` to coerce and return an appropriate `Err`, and wrap the resulting value in `Ok` so the expression remains of type `Result`
+   |
+82 ~         Ok(Proof::<Bn254>::deserialize_compressed(&bytes[..])
+83 ~             .map_err(|_| "Invalid proof binary format")?)
+   |
+
+warning: unused variable: `diff`
+   --> src\zkp\compiler.rs:253:9
+    |
+253 |     let diff = b - a;
+    |         ^^^^ help: if this is intentional, prefix it with an underscore: `_diff`
+    |
+    = note: `#[warn(unused_variables)]` (part of `#[warn(unused)]`) on by default
+
+warning: unused variable: `config`
+   --> src\zkp\compiler.rs:294:5
+    |
+294 |     config: &PoseidonConfig<Fr>
+    |     ^^^^^^ help: if this is intentional, prefix it with an underscore: `_config`
+
+Some errors have detailed explanations: E0308, E0432, E0599.
+For more information about an error, try `rustc --explain E0308`.
+warning: `atrosha-proxy` (bin "atrosha-proxy") generated 4 warnings
+error: could not compile `atrosha-proxy` (bin "atrosha-proxy") due to 4 previous errors; 4 warnings emitted

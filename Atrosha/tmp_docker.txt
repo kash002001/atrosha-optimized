@@ -1,0 +1,6 @@
+CONTAINER ID   IMAGE                                 COMMAND                  CREATED        STATUS                     PORTS                                                                                      NAMES
+a2750e56b1c3   atrosha-semantic-engine               "python -m server.ma…"   21 hours ago   Up 5 minutes (unhealthy)   0.0.0.0:8002->8002/tcp, [::]:8002->8002/tcp                                                atrosha-semantic-engine-1
+4320f05c02df   atrosha-proxy                         "./atrosha-proxy"        24 hours ago   Up 5 minutes (unhealthy)   0.0.0.0:8080->10000/tcp, [::]:8080->10000/tcp                                              atrosha-proxy-1
+e033aecdc299   atrosha-intent-validator              "/bin/sh -c 'uvicorn…"   24 hours ago   Up 5 minutes (unhealthy)   0.0.0.0:8001->8001/tcp, [::]:8001->8001/tcp                                                atrosha-intent-validator-1
+ae7c7b71a9ff   redis:7-alpine                        "docker-entrypoint.s…"   24 hours ago   Up 5 minutes (healthy)     0.0.0.0:6379->6379/tcp, [::]:6379->6379/tcp                                                atrosha-redis-1
+ca0c5bb6806e   clickhouse/clickhouse-server:latest   "/entrypoint.sh"         24 hours ago   Up 5 minutes (healthy)     0.0.0.0:8123->8123/tcp, [::]:8123->8123/tcp, 0.0.0.0:9000->9000/tcp, [::]:9000->9000/tcp   atrosha-clickhouse-1

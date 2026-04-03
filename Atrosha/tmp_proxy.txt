@@ -1,0 +1,100 @@
+[2m2026-03-27T10:49:20.964868Z[0m [32m INFO[0m [2matrosha_proxy[0m[2m:[0m Atrosha Proxy v2.2 (MODULAR) starting...
+[2m2026-03-27T10:49:20.981901Z[0m [32m INFO[0m [2matrosha_proxy[0m[2m:[0m redis connection verified
+[2m2026-03-27T10:49:21.000182Z[0m [33m WARN[0m [2matrosha_proxy::adapters[0m[2m:[0m EVM provider unreachable (error sending request for url (http://127.0.0.1:8545/): error trying to connect: tcp connect error: Connection refused (os error 111)), defaulting chain_id to 31337
+[2m2026-03-27T10:49:21.002112Z[0m [32m INFO[0m [2matrosha_proxy[0m[2m:[0m listening [3maddr[0m[2m=[0m0.0.0.0:10000
+[2m2026-03-27T13:11:52.155382Z[0m [33m WARN[0m [2matrosha_proxy::middleware[0m[2m:[0m missing sig header [3magent_id[0m[2m=[0msovereign-agent-v1 [3msig_status[0m[2m=[0mMissing
+[2m2026-03-27T14:20:44.240713Z[0m [33m WARN[0m [2matrosha_proxy::middleware[0m[2m:[0m missing sig header [3magent_id[0m[2m=[0msovereign-agent-v1 [3msig_status[0m[2m=[0mMissing
+[2m2026-03-27T14:23:44.464043Z[0m [33m WARN[0m [2matrosha_proxy::middleware[0m[2m:[0m VIOLATION: missing sig header [shadow bypass] [3magent_id[0m[2m=[0msovereign-agent-v1 [3msig_status[0m[2m=[0mMissing
+[2m2026-03-27T14:23:44.989738Z[0m [33m WARN[0m [2matrosha_proxy::semantic[0m[2m:[0m semantic engine unreachable [3merror[0m[2m=[0merror sending request for url (http://semantic-engine:8002/classify) [3melapsed_ms[0m[2m=[0m509
+[2m2026-03-27T14:23:44.989886Z[0m [33m WARN[0m [2matrosha_proxy::handlers[0m[2m:[0m semantic engine unavailable — fail-open
+[2m2026-03-27T14:23:46.774040Z[0m [31mERROR[0m [2matrosha_proxy::audit[0m[2m:[0m failed to flush audit batch [3merror[0m[2m=[0mclickhouse error: Code: 194. DB::Exception: default: Authentication failed: password is incorrect, or there is no user with such name.
+
+If you use ClickHouse Cloud, the password can be reset at https://clickhouse.cloud/
+on the settings page for the corresponding service.
+
+If you have installed ClickHouse and forgot password you can reset it in the configuration file.
+The password for default user is typically located at /etc/clickhouse-server/users.d/default-password.xml
+and deleting this file will reset the password.
+See also /etc/clickhouse-server/users.xml on the server where ClickHouse is installed.
+
+. (REQUIRED_PASSWORD)
+
+[2m2026-03-27T14:25:50.950030Z[0m [33m WARN[0m [2matrosha_proxy::middleware[0m[2m:[0m VIOLATION: missing sig header [shadow bypass] [3magent_id[0m[2m=[0msovereign-agent-v1 [3msig_status[0m[2m=[0mMissing
+[2m2026-03-27T14:25:50.959856Z[0m [33m WARN[0m [2matrosha_proxy::semantic[0m[2m:[0m semantic engine returned non-200 [3mstatus[0m[2m=[0m422 Unprocessable Entity
+[2m2026-03-27T14:25:50.959949Z[0m [33m WARN[0m [2matrosha_proxy::handlers[0m[2m:[0m semantic engine unavailable — fail-open
+[2m2026-03-27T14:25:51.746827Z[0m [31mERROR[0m [2matrosha_proxy::audit[0m[2m:[0m failed to flush audit batch [3merror[0m[2m=[0mclickhouse error: Code: 194. DB::Exception: default: Authentication failed: password is incorrect, or there is no user with such name.
+
+If you use ClickHouse Cloud, the password can be reset at https://clickhouse.cloud/
+on the settings page for the corresponding service.
+
+If you have installed ClickHouse and forgot password you can reset it in the configuration file.
+The password for default user is typically located at /etc/clickhouse-server/users.d/default-password.xml
+and deleting this file will reset the password.
+See also /etc/clickhouse-server/users.xml on the server where ClickHouse is installed.
+
+. (REQUIRED_PASSWORD)
+
+[2m2026-03-27T14:26:52.197431Z[0m [33m WARN[0m [2matrosha_proxy::middleware[0m[2m:[0m VIOLATION: missing sig header [shadow bypass] [3magent_id[0m[2m=[0msovereign-agent-v1 [3msig_status[0m[2m=[0mMissing
+[2m2026-03-27T14:26:52.202378Z[0m [33m WARN[0m [2matrosha_proxy::semantic[0m[2m:[0m semantic engine returned non-200 [3mstatus[0m[2m=[0m422 Unprocessable Entity
+[2m2026-03-27T14:26:52.202433Z[0m [33m WARN[0m [2matrosha_proxy::handlers[0m[2m:[0m semantic engine unavailable — fail-open
+[2m2026-03-27T14:26:52.742340Z[0m [31mERROR[0m [2matrosha_proxy::audit[0m[2m:[0m failed to flush audit batch [3merror[0m[2m=[0mclickhouse error: Code: 194. DB::Exception: default: Authentication failed: password is incorrect, or there is no user with such name.
+
+If you use ClickHouse Cloud, the password can be reset at https://clickhouse.cloud/
+on the settings page for the corresponding service.
+
+If you have installed ClickHouse and forgot password you can reset it in the configuration file.
+The password for default user is typically located at /etc/clickhouse-server/users.d/default-password.xml
+and deleting this file will reset the password.
+See also /etc/clickhouse-server/users.xml on the server where ClickHouse is installed.
+
+. (REQUIRED_PASSWORD)
+
+[2m2026-03-27T14:28:30.774535Z[0m [33m WARN[0m [2matrosha_proxy::middleware[0m[2m:[0m VIOLATION: missing sig header [shadow bypass] [3magent_id[0m[2m=[0msovereign-agent-v1 [3msig_status[0m[2m=[0mMissing
+[2m2026-03-27T14:28:30.780079Z[0m [33m WARN[0m [2matrosha_proxy::semantic[0m[2m:[0m semantic engine returned non-200 [3mstatus[0m[2m=[0m422 Unprocessable Entity
+[2m2026-03-27T14:28:30.780144Z[0m [33m WARN[0m [2matrosha_proxy::handlers[0m[2m:[0m semantic engine unavailable — fail-open
+[2m2026-03-27T14:28:31.735629Z[0m [31mERROR[0m [2matrosha_proxy::audit[0m[2m:[0m failed to flush audit batch [3merror[0m[2m=[0mclickhouse error: Code: 194. DB::Exception: default: Authentication failed: password is incorrect, or there is no user with such name.
+
+If you use ClickHouse Cloud, the password can be reset at https://clickhouse.cloud/
+on the settings page for the corresponding service.
+
+If you have installed ClickHouse and forgot password you can reset it in the configuration file.
+The password for default user is typically located at /etc/clickhouse-server/users.d/default-password.xml
+and deleting this file will reset the password.
+See also /etc/clickhouse-server/users.xml on the server where ClickHouse is installed.
+
+. (REQUIRED_PASSWORD)
+
+[2m2026-03-27T14:29:49.006768Z[0m [33m WARN[0m [2matrosha_proxy::middleware[0m[2m:[0m VIOLATION: missing sig header [shadow bypass] [3magent_id[0m[2m=[0msovereign-agent-v1 [3msig_status[0m[2m=[0mMissing
+[2m2026-03-27T14:29:49.011982Z[0m [33m WARN[0m [2matrosha_proxy::semantic[0m[2m:[0m semantic engine returned non-200 [3mstatus[0m[2m=[0m422 Unprocessable Entity
+[2m2026-03-27T14:29:49.012037Z[0m [33m WARN[0m [2matrosha_proxy::handlers[0m[2m:[0m semantic engine unavailable — fail-open
+[2m2026-03-27T14:29:50.730442Z[0m [31mERROR[0m [2matrosha_proxy::audit[0m[2m:[0m failed to flush audit batch [3merror[0m[2m=[0mclickhouse error: Code: 194. DB::Exception: default: Authentication failed: password is incorrect, or there is no user with such name.
+
+If you use ClickHouse Cloud, the password can be reset at https://clickhouse.cloud/
+on the settings page for the corresponding service.
+
+If you have installed ClickHouse and forgot password you can reset it in the configuration file.
+The password for default user is typically located at /etc/clickhouse-server/users.d/default-password.xml
+and deleting this file will reset the password.
+See also /etc/clickhouse-server/users.xml on the server where ClickHouse is installed.
+
+. (REQUIRED_PASSWORD)
+
+[2m2026-03-27T14:36:23.407434Z[0m [33m WARN[0m [2matrosha_proxy::middleware[0m[2m:[0m VIOLATION: missing sig header [shadow bypass] [3magent_id[0m[2m=[0msovereign-agent-v1 [3msig_status[0m[2m=[0mMissing
+[2m2026-03-27T14:36:23.423698Z[0m [33m WARN[0m [2matrosha_proxy::semantic[0m[2m:[0m semantic engine returned non-200 [3mstatus[0m[2m=[0m422 Unprocessable Entity
+[2m2026-03-27T14:36:23.423747Z[0m [33m WARN[0m [2matrosha_proxy::handlers[0m[2m:[0m semantic engine unavailable — fail-open
+[2m2026-03-27T14:36:25.710551Z[0m [31mERROR[0m [2matrosha_proxy::audit[0m[2m:[0m failed to flush audit batch [3merror[0m[2m=[0mclickhouse error: Code: 194. DB::Exception: default: Authentication failed: password is incorrect, or there is no user with such name.
+
+If you use ClickHouse Cloud, the password can be reset at https://clickhouse.cloud/
+on the settings page for the corresponding service.
+
+If you have installed ClickHouse and forgot password you can reset it in the configuration file.
+The password for default user is typically located at /etc/clickhouse-server/users.d/default-password.xml
+and deleting this file will reset the password.
+See also /etc/clickhouse-server/users.xml on the server where ClickHouse is installed.
+
+. (REQUIRED_PASSWORD)
+
+[2m2026-03-28T11:12:51.763275Z[0m [32m INFO[0m [2matrosha_proxy[0m[2m:[0m Atrosha Proxy v2.2 (MODULAR) starting...
+[2m2026-03-28T11:12:51.782390Z[0m [32m INFO[0m [2matrosha_proxy[0m[2m:[0m redis connection verified
+[2m2026-03-28T11:12:51.799630Z[0m [33m WARN[0m [2matrosha_proxy::adapters[0m[2m:[0m EVM provider unreachable (error sending request for url (http://127.0.0.1:8545/): error trying to connect: tcp connect error: Connection refused (os error 111)), defaulting chain_id to 31337
+[2m2026-03-28T11:12:51.801922Z[0m [32m INFO[0m [2matrosha_proxy[0m[2m:[0m listening [3maddr[0m[2m=[0m0.0.0.0:10000

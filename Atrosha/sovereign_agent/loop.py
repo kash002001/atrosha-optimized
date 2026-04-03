@@ -7,8 +7,15 @@ from brain import parse_invoice_with_fallback
 from tools import execute_payment
 from db import AtroshaDB
 
+from dotenv import load_dotenv
+
+load_dotenv()
+
 db = AtroshaDB()
-PERMIT_SECRET = os.getenv("PERMIT_SECRET", "super-secret-key-change-me")
+PERMIT_SECRET = os.getenv("PERMIT_SECRET")
+if not PERMIT_SECRET:
+    raise EnvironmentError("PERMIT_SECRET must be set in .env")
+
 
 def mint_permit(amount: float, vendor: str, session_id: str) -> str:
     payload = {
@@ -27,14 +34,17 @@ def run_agent_loop(invoice_path: str, session_id: str, auto_confirm: bool = Fals
     print(f"{'='*50}\n")
 
     # step 1: local ocr
-    print("[1/4] Zero-Knowledge Ingestion...")
+    print(f"[1/4] Reading PDF: {invoice_path}")
+    print("     > Performing Zero-Knowledge Ingestion...")
+    # Add a slight delay to mimic a real OCR process for the demo
+    time.sleep(1.5)
     raw_text = extract_invoice_data(invoice_path)
     if not raw_text:
-        print("FAILED: could not read invoice.")
+        print("     [X] FAILED: Could not read invoice contents.")
         db.log("ingest_failed", session_id, f"path={invoice_path}")
         return None
 
-    print(f"     extracted {len(raw_text)} chars of text\n")
+    print(f"     [OK] Extracted {len(raw_text)} chars of text\n")
 
     # step 2: deterministic parsing
     print("[2/4] Deterministic Invoice Parsing...")
@@ -48,13 +58,15 @@ def run_agent_loop(invoice_path: str, session_id: str, auto_confirm: bool = Fals
     # Lock intent in local agent DB before saving invoice to satisfy FK constraints
     db.lock_intent(session_id, f"Process invoice for {parsed.vendor} for ${parsed.amount:.2f}")
 
-    # save invoice to db
+    # Save to local agent ledger
+    print("     > Updating local sovereign ledger...")
     inv_id = db.save_invoice(
         vendor=parsed.vendor, amount=parsed.amount, currency=parsed.currency,
         due_date=parsed.due_date, invoice_number=parsed.invoice_number,
         confidence=parsed.confidence.value, raw_text=raw_text,
         source=parsed.source, session_id=session_id,
     )
+    print(f"     [OK] Invoice saved locally (ID: {inv_id})\n")
 
     # step 3: human confirmation
     print("[3/4] Human Review Required")

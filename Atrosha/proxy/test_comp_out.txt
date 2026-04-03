@@ -1,0 +1,90 @@
+   Compiling atrosha-proxy v0.2.0 (C:\Python\Project Atrosha\Atrosha\proxy)
+warning: unused variable: `diff`
+   --> src\zkp\compiler.rs:253:9
+    |
+253 |     let diff = b - a;
+    |         ^^^^ help: if this is intentional, prefix it with an underscore: `_diff`
+    |
+    = note: `#[warn(unused_variables)]` (part of `#[warn(unused)]`) on by default
+
+warning: unused variable: `config`
+   --> src\zkp\compiler.rs:294:5
+    |
+294 |     config: &PoseidonConfig<Fr>
+    |     ^^^^^^ help: if this is intentional, prefix it with an underscore: `_config`
+
+warning: `atrosha-proxy` (bin "atrosha-proxy" test) generated 2 warnings (run `cargo fix --bin "atrosha-proxy" -p atrosha-proxy --tests` to apply 2 suggestions)
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 12.16s
+warning: the following packages contain code that will be rejected by a future version of Rust: redis v0.24.0
+note: to see what the problems were, use the option `--future-incompat-report`, or run `cargo report future-incompatibilities --id 1`
+     Running unittests src\main.rs (target\debug\deps\atrosha_proxy-bf271413e45ba2cf.exe)
+
+running 10 tests
+test zkp::compiler::tests::test_compiler_07_temporal ... FAILED
+test zkp::compiler::tests::test_compiler_06_merkle_exclusion ... FAILED
+test zkp::compiler::tests::test_compiler_03_negation_logic ... FAILED
+test zkp::compiler::tests::test_compiler_05_implication ... FAILED
+test zkp::compiler::tests::test_compiler_10_stress_test ... FAILED
+test zkp::compiler::tests::test_compiler_constraint_count_01_baseline ... FAILED
+test zkp::compiler::tests::test_compiler_04_multiple_rules ... FAILED
+test zkp::compiler::tests::test_compiler_09_boolean_aggregation ... FAILED
+test zkp::compiler::tests::test_compiler_02_compound_arithmetic ... ok
+test zkp::compiler::tests::test_compiler_08_semantic_similarity_bounds ... ok
+
+failures:
+
+---- zkp::compiler::tests::test_compiler_07_temporal stdout ----
+
+thread 'zkp::compiler::tests::test_compiler_07_temporal' (21624) panicked at src\zkp\compiler.rs:388:22:
+called `Result::unwrap()` on an `Err` value: ParseError { message: "expected KwRequire, got KwWithin", span: Span { line: 3, col: 43 } }
+
+---- zkp::compiler::tests::test_compiler_06_merkle_exclusion stdout ----
+
+thread 'zkp::compiler::tests::test_compiler_06_merkle_exclusion' (16112) panicked at src\zkp\compiler.rs:388:22:
+called `Result::unwrap()` on an `Err` value: ParseError { message: "expected 'IN' after 'not' in set expression", span: Span { line: 3, col: 39 } }
+
+---- zkp::compiler::tests::test_compiler_03_negation_logic stdout ----
+
+thread 'zkp::compiler::tests::test_compiler_03_negation_logic' (20968) panicked at src\zkp\compiler.rs:388:22:
+called `Result::unwrap()` on an `Err` value: ParseError { message: "expected comparison operator, got KwRequire", span: Span { line: 4, col: 17 } }
+
+---- zkp::compiler::tests::test_compiler_05_implication stdout ----
+
+thread 'zkp::compiler::tests::test_compiler_05_implication' (15088) panicked at src\zkp\compiler.rs:388:22:
+called `Result::unwrap()` on an `Err` value: ParseError { message: "expected comparison operator, got RBrace", span: Span { line: 4, col: 13 } }
+
+---- zkp::compiler::tests::test_compiler_10_stress_test stdout ----
+
+thread 'zkp::compiler::tests::test_compiler_10_stress_test' (10520) panicked at src\zkp\compiler.rs:388:22:
+called `Result::unwrap()` on an `Err` value: ParseError { message: "expected comparison operator, got KwAnd", span: Span { line: 3, col: 41 } }
+
+---- zkp::compiler::tests::test_compiler_constraint_count_01_baseline stdout ----
+
+thread 'zkp::compiler::tests::test_compiler_constraint_count_01_baseline' (18804) panicked at src\zkp\compiler.rs:388:22:
+called `Result::unwrap()` on an `Err` value: ParseError { message: "expected comparison operator, got Dot", span: Span { line: 5, col: 38 } }
+
+---- zkp::compiler::tests::test_compiler_04_multiple_rules stdout ----
+
+thread 'zkp::compiler::tests::test_compiler_04_multiple_rules' (10704) panicked at src\zkp\compiler.rs:388:22:
+called `Result::unwrap()` on an `Err` value: ParseError { message: "expected comparison operator, got KwRequire", span: Span { line: 4, col: 17 } }
+note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace
+
+---- zkp::compiler::tests::test_compiler_09_boolean_aggregation stdout ----
+
+thread 'zkp::compiler::tests::test_compiler_09_boolean_aggregation' (16524) panicked at src\zkp\compiler.rs:388:22:
+called `Result::unwrap()` on an `Err` value: ParseError { message: "expected RParen, got Eq", span: Span { line: 3, col: 37 } }
+
+
+failures:
+    zkp::compiler::tests::test_compiler_03_negation_logic
+    zkp::compiler::tests::test_compiler_04_multiple_rules
+    zkp::compiler::tests::test_compiler_05_implication
+    zkp::compiler::tests::test_compiler_06_merkle_exclusion
+    zkp::compiler::tests::test_compiler_07_temporal
+    zkp::compiler::tests::test_compiler_09_boolean_aggregation
+    zkp::compiler::tests::test_compiler_10_stress_test
+    zkp::compiler::tests::test_compiler_constraint_count_01_baseline
+
+test result: FAILED. 2 passed; 8 failed; 0 ignored; 0 measured; 25 filtered out; finished in 0.00s
+
+error: test failed, to rerun pass `--bin atrosha-proxy`

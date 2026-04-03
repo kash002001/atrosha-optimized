@@ -1,0 +1,25 @@
+
+==================================================
+  SOVEREIGN AGENT - Processing Invoice
+==================================================
+
+[1/4] Zero-Knowledge Ingestion...
+     extracted 1042 chars of text
+
+[2/4] Deterministic Invoice Parsing...
+     vendor  = Meridian Logistics LLC
+     amount  = $24500.00
+     due     = April 10, 2026
+     inv#    = BILL
+     conf    = high (regex)
+
+[3/4] Human Review Required
+     auto-confirm enabled, proceeding...
+
+[4/4] Executing via Atrosha Kernel...
+
+     [OK] Result: confirmed
+     tx_ref: tx_c6e8fefb
+
+==================================================
+

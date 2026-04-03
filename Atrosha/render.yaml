@@ -3,8 +3,8 @@ services:
   - type: web
     name: atrosha-proxy
     runtime: docker
-    dockerfilePath: ./Atrosha/proxy/Dockerfile
-    dockerContext: ./Atrosha/proxy
+    dockerfilePath: proxy/Dockerfile
+    dockerContext: proxy
     plan: starter
     healthCheckPath: /health
     envVars:
@@ -28,8 +28,8 @@ services:
   - type: worker
     name: atrosha-semantic
     runtime: docker
-    dockerfilePath: ./Atrosha/semantic_engine/Dockerfile
-    dockerContext: ./Atrosha/semantic_engine
+    dockerfilePath: semantic_engine/Dockerfile
+    dockerContext: semantic_engine
     plan: starter
     envVars:
       - key: PORT

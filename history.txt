@@ -1,0 +1,780 @@
+commit 426883d0e8543540fca5cb1dc958f43265ad5368
+Author: kash002100 <kashabhi440@gmail.com>
+Date:   Thu Mar 26 22:51:48 2026 +0530
+
+    landing tweaks: update hero copy to hallucinates/capital
+
+diff --git a/landing-page/src/app/components/Hero.tsx b/landing-page/src/app/components/Hero.tsx
+index f4a1fd8f..514aeb3d 100644
+--- a/landing-page/src/app/components/Hero.tsx
++++ b/landing-page/src/app/components/Hero.tsx
+@@ -28,11 +28,9 @@ export default function Hero() {
+                     transition={{ duration: 0.9, ease: "easeOut", delay: 0.1 }}
+                     className="font-serif text-4xl md:text-5xl lg:text-6xl tracking-tight leading-[1.12] text-text-light dark:text-white mb-8"
+                 >
+-                    Your AI agents spend <br />
+-                    money. <br />
++                    Code hallucinates. <br className="hidden sm:block" />
+                     <span className="italic text-primary">
+-                        We make sure they don&apos;t go <br className="hidden sm:block" />
+-                        rogue.
++                        Capital shouldn&apos;t.
+                     </span>
+                 </motion.h1>
+ 
+@@ -42,7 +40,7 @@ export default function Hero() {
+                     transition={{ duration: 0.8, delay: 0.3 }}
+                     className="text-base md:text-lg text-muted-light dark:text-muted-dark max-w-xl mx-auto mb-12 leading-relaxed"
+                 >
+-                    Atrosha is a financial firewall for autonomous AI agents. It reads invoices locally, verifies intent with your cryptographic signature, and only then executes the payment — on your hardware, with a full audit trail.
++                    AI agents are now making financial decisions. Atrosha provides the essential security layer. Our 7M-parameter Semantic Firewall analyzes every payload&apos;s intent in real-time, blocking hallucinations and prompt injections before the money leaves your network.
+                 </motion.p>
+ 
+                 <motion.div
+
+commit 537cef947bc88c12d0d5cf5d377cde37334756ca
+Author: kash002100 <kashabhi440@gmail.com>
+Date:   Thu Mar 26 22:39:45 2026 +0530
+
+    landing tweaks: revert hero text and fix pricing layout
+
+diff --git a/landing-page/src/app/components/Hero.tsx b/landing-page/src/app/components/Hero.tsx
+index 0710b587..f4a1fd8f 100644
+--- a/landing-page/src/app/components/Hero.tsx
++++ b/landing-page/src/app/components/Hero.tsx
+@@ -26,11 +26,14 @@ export default function Hero() {
+                     initial={{ opacity: 0, y: 24 }}
+                     animate={{ opacity: 1, y: 0 }}
+                     transition={{ duration: 0.9, ease: "easeOut", delay: 0.1 }}
+-                    className="font-serif text-4xl md:text-6xl lg:text-[4.25rem] tracking-tight leading-[1.12] text-text-light dark:text-white mb-8"
++                    className="font-serif text-4xl md:text-5xl lg:text-6xl tracking-tight leading-[1.12] text-text-light dark:text-white mb-8"
+                 >
+-                    Your AI agents spend money.{" "}
+-                    <br className="hidden sm:block" />
+-                    <span className="italic text-primary">We make sure they don&apos;t go rogue.</span>
++                    Your AI agents spend <br />
++                    money. <br />
++                    <span className="italic text-primary">
++                        We make sure they don&apos;t go <br className="hidden sm:block" />
++                        rogue.
++                    </span>
+                 </motion.h1>
+ 
+                 <motion.p
+@@ -39,7 +42,7 @@ export default function Hero() {
+                     transition={{ duration: 0.8, delay: 0.3 }}
+                     className="text-base md:text-lg text-muted-light dark:text-muted-dark max-w-xl mx-auto mb-12 leading-relaxed"
+                 >
+-                    The financial firewall for autonomous AI agents. We verify intent, cryptographically sign transactions, and guarantee your AI only spends what you approve.
++                    Atrosha is a financial firewall for autonomous AI agents. It reads invoices locally, verifies intent with your cryptographic signature, and only then executes the payment — on your hardware, with a full audit trail.
+                 </motion.p>
+ 
+                 <motion.div
+
+commit 94623013bbeada53bb0aa5a56f2cd478242b4f3e
+Author: kash002100 <kashabhi440@gmail.com>
+Date:   Thu Mar 26 22:23:24 2026 +0530
+
+    revert hero h1 text size to 4.25rem as requested
+
+diff --git a/landing-page/src/app/components/Hero.tsx b/landing-page/src/app/components/Hero.tsx
+index d73e9ff6..0710b587 100644
+--- a/landing-page/src/app/components/Hero.tsx
++++ b/landing-page/src/app/components/Hero.tsx
+@@ -21,21 +21,12 @@ export default function Hero() {
+             </div>
+ 
+             <div className="relative z-10 max-w-3xl mx-auto px-6 text-center pt-24 pb-12">
+-                <motion.div
+-                    initial={{ opacity: 0, y: 12 }}
+-                    animate={{ opacity: 1, y: 0 }}
+-                    transition={{ duration: 0.6 }}
+-                    className="inline-flex items-center gap-2 bg-primary/10 dark:bg-primary/15 border border-primary/20 text-primary text-[11px] font-semibold uppercase tracking-[0.15em] px-4 py-2 rounded-full mb-10"
+-                >
+-                    <span className="w-1.5 h-1.5 rounded-full bg-primary animate-pulse"></span>
+-                    Agentic Finance, Secured
+-                </motion.div>
+ 
+                 <motion.h1
+                     initial={{ opacity: 0, y: 24 }}
+                     animate={{ opacity: 1, y: 0 }}
+                     transition={{ duration: 0.9, ease: "easeOut", delay: 0.1 }}
+-                    className="font-serif text-4xl md:text-5xl lg:text-6xl tracking-tight leading-[1.12] text-text-light dark:text-white mb-8"
++                    className="font-serif text-4xl md:text-6xl lg:text-[4.25rem] tracking-tight leading-[1.12] text-text-light dark:text-white mb-8"
+                 >
+                     Your AI agents spend money.{" "}
+                     <br className="hidden sm:block" />
+@@ -80,37 +71,7 @@ export default function Hero() {
+                     </a>
+                 </motion.div>
+ 
+-                <motion.div
+-                    initial={{ opacity: 0 }}
+-                    animate={{ opacity: 1 }}
+-                    transition={{ duration: 1, delay: 0.7 }}
+-                    className="flex flex-wrap justify-center items-center gap-x-8 gap-y-3 text-sm text-muted-light dark:text-muted-dark"
+-                >
+-                    {["Runs locally", "WebCrypto intent", "Full audit trail"].map((item, i) => (
+-                        <div key={i} className="flex items-center gap-1.5">
+-                            <span className="material-symbols-outlined text-primary text-base">check_circle</span>
+-                            {item}
+-                        </div>
+-                    ))}
+-                </motion.div>
+             </div>
+-
+-            {/* scroll hint */}
+-            <motion.div
+-                initial={{ opacity: 0 }}
+-                animate={{ opacity: 1 }}
+-                transition={{ delay: 1.2, duration: 1 }}
+-                className="absolute bottom-8 left-1/2 -translate-x-1/2 flex flex-col items-center gap-2 text-muted-light dark:text-muted-dark"
+-            >
+-                <span className="text-[11px] uppercase tracking-widest">Scroll</span>
+-                <motion.span
+-                    animate={{ y: [0, 6, 0] }}
+-                    transition={{ duration: 1.5, repeat: Infinity }}
+-                    className="material-symbols-outlined text-sm"
+-                >
+-                    expand_more
+-                </motion.span>
+-            </motion.div>
+         </section>
+     );
+ }
+
+commit 1b5e9b4381f19d8edd6c450a78308a9518e97f89
+Author: kash002100 <kashabhi440@gmail.com>
+Date:   Thu Mar 26 20:39:38 2026 +0530
+
+    landing tweaks: hero spacing, code demo line fix, 2-tier pricing, remove fake reviews, simplify cta
+
+diff --git a/landing-page/src/app/components/Hero.tsx b/landing-page/src/app/components/Hero.tsx
+index 16d8b8ea..d73e9ff6 100644
+--- a/landing-page/src/app/components/Hero.tsx
++++ b/landing-page/src/app/components/Hero.tsx
+@@ -20,7 +20,7 @@ export default function Hero() {
+                 />
+             </div>
+ 
+-            <div className="relative z-10 max-w-3xl mx-auto px-6 text-center">
++            <div className="relative z-10 max-w-3xl mx-auto px-6 text-center pt-24 pb-12">
+                 <motion.div
+                     initial={{ opacity: 0, y: 12 }}
+                     animate={{ opacity: 1, y: 0 }}
+@@ -35,7 +35,7 @@ export default function Hero() {
+                     initial={{ opacity: 0, y: 24 }}
+                     animate={{ opacity: 1, y: 0 }}
+                     transition={{ duration: 0.9, ease: "easeOut", delay: 0.1 }}
+-                    className="font-serif text-4xl md:text-6xl lg:text-[4.25rem] tracking-tight leading-[1.12] text-text-light dark:text-white mb-8"
++                    className="font-serif text-4xl md:text-5xl lg:text-6xl tracking-tight leading-[1.12] text-text-light dark:text-white mb-8"
+                 >
+                     Your AI agents spend money.{" "}
+                     <br className="hidden sm:block" />
+@@ -48,7 +48,7 @@ export default function Hero() {
+                     transition={{ duration: 0.8, delay: 0.3 }}
+                     className="text-base md:text-lg text-muted-light dark:text-muted-dark max-w-xl mx-auto mb-12 leading-relaxed"
+                 >
+-                    Atrosha is a financial firewall for autonomous AI agents. It reads invoices locally, verifies intent with your cryptographic signature, and only then executes the payment — on your hardware, with a full audit trail.
++                    The financial firewall for autonomous AI agents. We verify intent, cryptographically sign transactions, and guarantee your AI only spends what you approve.
+                 </motion.p>
+ 
+                 <motion.div
+@@ -86,7 +86,7 @@ export default function Hero() {
+                     transition={{ duration: 1, delay: 0.7 }}
+                     className="flex flex-wrap justify-center items-center gap-x-8 gap-y-3 text-sm text-muted-light dark:text-muted-dark"
+                 >
+-                    {["Runs locally — no data leaves your network", "WebCrypto-signed intent", "Full audit trail"].map((item, i) => (
++                    {["Runs locally", "WebCrypto intent", "Full audit trail"].map((item, i) => (
+                         <div key={i} className="flex items-center gap-1.5">
+                             <span className="material-symbols-outlined text-primary text-base">check_circle</span>
+                             {item}
+
+commit 948e72fe6c82046a9a8e67b42f568c44ba73bbe7
+Author: kash002100 <kashabhi440@gmail.com>
+Date:   Thu Mar 26 19:53:44 2026 +0530
+
+    redesign: uncluttered vault landing page — full-viewport hero, tonal layering, no hard borders
+
+diff --git a/landing-page/src/app/components/Hero.tsx b/landing-page/src/app/components/Hero.tsx
+index aab691f2..16d8b8ea 100644
+--- a/landing-page/src/app/components/Hero.tsx
++++ b/landing-page/src/app/components/Hero.tsx
+@@ -5,48 +5,58 @@ import Link from "next/link";
+ 
+ export default function Hero() {
+     return (
+-        <section className="relative pt-32 pb-20 lg:pt-48 lg:pb-32 overflow-hidden flex items-center justify-center min-h-[80vh]">
+-            <div className="absolute inset-0 z-0 pointer-events-none flex items-center justify-center select-none overflow-hidden">
++        <section className="relative min-h-screen flex items-center justify-center overflow-hidden">
++            {/* ambient glow — kept subtle so the text is king */}
++            <div className="absolute inset-0 z-0 pointer-events-none select-none overflow-hidden">
+                 <motion.div
+-                    animate={{ rotate: 360, scale: [1, 1.1, 1] }}
+-                    transition={{ duration: 20, repeat: Infinity, ease: "linear" }}
+-                    className="absolute top-1/4 left-1/4 w-[600px] h-[600px] bg-primary/10 rounded-full blur-[100px] mix-blend-screen dark:mix-blend-normal"
++                    animate={{ rotate: 360, scale: [1, 1.08, 1] }}
++                    transition={{ duration: 30, repeat: Infinity, ease: "linear" }}
++                    className="absolute top-1/3 left-1/3 w-[500px] h-[500px] bg-primary/8 rounded-full blur-[140px] mix-blend-screen dark:mix-blend-normal"
+                 />
+                 <motion.div
+-                    animate={{ rotate: -360, scale: [1, 1.2, 1] }}
+-                    transition={{ duration: 25, repeat: Infinity, ease: "linear" }}
+-                    className="absolute bottom-1/4 right-1/4 w-[500px] h-[500px] bg-primary/5 rounded-full blur-[120px] mix-blend-screen dark:mix-blend-normal"
++                    animate={{ rotate: -360, scale: [1, 1.15, 1] }}
++                    transition={{ duration: 40, repeat: Infinity, ease: "linear" }}
++                    className="absolute bottom-1/3 right-1/4 w-[400px] h-[400px] bg-primary/5 rounded-full blur-[160px] mix-blend-screen dark:mix-blend-normal"
+                 />
+             </div>
+-            <div className="relative z-10 max-w-4xl mx-auto px-4 text-center">
++
++            <div className="relative z-10 max-w-3xl mx-auto px-6 text-center">
+                 <motion.div
+-                    initial={{ opacity: 0, y: 20 }}
++                    initial={{ opacity: 0, y: 12 }}
+                     animate={{ opacity: 1, y: 0 }}
+-                    transition={{ duration: 0.5 }}
+-                    className="inline-flex items-center gap-2 bg-primary/10 dark:bg-primary/20 border border-primary/20 text-primary text-xs font-semibold uppercase tracking-widest px-4 py-2 rounded-full mb-8"
++                    transition={{ duration: 0.6 }}
++                    className="inline-flex items-center gap-2 bg-primary/10 dark:bg-primary/15 border border-primary/20 text-primary text-[11px] font-semibold uppercase tracking-[0.15em] px-4 py-2 rounded-full mb-10"
+                 >
+                     <span className="w-1.5 h-1.5 rounded-full bg-primary animate-pulse"></span>
+                     Agentic Finance, Secured
+                 </motion.div>
++
+                 <motion.h1
+-                    initial={{ opacity: 0, y: 30 }}
++                    initial={{ opacity: 0, y: 24 }}
+                     animate={{ opacity: 1, y: 0 }}
+-                    transition={{ duration: 0.8, ease: "easeOut", delay: 0.1 }}
+-                    className="font-serif text-5xl md:text-7xl lg:text-[5rem] tracking-tight leading-[1.1] text-text-light dark:text-white mb-6 drop-shadow-sm"
++                    transition={{ duration: 0.9, ease: "easeOut", delay: 0.1 }}
++                    className="font-serif text-4xl md:text-6xl lg:text-[4.25rem] tracking-tight leading-[1.12] text-text-light dark:text-white mb-8"
+                 >
+                     Your AI agents spend money.{" "}
+-                    <br />
++                    <br className="hidden sm:block" />
+                     <span className="italic text-primary">We make sure they don&apos;t go rogue.</span>
+                 </motion.h1>
++
+                 <motion.p
+-                    initial={{ opacity: 0, y: 20 }}
++                    initial={{ opacity: 0, y: 16 }}
+                     animate={{ opacity: 1, y: 0 }}
+-                    transition={{ duration: 0.8, delay: 0.25 }}
+-                    className="text-lg md:text-xl text-muted-light dark:text-muted-dark max-w-2xl mx-auto mb-10 leading-relaxed"
++                    transition={{ duration: 0.8, delay: 0.3 }}
++                    className="text-base md:text-lg text-muted-light dark:text-muted-dark max-w-xl mx-auto mb-12 leading-relaxed"
+                 >
+-                    Atrosha is a financial firewall for autonomous AI agents. It reads invoices, verifies intent with your cryptographic signature, and only then executes the payment — on your hardware, with full audit trail.
++                    Atrosha is a financial firewall for autonomous AI agents. It reads invoices locally, verifies intent with your cryptographic signature, and only then executes the payment — on your hardware, with a full audit trail.
+                 </motion.p>
+-                <div className="flex flex-col sm:flex-row justify-center items-center gap-4 mb-12">
++
++                <motion.div
++                    initial={{ opacity: 0, y: 12 }}
++                    animate={{ opacity: 1, y: 0 }}
++                    transition={{ duration: 0.7, delay: 0.45 }}
++                    className="flex flex-col sm:flex-row justify-center items-center gap-4 mb-16"
++                >
+                     <Link
+                         className="relative overflow-hidden group bg-primary hover:bg-primary-hover text-white px-8 py-3.5 rounded-xl text-sm font-semibold transition-all shadow-glow flex items-center gap-2 transform hover:-translate-y-0.5"
+                         href="/signup"
+@@ -68,16 +78,39 @@ export default function Hero() {
+                         </span>
+                         Read the Docs
+                     </a>
+-                </div>
+-                <div className="flex flex-wrap justify-center items-center gap-6 text-sm text-muted-light dark:text-muted-dark">
+-                    {["Runs locally — no data leaves your network", "WebCrypto-signed intent", "Full audit trail on every transaction"].map((item, i) => (
++                </motion.div>
++
++                <motion.div
++                    initial={{ opacity: 0 }}
++                    animate={{ opacity: 1 }}
++                    transition={{ duration: 1, delay: 0.7 }}
++                    className="flex flex-wrap justify-center items-center gap-x-8 gap-y-3 text-sm text-muted-light dark:text-muted-dark"
++                >
++                    {["Runs locally — no data leaves your network", "WebCrypto-signed intent", "Full audit trail"].map((item, i) => (
+                         <div key={i} className="flex items-center gap-1.5">
+                             <span className="material-symbols-outlined text-primary text-base">check_circle</span>
+                             {item}
+                         </div>
+                     ))}
+-                </div>
++                </motion.div>
+             </div>
++
++            {/* scroll hint */}
++            <motion.div
++                initial={{ opacity: 0 }}
++                animate={{ opacity: 1 }}
++                transition={{ delay: 1.2, duration: 1 }}
++                className="absolute bottom-8 left-1/2 -translate-x-1/2 flex flex-col items-center gap-2 text-muted-light dark:text-muted-dark"
++            >
++                <span className="text-[11px] uppercase tracking-widest">Scroll</span>
++                <motion.span
++                    animate={{ y: [0, 6, 0] }}
++                    transition={{ duration: 1.5, repeat: Infinity }}
++                    className="material-symbols-outlined text-sm"
++                >
++                    expand_more
++                </motion.span>
++            </motion.div>
+         </section>
+     );
+ }
+
+commit 32baea7000dde143dda1f35f32cab744ddab6c5c
+Author: kash002100 <kashabhi440@gmail.com>
+Date:   Thu Mar 26 15:51:38 2026 +0530
+
+    revamp landing page: clear messaging, 6-feature grid, how-it-works flow, social proof + CTA sections, updated pricing
+
+diff --git a/landing-page/src/app/components/Hero.tsx b/landing-page/src/app/components/Hero.tsx
+index ec2ef175..aab691f2 100644
+--- a/landing-page/src/app/components/Hero.tsx
++++ b/landing-page/src/app/components/Hero.tsx
+@@ -19,22 +19,32 @@ export default function Hero() {
+                 />
+             </div>
+             <div className="relative z-10 max-w-4xl mx-auto px-4 text-center">
++                <motion.div
++                    initial={{ opacity: 0, y: 20 }}
++                    animate={{ opacity: 1, y: 0 }}
++                    transition={{ duration: 0.5 }}
++                    className="inline-flex items-center gap-2 bg-primary/10 dark:bg-primary/20 border border-primary/20 text-primary text-xs font-semibold uppercase tracking-widest px-4 py-2 rounded-full mb-8"
++                >
++                    <span className="w-1.5 h-1.5 rounded-full bg-primary animate-pulse"></span>
++                    Agentic Finance, Secured
++                </motion.div>
+                 <motion.h1
+                     initial={{ opacity: 0, y: 30 }}
+                     animate={{ opacity: 1, y: 0 }}
+-                    transition={{ duration: 0.8, ease: "easeOut" }}
++                    transition={{ duration: 0.8, ease: "easeOut", delay: 0.1 }}
+                     className="font-serif text-5xl md:text-7xl lg:text-[5rem] tracking-tight leading-[1.1] text-text-light dark:text-white mb-6 drop-shadow-sm"
+                 >
+-                    Code hallucinates. <br />
+-                    <span className="italic text-primary">Capital shouldn&apos;t.</span>
++                    Your AI agents spend money.{" "}
++                    <br />
++                    <span className="italic text-primary">We make sure they don&apos;t go rogue.</span>
+                 </motion.h1>
+                 <motion.p
+                     initial={{ opacity: 0, y: 20 }}
+                     animate={{ opacity: 1, y: 0 }}
+-                    transition={{ duration: 0.8, delay: 0.2 }}
++                    transition={{ duration: 0.8, delay: 0.25 }}
+                     className="text-lg md:text-xl text-muted-light dark:text-muted-dark max-w-2xl mx-auto mb-10 leading-relaxed"
+                 >
+-                    Atrosha is the ultimate Sovereign Financial Agent. We don&apos;t just secure other agents; Atrosha natively ingests invoices, reasons locally, and executes payments perfectly aligned with your cryptographically signed intent.
++                    Atrosha is a financial firewall for autonomous AI agents. It reads invoices, verifies intent with your cryptographic signature, and only then executes the payment — on your hardware, with full audit trail.
+                 </motion.p>
+                 <div className="flex flex-col sm:flex-row justify-center items-center gap-4 mb-12">
+                     <Link
+@@ -43,7 +53,7 @@ export default function Hero() {
+                     >
+                         <span className="absolute inset-0 w-full h-full bg-white/10 group-hover:bg-transparent translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-700 ease-in-out"></span>
+                         <span className="relative z-10 flex items-center gap-2">
+-                            Get Started for Free
++                            Start for Free
+                             <span className="material-symbols-outlined text-sm group-hover:translate-x-1 transition-transform">
+                                 arrow_forward
+                             </span>
+@@ -56,22 +66,16 @@ export default function Hero() {
+                         <span className="material-symbols-outlined text-gray-400 text-lg">
+                             description
+                         </span>
+-                        View Documentation
++                        Read the Docs
+                     </a>
+                 </div>
+-                <div className="flex items-center justify-center gap-3 text-sm text-muted-light dark:text-muted-dark">
+-                    <div className="flex -space-x-2">
+-                        <div className="w-8 h-8 rounded-full bg-gray-200 dark:bg-gray-700 flex items-center justify-center text-xs font-bold border-2 border-background-light dark:border-background-dark text-gray-500">
+-                            JP
+-                        </div>
+-                        <div className="w-8 h-8 rounded-full bg-gray-200 dark:bg-gray-700 flex items-center justify-center text-xs font-bold border-2 border-background-light dark:border-background-dark text-gray-500">
+-                            GS
+-                        </div>
+-                        <div className="w-8 h-8 rounded-full bg-gray-200 dark:bg-gray-700 flex items-center justify-center text-xs font-bold border-2 border-background-light dark:border-background-dark text-gray-500">
+-                            MS
++                <div className="flex flex-wrap justify-center items-center gap-6 text-sm text-muted-light dark:text-muted-dark">
++                    {["Runs locally — no data leaves your network", "WebCrypto-signed intent", "Full audit trail on every transaction"].map((item, i) => (
++                        <div key={i} className="flex items-center gap-1.5">
++                            <span className="material-symbols-outlined text-primary text-base">check_circle</span>
++                            {item}
+                         </div>
+-                    </div>
+-                    <span>Trusted by financial engineering teams</span>
++                    ))}
+                 </div>
+             </div>
+         </section>
+
+commit 35334948d2272ba7674dd99e436859333c933156
+Author: kash002100 <kashabhi440@gmail.com>
+Date:   Thu Mar 5 18:49:35 2026 +0530
+
+    feat: Pivot UI to Sovereign Financial Agent architecture
+
+diff --git a/landing-page/src/app/components/Hero.tsx b/landing-page/src/app/components/Hero.tsx
+index dee23296..ec2ef175 100644
+--- a/landing-page/src/app/components/Hero.tsx
++++ b/landing-page/src/app/components/Hero.tsx
+@@ -34,9 +34,7 @@ export default function Hero() {
+                     transition={{ duration: 0.8, delay: 0.2 }}
+                     className="text-lg md:text-xl text-muted-light dark:text-muted-dark max-w-2xl mx-auto mb-10 leading-relaxed"
+                 >
+-                    AI agents are now making financial decisions. Atrosha provides the
+-                    essential security layer, mathematically verifying transaction intent in
+-                    real-time to protect your capital. No prompt injection. No LLM judges.
++                    Atrosha is the ultimate Sovereign Financial Agent. We don&apos;t just secure other agents; Atrosha natively ingests invoices, reasons locally, and executes payments perfectly aligned with your cryptographically signed intent.
+                 </motion.p>
+                 <div className="flex flex-col sm:flex-row justify-center items-center gap-4 mb-12">
+                     <Link
+
+commit 261e0172d79fb5fc782f51483c402e8d1a036bd7
+Author: kash002100 <kashabhi440@gmail.com>
+Date:   Thu Mar 5 15:28:16 2026 +0530
+
+    feat(landing): update hero, features, code demo, and docs page
+
+diff --git a/landing-page/src/app/components/Hero.tsx b/landing-page/src/app/components/Hero.tsx
+index 57303ec6..dee23296 100644
+--- a/landing-page/src/app/components/Hero.tsx
++++ b/landing-page/src/app/components/Hero.tsx
+@@ -35,8 +35,8 @@ export default function Hero() {
+                     className="text-lg md:text-xl text-muted-light dark:text-muted-dark max-w-2xl mx-auto mb-10 leading-relaxed"
+                 >
+                     AI agents are now making financial decisions. Atrosha provides the
+-                    essential security layer, approving safe transactions and blocking risky
+-                    ones in real-time to protect your capital.
++                    essential security layer, mathematically verifying transaction intent in
++                    real-time to protect your capital. No prompt injection. No LLM judges.
+                 </motion.p>
+                 <div className="flex flex-col sm:flex-row justify-center items-center gap-4 mb-12">
+                     <Link
+
+commit dbe17d7761da3b918c60564cd26ead76ea4dd3a2
+Author: kash002100 <kashabhi440@gmail.com>
+Date:   Sat Feb 28 12:54:44 2026 +0530
+
+    fix(ui): revert coloring to exact original scheme while preserving glass and motion
+
+diff --git a/landing-page/src/app/components/Hero.tsx b/landing-page/src/app/components/Hero.tsx
+index e0064219..57303ec6 100644
+--- a/landing-page/src/app/components/Hero.tsx
++++ b/landing-page/src/app/components/Hero.tsx
+@@ -10,12 +10,12 @@ export default function Hero() {
+                 <motion.div
+                     animate={{ rotate: 360, scale: [1, 1.1, 1] }}
+                     transition={{ duration: 20, repeat: Infinity, ease: "linear" }}
+-                    className="absolute top-1/4 left-1/4 w-[600px] h-[600px] bg-primary/20 rounded-full blur-[100px] mix-blend-screen"
++                    className="absolute top-1/4 left-1/4 w-[600px] h-[600px] bg-primary/10 rounded-full blur-[100px] mix-blend-screen dark:mix-blend-normal"
+                 />
+                 <motion.div
+                     animate={{ rotate: -360, scale: [1, 1.2, 1] }}
+                     transition={{ duration: 25, repeat: Infinity, ease: "linear" }}
+-                    className="absolute bottom-1/4 right-1/4 w-[500px] h-[500px] bg-emerald-500/10 rounded-full blur-[120px] mix-blend-screen"
++                    className="absolute bottom-1/4 right-1/4 w-[500px] h-[500px] bg-primary/5 rounded-full blur-[120px] mix-blend-screen dark:mix-blend-normal"
+                 />
+             </div>
+             <div className="relative z-10 max-w-4xl mx-auto px-4 text-center">
+@@ -26,7 +26,7 @@ export default function Hero() {
+                     className="font-serif text-5xl md:text-7xl lg:text-[5rem] tracking-tight leading-[1.1] text-text-light dark:text-white mb-6 drop-shadow-sm"
+                 >
+                     Code hallucinates. <br />
+-                    <span className="italic bg-clip-text text-transparent bg-gradient-to-r from-primary to-emerald-400">Capital shouldn&apos;t.</span>
++                    <span className="italic text-primary">Capital shouldn&apos;t.</span>
+                 </motion.h1>
+                 <motion.p
+                     initial={{ opacity: 0, y: 20 }}
+@@ -40,10 +40,10 @@ export default function Hero() {
+                 </motion.p>
+                 <div className="flex flex-col sm:flex-row justify-center items-center gap-4 mb-12">
+                     <Link
+-                        className="relative overflow-hidden group bg-gradient-to-br from-primary to-emerald-700 hover:from-primary-hover hover:to-emerald-800 text-white px-8 py-3.5 rounded-xl text-sm font-semibold transition-all shadow-[0_0_30px_rgba(16,185,129,0.3)] hover:shadow-[0_0_40px_rgba(16,185,129,0.5)] flex items-center gap-2 transform hover:-translate-y-0.5"
++                        className="relative overflow-hidden group bg-primary hover:bg-primary-hover text-white px-8 py-3.5 rounded-xl text-sm font-semibold transition-all shadow-glow flex items-center gap-2 transform hover:-translate-y-0.5"
+                         href="/signup"
+                     >
+-                        <span className="absolute inset-0 w-full h-full bg-white/20 group-hover:bg-transparent translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-700 ease-in-out"></span>
++                        <span className="absolute inset-0 w-full h-full bg-white/10 group-hover:bg-transparent translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-700 ease-in-out"></span>
+                         <span className="relative z-10 flex items-center gap-2">
+                             Get Started for Free
+                             <span className="material-symbols-outlined text-sm group-hover:translate-x-1 transition-transform">
+@@ -52,7 +52,7 @@ export default function Hero() {
+                         </span>
+                     </Link>
+                     <a
+-                        className="bg-white/50 dark:bg-white/5 backdrop-blur-md border border-gray-200 dark:border-white/10 hover:border-primary/50 text-text-light dark:text-white px-8 py-3.5 rounded-xl text-sm font-medium transition-all flex items-center gap-2 transform hover:-translate-y-0.5"
++                        className="bg-white/50 dark:bg-surface-dark/50 backdrop-blur-md border border-gray-200 dark:border-gray-700 hover:border-primary/50 text-text-light dark:text-white px-8 py-3.5 rounded-xl text-sm font-medium transition-all flex items-center gap-2 transform hover:-translate-y-0.5"
+                         href="/docs"
+                     >
+                         <span className="material-symbols-outlined text-gray-400 text-lg">
+
+commit a52f317874f285615818cecb50bc5c74be2fd441
+Author: kash002100 <kashabhi440@gmail.com>
+Date:   Sat Feb 28 12:42:48 2026 +0530
+
+    feat(ui): premium glassmorphism and animations for landing page
+
+diff --git a/landing-page/src/app/components/Hero.tsx b/landing-page/src/app/components/Hero.tsx
+index 1f248ed7..e0064219 100644
+--- a/landing-page/src/app/components/Hero.tsx
++++ b/landing-page/src/app/components/Hero.tsx
+@@ -6,18 +6,27 @@ import Link from "next/link";
+ export default function Hero() {
+     return (
+         <section className="relative pt-32 pb-20 lg:pt-48 lg:pb-32 overflow-hidden flex items-center justify-center min-h-[80vh]">
+-            <div className="absolute inset-0 z-0 pointer-events-none flex items-center justify-center select-none">
+-                <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[500px] h-[500px] bg-gradient-to-b from-primary/5 via-transparent to-transparent rounded-full blur-3xl"></div>
++            <div className="absolute inset-0 z-0 pointer-events-none flex items-center justify-center select-none overflow-hidden">
++                <motion.div
++                    animate={{ rotate: 360, scale: [1, 1.1, 1] }}
++                    transition={{ duration: 20, repeat: Infinity, ease: "linear" }}
++                    className="absolute top-1/4 left-1/4 w-[600px] h-[600px] bg-primary/20 rounded-full blur-[100px] mix-blend-screen"
++                />
++                <motion.div
++                    animate={{ rotate: -360, scale: [1, 1.2, 1] }}
++                    transition={{ duration: 25, repeat: Infinity, ease: "linear" }}
++                    className="absolute bottom-1/4 right-1/4 w-[500px] h-[500px] bg-emerald-500/10 rounded-full blur-[120px] mix-blend-screen"
++                />
+             </div>
+             <div className="relative z-10 max-w-4xl mx-auto px-4 text-center">
+                 <motion.h1
+-                    initial={{ opacity: 0, y: 20 }}
++                    initial={{ opacity: 0, y: 30 }}
+                     animate={{ opacity: 1, y: 0 }}
+-                    transition={{ duration: 0.8 }}
+-                    className="font-serif text-5xl md:text-7xl leading-tight text-text-light dark:text-white mb-6"
++                    transition={{ duration: 0.8, ease: "easeOut" }}
++                    className="font-serif text-5xl md:text-7xl lg:text-[5rem] tracking-tight leading-[1.1] text-text-light dark:text-white mb-6 drop-shadow-sm"
+                 >
+                     Code hallucinates. <br />
+-                    <span className="italic text-primary">Capital shouldn&apos;t.</span>
++                    <span className="italic bg-clip-text text-transparent bg-gradient-to-r from-primary to-emerald-400">Capital shouldn&apos;t.</span>
+                 </motion.h1>
+                 <motion.p
+                     initial={{ opacity: 0, y: 20 }}
+@@ -31,16 +40,19 @@ export default function Hero() {
+                 </motion.p>
+                 <div className="flex flex-col sm:flex-row justify-center items-center gap-4 mb-12">
+                     <Link
+-                        className="group bg-primary hover:bg-primary-hover text-white px-8 py-3.5 rounded-lg text-sm font-medium transition-all shadow-glow flex items-center gap-2"
++                        className="relative overflow-hidden group bg-gradient-to-br from-primary to-emerald-700 hover:from-primary-hover hover:to-emerald-800 text-white px-8 py-3.5 rounded-xl text-sm font-semibold transition-all shadow-[0_0_30px_rgba(16,185,129,0.3)] hover:shadow-[0_0_40px_rgba(16,185,129,0.5)] flex items-center gap-2 transform hover:-translate-y-0.5"
+                         href="/signup"
+                     >
+-                        Get Started for Free
+-                        <span className="material-symbols-outlined text-sm group-hover:translate-x-1 transition-transform">
+-                            arrow_forward
++                        <span className="absolute inset-0 w-full h-full bg-white/20 group-hover:bg-transparent translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-700 ease-in-out"></span>
++                        <span className="relative z-10 flex items-center gap-2">
++                            Get Started for Free
++                            <span className="material-symbols-outlined text-sm group-hover:translate-x-1 transition-transform">
++                                arrow_forward
++                            </span>
+                         </span>
+                     </Link>
+                     <a
+-                        className="bg-white dark:bg-surface-dark border border-gray-200 dark:border-gray-700 hover:border-primary/30 text-text-light dark:text-white px-8 py-3.5 rounded-lg text-sm font-medium transition-colors flex items-center gap-2 shadow-sm"
++                        className="bg-white/50 dark:bg-white/5 backdrop-blur-md border border-gray-200 dark:border-white/10 hover:border-primary/50 text-text-light dark:text-white px-8 py-3.5 rounded-xl text-sm font-medium transition-all flex items-center gap-2 transform hover:-translate-y-0.5"
+                         href="/docs"
+                     >
+                         <span className="material-symbols-outlined text-gray-400 text-lg">
+
+commit 73c2068f146a1b16de7b34c4b80b81b04d52d62c
+Author: kash002100 <kashabhi440@gmail.com>
+Date:   Fri Feb 27 19:19:26 2026 +0530
+
+    chore: resolve final typescript and ESLint build errors
+
+diff --git a/landing-page/src/app/components/Hero.tsx b/landing-page/src/app/components/Hero.tsx
+index d1550514..1f248ed7 100644
+--- a/landing-page/src/app/components/Hero.tsx
++++ b/landing-page/src/app/components/Hero.tsx
+@@ -3,7 +3,7 @@
+ import { motion } from "framer-motion";
+ import Link from "next/link";
+ 
+-export default function Hero({ onCta }: { onCta: () => void }) {
++export default function Hero() {
+     return (
+         <section className="relative pt-32 pb-20 lg:pt-48 lg:pb-32 overflow-hidden flex items-center justify-center min-h-[80vh]">
+             <div className="absolute inset-0 z-0 pointer-events-none flex items-center justify-center select-none">
+@@ -17,7 +17,7 @@ export default function Hero({ onCta }: { onCta: () => void }) {
+                     className="font-serif text-5xl md:text-7xl leading-tight text-text-light dark:text-white mb-6"
+                 >
+                     Code hallucinates. <br />
+-                    <span className="italic text-primary">Capital shouldn’t.</span>
++                    <span className="italic text-primary">Capital shouldn&apos;t.</span>
+                 </motion.h1>
+                 <motion.p
+                     initial={{ opacity: 0, y: 20 }}
+
+commit d3343b173d3093bf8968096b8b9902fc6b31c8b1
+Author: kash002100 <kashabhi440@gmail.com>
+Date:   Wed Feb 25 15:48:02 2026 +0530
+
+    fix(vercel): allow landing-page folder in .vercelignore and include UI updates
+
+diff --git a/landing-page/src/app/components/Hero.tsx b/landing-page/src/app/components/Hero.tsx
+index 549dd4b6..d1550514 100644
+--- a/landing-page/src/app/components/Hero.tsx
++++ b/landing-page/src/app/components/Hero.tsx
+@@ -26,7 +26,8 @@ export default function Hero({ onCta }: { onCta: () => void }) {
+                     className="text-lg md:text-xl text-muted-light dark:text-muted-dark max-w-2xl mx-auto mb-10 leading-relaxed"
+                 >
+                     AI agents are now making financial decisions. Atrosha provides the
+-                    essential security layer. Our 7M-parameter Semantic Firewall analyzes every payload's intent in real-time, blocking hallucinations and prompt injections before the money leaves your network.
++                    essential security layer, approving safe transactions and blocking risky
++                    ones in real-time to protect your capital.
+                 </motion.p>
+                 <div className="flex flex-col sm:flex-row justify-center items-center gap-4 mb-12">
+                     <Link
+
+commit 183413f3fdb4a28e5848cc6e54d53bcf38aecd00
+Author: kash002100 <kashabhi440@gmail.com>
+Date:   Wed Feb 25 10:53:22 2026 +0530
+
+    Apply Rust fixes and Vercel config
+
+diff --git a/landing-page/src/app/components/Hero.tsx b/landing-page/src/app/components/Hero.tsx
+index d1550514..549dd4b6 100644
+--- a/landing-page/src/app/components/Hero.tsx
++++ b/landing-page/src/app/components/Hero.tsx
+@@ -26,8 +26,7 @@ export default function Hero({ onCta }: { onCta: () => void }) {
+                     className="text-lg md:text-xl text-muted-light dark:text-muted-dark max-w-2xl mx-auto mb-10 leading-relaxed"
+                 >
+                     AI agents are now making financial decisions. Atrosha provides the
+-                    essential security layer, approving safe transactions and blocking risky
+-                    ones in real-time to protect your capital.
++                    essential security layer. Our 7M-parameter Semantic Firewall analyzes every payload's intent in real-time, blocking hallucinations and prompt injections before the money leaves your network.
+                 </motion.p>
+                 <div className="flex flex-col sm:flex-row justify-center items-center gap-4 mb-12">
+                     <Link
+
+commit 9cf4edfd402383ea0acc789da05b2ca3fdb2ab72
+Author: kash002100 <kashabhi440@gmail.com>
+Date:   Tue Feb 24 19:24:00 2026 +0530
+
+    fix(landing): revert hero sub-heading paragraph
+
+diff --git a/landing-page/src/app/components/Hero.tsx b/landing-page/src/app/components/Hero.tsx
+index 549dd4b6..d1550514 100644
+--- a/landing-page/src/app/components/Hero.tsx
++++ b/landing-page/src/app/components/Hero.tsx
+@@ -26,7 +26,8 @@ export default function Hero({ onCta }: { onCta: () => void }) {
+                     className="text-lg md:text-xl text-muted-light dark:text-muted-dark max-w-2xl mx-auto mb-10 leading-relaxed"
+                 >
+                     AI agents are now making financial decisions. Atrosha provides the
+-                    essential security layer. Our 7M-parameter Semantic Firewall analyzes every payload's intent in real-time, blocking hallucinations and prompt injections before the money leaves your network.
++                    essential security layer, approving safe transactions and blocking risky
++                    ones in real-time to protect your capital.
+                 </motion.p>
+                 <div className="flex flex-col sm:flex-row justify-center items-center gap-4 mb-12">
+                     <Link
+
+commit 1daaf333fe3e9ffeb0c92c403462ea3522246b03
+Author: kash002100 <kashabhi440@gmail.com>
+Date:   Tue Feb 24 10:59:58 2026 +0530
+
+    docs: update developer pages to showcase Semantic Firewall features and SDK interceptors
+
+diff --git a/landing-page/src/app/components/Hero.tsx b/landing-page/src/app/components/Hero.tsx
+index d1550514..549dd4b6 100644
+--- a/landing-page/src/app/components/Hero.tsx
++++ b/landing-page/src/app/components/Hero.tsx
+@@ -26,8 +26,7 @@ export default function Hero({ onCta }: { onCta: () => void }) {
+                     className="text-lg md:text-xl text-muted-light dark:text-muted-dark max-w-2xl mx-auto mb-10 leading-relaxed"
+                 >
+                     AI agents are now making financial decisions. Atrosha provides the
+-                    essential security layer, approving safe transactions and blocking risky
+-                    ones in real-time to protect your capital.
++                    essential security layer. Our 7M-parameter Semantic Firewall analyzes every payload's intent in real-time, blocking hallucinations and prompt injections before the money leaves your network.
+                 </motion.p>
+                 <div className="flex flex-col sm:flex-row justify-center items-center gap-4 mb-12">
+                     <Link
+
+commit 62187fb4eb0e88fec8d461513ff807e71781959f
+Author: kash002100 <kashyapabhigyan2@gmail.com>
+Date:   Sat Feb 14 15:24:48 2026 +0530
+
+    Fix: Truly convert landing-page to directory by removing nested .git
+
+diff --git a/landing-page/src/app/components/Hero.tsx b/landing-page/src/app/components/Hero.tsx
+new file mode 100644
+index 00000000..d1550514
+--- /dev/null
++++ b/landing-page/src/app/components/Hero.tsx
+@@ -0,0 +1,69 @@
++"use client";
++
++import { motion } from "framer-motion";
++import Link from "next/link";
++
++export default function Hero({ onCta }: { onCta: () => void }) {
++    return (
++        <section className="relative pt-32 pb-20 lg:pt-48 lg:pb-32 overflow-hidden flex items-center justify-center min-h-[80vh]">
++            <div className="absolute inset-0 z-0 pointer-events-none flex items-center justify-center select-none">
++                <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[500px] h-[500px] bg-gradient-to-b from-primary/5 via-transparent to-transparent rounded-full blur-3xl"></div>
++            </div>
++            <div className="relative z-10 max-w-4xl mx-auto px-4 text-center">
++                <motion.h1
++                    initial={{ opacity: 0, y: 20 }}
++                    animate={{ opacity: 1, y: 0 }}
++                    transition={{ duration: 0.8 }}
++                    className="font-serif text-5xl md:text-7xl leading-tight text-text-light dark:text-white mb-6"
++                >
++                    Code hallucinates. <br />
++                    <span className="italic text-primary">Capital shouldn’t.</span>
++                </motion.h1>
++                <motion.p
++                    initial={{ opacity: 0, y: 20 }}
++                    animate={{ opacity: 1, y: 0 }}
++                    transition={{ duration: 0.8, delay: 0.2 }}
++                    className="text-lg md:text-xl text-muted-light dark:text-muted-dark max-w-2xl mx-auto mb-10 leading-relaxed"
++                >
++                    AI agents are now making financial decisions. Atrosha provides the
++                    essential security layer, approving safe transactions and blocking risky
++                    ones in real-time to protect your capital.
++                </motion.p>
++                <div className="flex flex-col sm:flex-row justify-center items-center gap-4 mb-12">
++                    <Link
++                        className="group bg-primary hover:bg-primary-hover text-white px-8 py-3.5 rounded-lg text-sm font-medium transition-all shadow-glow flex items-center gap-2"
++                        href="/signup"
++                    >
++                        Get Started for Free
++                        <span className="material-symbols-outlined text-sm group-hover:translate-x-1 transition-transform">
++                            arrow_forward
++                        </span>
++                    </Link>
++                    <a
++                        className="bg-white dark:bg-surface-dark border border-gray-200 dark:border-gray-700 hover:border-primary/30 text-text-light dark:text-white px-8 py-3.5 rounded-lg text-sm font-medium transition-colors flex items-center gap-2 shadow-sm"
++                        href="/docs"
++                    >
++                        <span className="material-symbols-outlined text-gray-400 text-lg">
++                            description
++                        </span>
++                        View Documentation
++                    </a>
++                </div>
++                <div className="flex items-center justify-center gap-3 text-sm text-muted-light dark:text-muted-dark">
++                    <div className="flex -space-x-2">
++                        <div className="w-8 h-8 rounded-full bg-gray-200 dark:bg-gray-700 flex items-center justify-center text-xs font-bold border-2 border-background-light dark:border-background-dark text-gray-500">
++                            JP
++                        </div>
++                        <div className="w-8 h-8 rounded-full bg-gray-200 dark:bg-gray-700 flex items-center justify-center text-xs font-bold border-2 border-background-light dark:border-background-dark text-gray-500">
++                            GS
++                        </div>
++                        <div className="w-8 h-8 rounded-full bg-gray-200 dark:bg-gray-700 flex items-center justify-center text-xs font-bold border-2 border-background-light dark:border-background-dark text-gray-500">
++                            MS
++                        </div>
++                    </div>
++                    <span>Trusted by financial engineering teams</span>
++                </div>
++            </div>
++        </section>
++    );
++}

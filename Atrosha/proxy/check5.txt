@@ -1,0 +1,177 @@
+    Checking atrosha-proxy v0.2.0 (C:\Python\Project Atrosha\Atrosha\proxy)
+error[E0425]: cannot find type `PolicyAST` in module `crate::zkp::policy_lang`
+  --> src\state.rs:24:57
+   |
+24 |     pub zkp_policy: Option<Arc<crate::zkp::policy_lang::PolicyAST>>,
+   |                                                         ^^^^^^^^^ help: a struct with a similar name exists: `Policy`
+   |
+  ::: src\zkp\policy_lang.rs:74:1
+   |
+74 | pub struct Policy {
+   | ----------------- similarly named struct `Policy` defined here
+
+warning: unused import: `PreparedVerifyingKey`
+ --> src\zkp\verifier.rs:1:65
+  |
+1 | use ark_groth16::{Groth16, VerifyingKey, prepare_verifying_key, PreparedVerifyingKey, Proof};
+  |                                                                 ^^^^^^^^^^^^^^^^^^^^
+  |
+  = note: `#[warn(unused_imports)]` (part of `#[warn(unused)]`) on by default
+
+error[E0107]: struct takes 0 generic arguments but 1 generic argument was supplied
+  --> src\state.rs:23:51
+   |
+23 |     pub zkp_setup: Option<Arc<crate::zkp::prover::Groth16Setup<ark_bn254::Bn254>>>,
+   |                                                   ^^^^^^^^^^^^------------------ help: remove the unnecessary generics
+   |                                                   |
+   |                                                   expected 0 generic arguments
+   |
+note: struct defined here, with 0 generic parameters
+  --> src\zkp\prover.rs:16:12
+   |
+16 | pub struct Groth16Setup {
+   |            ^^^^^^^^^^^^
+
+error[E0061]: this function takes 15 arguments but 14 arguments were supplied
+   --> src\handlers.rs:151:9
+    |
+151 | ...   log_audit(&state, &org_id, agent_id, &req_id, amount, target_url, AuditDecision::Denied, start, false, None::<String>, SignatureStatus::Verified, Some("Egress Blocked: Target not whitelisted".to_string()), 0.0, None::<String>);
+    |       ^^^^^^^^^------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- argument #15 of type `std::option::Option<std::string::String>` is missing
+    |
+note: function defined here
+   --> src\handlers.rs:503:8
+    |
+503 | pub fn log_audit(
+    |        ^^^^^^^^^
+...
+518 |     zkp_proof: Option<String>,
+    |     -------------------------
+help: provide the argument
+    |
+151 |         log_audit(&state, &org_id, agent_id, &req_id, amount, target_url, AuditDecision::Denied, start, false, None::<String>, SignatureStatus::Verified, Some("Egress Blocked: Target not whitelisted".to_string()), 0.0, None::<String>, /* std::option::Option<std::string::String> */);
+    |                                                                                                                                                                                                                                          ++++++++++++++++++++++++++++++++++++++++++++++++
+
+error[E0061]: this function takes 15 arguments but 14 arguments were supplied
+   --> src\handlers.rs:182:17
+    |
+182 | ...   log_audit(&state, &org_id, agent_id, &req_id, amount, target_url, AuditDecision::Denied, start, false, None::<String>, SignatureStatus::Verified, Some(format!("Semantic Firewall: DENY (conf={:.3})", verdict.confidence)), 0.0, None::<String>);
+    |       ^^^^^^^^^---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- argument #15 of type `std::option::Option<std::string::String>` is missing
+    |
+note: function defined here
+   --> src\handlers.rs:503:8
+    |
+503 | pub fn log_audit(
+    |        ^^^^^^^^^
+...
+518 |     zkp_proof: Option<String>,
+    |     -------------------------
+help: provide the argument
+    |
+182 |                 log_audit(&state, &org_id, agent_id, &req_id, amount, target_url, AuditDecision::Denied, start, false, None::<String>, SignatureStatus::Verified, Some(format!("Semantic Firewall: DENY (conf={:.3})", verdict.confidence)), 0.0, None::<String>, /* std::option::Option<std::string::String> */);
+    |                                                                                                                                                                                                                                                                 ++++++++++++++++++++++++++++++++++++++++++++++++
+
+error[E0061]: this function takes 15 arguments but 14 arguments were supplied
+   --> src\handlers.rs:202:13
+    |
+202 | ...   log_audit(&state, &org_id, agent_id, &req_id, amount, target_url, AuditDecision::Denied, start, false, None::<String>, SignatureStatus::Verified, Some("Intent Drift: streamed validation rejected".to_string()), 0.0, None::<String>);
+    |       ^^^^^^^^^----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- argument #15 of type `std::option::Option<std::string::String>` is missing
+    |
+note: function defined here
+   --> src\handlers.rs:503:8
+    |
+503 | pub fn log_audit(
+    |        ^^^^^^^^^
+...
+518 |     zkp_proof: Option<String>,
+    |     -------------------------
+help: provide the argument
+    |
+202 |             log_audit(&state, &org_id, agent_id, &req_id, amount, target_url, AuditDecision::Denied, start, false, None::<String>, SignatureStatus::Verified, Some("Intent Drift: streamed validation rejected".to_string()), 0.0, None::<String>, /* std::option::Option<std::string::String> */);
+    |                                                                                                                                                                                                                                                  ++++++++++++++++++++++++++++++++++++++++++++++++
+
+error[E0061]: this function takes 15 arguments but 14 arguments were supplied
+   --> src\handlers.rs:209:9
+    |
+209 | ...   log_audit(&state, &org_id, agent_id, &req_id, amount, target_url, AuditDecision::Denied, start, false, None::<String>, SignatureStatus::Verified, Some("Transaction > $10k requires Human-in-the-Loop MFA".to_string()), 0.0, None::<String>);
+    |       ^^^^^^^^^------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ argument #15 of type `std::option::Option<std::string::String>` is missing
+    |
+note: function defined here
+   --> src\handlers.rs:503:8
+    |
+503 | pub fn log_audit(
+    |        ^^^^^^^^^
+...
+518 |     zkp_proof: Option<String>,
+    |     -------------------------
+help: provide the argument
+    |
+209 |         log_audit(&state, &org_id, agent_id, &req_id, amount, target_url, AuditDecision::Denied, start, false, None::<String>, SignatureStatus::Verified, Some("Transaction > $10k requires Human-in-the-Loop MFA".to_string()), 0.0, None::<String>, /* std::option::Option<std::string::String> */);
+    |                                                                                                                                                                                                                                                     ++++++++++++++++++++++++++++++++++++++++++++++++
+
+error[E0061]: this function takes 15 arguments but 14 arguments were supplied
+   --> src\handlers.rs:214:9
+    |
+214 | ...   log_audit(&state, &org_id, agent_id, &req_id, amount, target_url, AuditDecision::Denied, start, false, None::<String>, SignatureStatus::Verified, Some("Transaction > $5k requires Supervisor-Signature".to_string()), 0.0, None::<String>);
+    |       ^^^^^^^^^---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- argument #15 of type `std::option::Option<std::string::String>` is missing
+    |
+note: function defined here
+   --> src\handlers.rs:503:8
+    |
+503 | pub fn log_audit(
+    |        ^^^^^^^^^
+...
+518 |     zkp_proof: Option<String>,
+    |     -------------------------
+help: provide the argument
+    |
+214 |         log_audit(&state, &org_id, agent_id, &req_id, amount, target_url, AuditDecision::Denied, start, false, None::<String>, SignatureStatus::Verified, Some("Transaction > $5k requires Supervisor-Signature".to_string()), 0.0, None::<String>, /* std::option::Option<std::string::String> */);
+    |                                                                                                                                                                                                                                                   ++++++++++++++++++++++++++++++++++++++++++++++++
+
+error[E0061]: this function takes 15 arguments but 14 arguments were supplied
+   --> src\handlers.rs:222:13
+    |
+222 | ...   log_audit(&state, &org_id, agent_id, &req_id, amount, target_url, AuditDecision::Denied, start, false, None::<String>, sig, Some(reason), 0.0, None::<String>);
+    |       ^^^^^^^^^----------------------------------------------------------------------------------------------------------------------------------------------------- argument #15 of type `std::option::Option<std::string::String>` is missing
+    |
+note: function defined here
+   --> src\handlers.rs:503:8
+    |
+503 | pub fn log_audit(
+    |        ^^^^^^^^^
+...
+518 |     zkp_proof: Option<String>,
+    |     -------------------------
+help: provide the argument
+    |
+222 |             log_audit(&state, &org_id, agent_id, &req_id, amount, target_url, AuditDecision::Denied, start, false, None::<String>, sig, Some(reason), 0.0, None::<String>, /* std::option::Option<std::string::String> */);
+    |                                                                                                                                                                          ++++++++++++++++++++++++++++++++++++++++++++++++
+
+error[E0308]: mismatched types
+   --> src\handlers.rs:281:24
+    |
+281 |                 if let Ok(b64) = crate::zkp::prover::ProofGenerator::serialize_proof(&proof) {
+    |                        ^^^^^^^   ----------------------------------------------------------- this expression has type `std::string::String`
+    |                        |
+    |                        expected `String`, found `Result<_, _>`
+    |
+    = note: expected struct `std::string::String`
+                 found enum `std::result::Result<_, _>`
+
+warning: unused variable: `diff`
+   --> src\zkp\compiler.rs:253:9
+    |
+253 |     let diff = b - a;
+    |         ^^^^ help: if this is intentional, prefix it with an underscore: `_diff`
+    |
+    = note: `#[warn(unused_variables)]` (part of `#[warn(unused)]`) on by default
+
+warning: unused variable: `config`
+   --> src\zkp\compiler.rs:294:5
+    |
+294 |     config: &PoseidonConfig<Fr>
+    |     ^^^^^^ help: if this is intentional, prefix it with an underscore: `_config`
+
+Some errors have detailed explanations: E0061, E0107, E0308, E0425.
+For more information about an error, try `rustc --explain E0061`.
+warning: `atrosha-proxy` (bin "atrosha-proxy") generated 3 warnings
+error: could not compile `atrosha-proxy` (bin "atrosha-proxy") due to 9 previous errors; 3 warnings emitted

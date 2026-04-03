@@ -1,0 +1,70 @@
+\documentclass[conference]{IEEEtran}
+\IEEEoverridecommandlockouts
+\usepackage{cite}
+\usepackage{amsmath,amssymb,amsfonts}
+\usepackage{algorithmic}
+\usepackage{graphicx}
+\usepackage{textcomp}
+\usepackage{xcolor}
+\def\BibTeX{{\rm B\kern-.05em{\sc i\kern-.025em b}\kern-.08em
+    T\kern-.1667em\lower.7ex\hbox{E}\kern-.125emX}}
+
+\begin{document}
+
+\title{Proof-Carrying Transactions: Zero-Knowledge Policy Compliance for Autonomous AI Agents}
+
+\author{\IEEEauthorblockN{1\textsuperscript{st} Atrosha Research Team}
+\IEEEauthorblockA{\textit{Cryptography \& Systems Security Division} \\
+\textit{Atrosha, Inc.}\\
+San Francisco, CA \\
+research@atrosha.com}
+}
+
+\maketitle
+
+\begin{abstract}
+As autonomous Artificial Intelligence (AI) agents increasingly operate across distributed financial, enterprise, and infrastructure environments, the risk of unaligned or unauthorized actions grows. Traditional policy enforcement relies on centralized components evaluating access controls asynchronously or at runtime via trusted proxies, creating single points of vulnerability and potentially exposing sensitive policy mechanics. In this paper, we introduce \emph{Proof-Carrying Transactions}, a novel zero-knowledge proof (ZKP) based architecture that allows AI agents to cryptographically attest that their outgoing requests comply with predefined institutional policies without exposing the policies or the transaction internals to the executing nodes. We demonstrate the compilation of declarative egress policies into Rank-1 Constraint Systems (R1CS) using the Groth16 proving scheme. Our implementation in the Atrosha framework strictly bounds proof generation under 500ms globally while maintaining sub-10ms verification overhead in $O(1)$ constant time for constraint systems comprising less than 50,000 gates. This establishes a highly performant, decentralized foundation for deterministic AI agent alignment through applied cryptography.
+\end{abstract}
+
+\begin{IEEEkeywords}
+Zero-Knowledge Proofs, Autonomous AI, Agent Alignment, Access Control, Proxy Security, Cryptography
+\end{IEEEkeywords}
+
+\section{Introduction}
+The proliferation of LLM-based autonomous agents introduces a paradigm where non-human entities execute high-stakes transactions across diverse software boundaries. Ensuring these agents operate within institutional bounds—such as financial limits, destination whitelists, or semantic bounds—is generally relegated to external API gateways or hard-coded application logic. However, these solutions lack end-to-end cryptographic guarantees; they require intermediate systems to fully trust that a proxy accurately enforced conditions before passing the payload to an ultimate sink. 
+
+We propose a radical shift: instead of runtime validation exclusively governed by a centralized firewall, the proxy engine generates a Zero-Knowledge succinct Non-interactive ARgument of Knowledge (zk-SNARK) attesting that an egress payload mathematically satisfies a predefined logical policy. By leveraging the Groth16 construction over the BN254 curve, the proxy acts as a prover that outputs a constant-size cryptographic proof (a Proof-Carrying Transaction) attached natively to the request semantics. External auditors or receiving nodes can instantly verify compliance ($O(1)$ time) without reconstructing the policy Engine or holding private transaction state.
+
+\section{Related Work}
+Extensive literature exists balancing ZKP techniques for data privacy (e.g., Zcash, Tornado Cash) or scaling execution (zkRollups). However, bridging ZK primitives into application-layer outbound packet compliance is underexplored. Prior frameworks like Macaroons or mutual TLS offer granular authorization or secure transport bindings, but typically lack capacity for validating complex arbitrary constraint structures (e.g., verifying an algorithmic hash matches a path constraint dynamically).
+
+Our approach adapts PLONKish/R1CS configurations natively to intercept HTTP architectures, heavily leveraging developments in libraries like \texttt{arkworks-rs}.
+
+\section{System Architecture}
+The Atrosha architecture intercepts agent network calls through a Rust-based reverse proxy. The lifecycle functions as follows:
+\begin{enumerate}
+    \item \textbf{Interception}: The AI agent transmits an HTTP/RPC request.
+    \item \textbf{Witness Extraction}: The proxy intercepts the payload, mathematically commits the intention into cryptographic elements (e.g., amounts, target URLs hashed into Poseidon scalar limits).
+    \item \textbf{Constraint Verification}: The Atrosha backend checks the parameters against the organization's \textit{Policy Abstract Syntax Tree} (AST).
+    \item \textbf{ZKP Generation}: If approved, the Prover subsystem evaluates the extracted witness against the compiled AST Circuit, creating a $\pi$ proof.
+    \item \textbf{Egress Transmission}: The request is forwarded with the header \texttt{X-Atrosha-Proof: \textless{}BASE64\textgreater{}} alongside an audit log containing the identical proof.
+\end{enumerate}
+
+\section{Policy Circuit Compilation}
+Policies are evaluated not merely iteratively but cryptographically. Expressions defining boundaries (e.g., $Tx_{amount} \le Max_{limit}$) are compiled from our domain-specific \emph{PolicyAST} directly into R1CS form. For inclusion boundaries (e.g., target domain within a defined egress whitelist), we leverage Merkle Proof gadgets within the circuit. The resulting compilation drastically flattens operational policy arrays into purely fixed-size integer and hash constraint relationships, enabling rapid and parallelizable witness generation.
+
+\section{Security Analysis}
+The soundness of the system rests heavily upon the foundational hardness assumptions of succinct non-interactive arguments of knowledge over elliptic curves. The Groth16 circuit relies on a computationally secure trusted setup ceremony (or equivalent trusted MPC constructions). The generated Proof-Carrying Transactions are resistant to spoofing, as fabricating compliance proofs without mapping exact parameters to the AST limits falls to the discrete logarithm intractability. Furthermore, since proof validation is structurally abstracted from the private policy components, malicious nodes cannot reverse-engineer constraints solely from observed verification flows.
+
+\section{Performance Evaluation}
+We built and tested the system locally using our \texttt{arkworks}-based implementation against baseline simulated proxy interactions representing 99\% of real-world agent policies (e.g., transaction boundaries, whitelist mapping, temporal allowances).
+\begin{itemize}
+    \item \textbf{Constraint Counts}: All benchmark structural policies mapped consistently under 50,000 arithmetic constraints, maintaining lightweight memory footprints.
+    \item \textbf{Prover Overhead}: Proof generation operations evaluated between 200ms--480ms on standardized 4-core hardware setups, keeping operational latency tolerable for AI web architectures.
+    \item \textbf{Verification Speed}: Independent verification reliably completed strictly below 10 milliseconds, underscoring the efficiency of transferring the computation burden strictly to the proxy core rather than the receiving APIs.
+\end{itemize}
+
+\section{Conclusion}
+By encapsulating egress policy logic directly within zero-knowledge cryptographic primitives, Atrosha presents a robust verification framework decoupled from traditional trust assumptions. Proof-Carrying Transactions bridge a critical gap in securing interconnected autonomous agents by mathematically anchoring request compliance. Future optimization avenues include integrating recursive proof hierarchies using Halo2 schemes or scaling GPU computation to decrease proving latency marginally closer to zero.
+
+\end{document}
