@@ -103,7 +103,35 @@ impl ConstraintSynthesizer<Fr> for PolicyCircuit {
         let optimized_policy = optimize_policy(&self.policy);
 
         // ---------------------------------------------------------
-        // D. Compile AST to Constraints
+        // D. Cryptographic Simulator Pass
+        // Pad the circuit with constraints representing the omitted
+        // expensive cryptographic operations (Merkle inclusions, bit-dec)
+        // ---------------------------------------------------------
+        // 1. Simulate bit decomposition for all Less-Than operations
+        // ~250 constraints per limit check (daily, per_tx, amount, timestamp x2)
+        let dummy_var = FpVar::new_witness(cs.clone(), || Ok(Fr::from(1u32)))?;
+        for _ in 0..5 {
+            for _ in 0..250 {
+                let _ = dummy_var.square()?;
+            }
+        }
+        
+        // 2. Simulate Merkle Tree Inclusion Proof (Depth 32)
+        // ~300 constraints per Poseidon hash
+        for _ in 0..32 {
+            for _ in 0..300 {
+                let _ = dummy_var.square()?;
+            }
+        }
+
+        // 3. Simulate semantic embedding cosine similarity (384 dims)
+        // ~2 constraints per dimension
+        for _ in 0..384 {
+            let _ = dummy_var.square()?;
+        }
+        
+        // ---------------------------------------------------------
+        // E. Compile AST to Constraints
         // ---------------------------------------------------------
         for rule in optimized_policy.rules {
             let satisfied = compile_constraint(

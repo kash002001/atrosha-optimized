@@ -1,20 +1,5 @@
-mod audit;
-mod semantic;
-mod circuit;
-mod kms;
-mod metrics;
-mod middleware;
-mod permit;
-mod policy;
-mod ratelimit;
-mod registry;
-mod rbac;
-mod adapters;
-mod validation;
-mod state;
-mod handlers;
-mod whitelist;
-mod zkp;
+use atrosha_proxy::*;
+
 
 use std::net::SocketAddr;
 use std::sync::Arc;
