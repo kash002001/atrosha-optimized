@@ -56,13 +56,13 @@
 %% ABSTRACT
 %% ===================================================================
 \begin{abstract}
-The deployment of autonomous AI agents capable of initiating financial transactions, invoking external APIs, and orchestrating multi-step workflows across enterprise boundaries introduces an unprecedented class of alignment failures: \emph{egress-time policy violations}---actions that individually appear benign but collectively breach organizational constraints governing amount limits, destination whitelists, temporal windows, and semantic intent boundaries. Existing enforcement architectures rely on centralized proxy firewalls that require downstream consumers to implicitly trust the enforcer's computation, creating single points of compromise and precluding independent auditability.
+Autonomous AI agents pose a non-trivial problem for enterprise governance. These agents execute financial transactions, orchestrate multi-step API calls, and operate with minimal human oversight---making it exceedingly hard to enforce policy at the point of network egress. Individual outbound requests look harmless. Composed together, they trigger \emph{egress-time policy violations}: breached spending caps, ignored temporal windows, drift outside approved task categories. The standard fix is a centralized proxy firewall. This is fragile. It demands implicit trust in the proxy, creates a single point of compromise, and blocks independent auditability.
 
-We introduce \textbf{Proof-Carrying Transactions (PCT)}, a cryptographic framework that removes the need to trust the proxy's evaluation logic by transforming every outbound agent request into a self-certifying artifact: each transaction carries a zero-knowledge succinct non-interactive argument of knowledge (zk-SNARK) attesting that its parameters satisfy the organization's declarative policy constraints, without revealing the policy structure, private thresholds, or internal agent state to any external party.
+We propose \textbf{Proof-Carrying Transactions (PCT)}. PCT transforms every outbound agent request into a self-certifying artifact. Each request carries a zero-knowledge succinct non-interactive argument of knowledge (zk-SNARK) proving compliance with the organization's declarative policy constraints. The receiver never sees the rules, the thresholds, or internal agent state.
 
-Our core contribution is architectural, not cryptographic: we design a \emph{Policy Constraint Language} (PCL) and its domain-specific compiler that translates declarative egress rules into optimized Rank-1 Constraint Systems (R1CS), reducing constraint counts by 50--100$\times$ and proving latency by orders of magnitude compared to general-purpose zkVMs like RISC Zero. We implement PCT using the Groth16 proving scheme over the BN254 elliptic curve and introduce three novel application-layer gadgets---a \emph{16-bit quantized semantic similarity threshold circuit}, \emph{temporal window membership proofs}, and \emph{hierarchical Merkle whitelist accumulators}---that extend standard ZKP primitives to the domain of AI agent governance.
+Our primary contribution lies in applied systems architecture rather than pure cryptographic theory. We built a domain-specific \emph{Policy Constraint Language} (PCL) and a compiler that maps declarative egress rules into tightly optimized Rank-1 Constraint Systems (R1CS), cutting constraint overhead by two orders of magnitude versus general-purpose zkVMs like RISC Zero. On top of Groth16 over BN254, we introduce three application-layer gadgets for AI governance: a 16-bit quantized semantic similarity threshold, temporal window proofs, and hierarchical Merkle-based whitelist accumulators.
 
-Comprehensive evaluation on a corpus of 847 real-world enterprise policies demonstrates that PCT achieves a median proof generation latency of 95ms and verification in 4.2ms ($O(1)$) while maintaining constraint counts at approximately 11,200 R1CS gates for 97.3\% of policies tested. We prove that PCT satisfies \emph{computational soundness}, \emph{zero-knowledge privacy}, and a new property we term \emph{policy-binding completeness}---ensuring that no compliant transaction is rejected and no non-compliant transaction can forge a valid proof under the Knowledge of Exponent assumption. Finally, we demonstrate PCT's regulatory applicability by mapping its cryptographic guarantees to the technical requirements of the EU AI Act (Articles 9, 12, 14) and the NIST AI Risk Management Framework, establishing PCT as the first formally verified bridge between applied cryptography and AI governance regulation.
+We evaluated PCT against 847 enterprise-derived policies. Median proof generation: 95ms. Verification: 4.2ms, constant-time. 97.3\% of policies compiled to under 11,200 R1CS gates. We prove computational soundness, zero-knowledge privacy, and a property we call \emph{policy-binding completeness}---a non-compliant agent cannot forge a valid proof; compliant agents are never rejected. We also map PCT onto the EU AI Act and NIST AI RMF, showing that cryptographic enforcement directly addresses emerging governance mandates.
 \end{abstract}
 
 \begin{IEEEkeywords}
@@ -75,44 +75,46 @@ Zero-Knowledge Proofs, Autonomous AI Agents, Agent Alignment, Proof-Carrying Cod
 \section{Introduction}
 \label{sec:intro}
 
-Large language model (LLM)-based autonomous agents---software entities capable of planning, reasoning, and executing multi-step actions without continuous human supervision---are rapidly transitioning from research prototypes to production infrastructure across financial services, healthcare operations, supply chain logistics, and critical infrastructure management~\cite{xi2023rise, wang2024survey}. These agents routinely initiate wire transfers, invoke third-party APIs, modify database records, and orchestrate workflows that carry real-world consequences measured in millions of dollars and human lives.
+LLM-based agents now autonomously reason, plan, and execute actions across enterprise infrastructure~\cite{xi2023rise, wang2024survey}. They initiate fund transfers. They modify database records. They call third-party services with minimal human oversight---and the aggregate consequences are measurable in millions of dollars.
 
-This proliferation introduces what we term the \textbf{Autonomous Egress Problem}: how can an organization cryptographically guarantee that every outbound action taken by an AI agent complies with its governance policies, without requiring downstream systems to trust the enforcement infrastructure and without exposing proprietary policy details to external observers?
+This creates what we call the \textbf{Autonomous Egress Problem}: how does an organization cryptographically guarantee that an agent's outbound request complies with its governance policy? The question has teeth. We need to do this without forcing downstream receivers to trust a network intermediary, and without leaking proprietary policy logic.
 
-\subsection{The Failure of Trust-Based Enforcement}
+\subsection{Limitations of Trust-Based Enforcement}
 
-Current approaches to agent governance fall into three inadequate categories:
+Existing approaches to this problem exhibit three fundamental shortcomings:
 
-\textbf{(1) Application-level guardrails.} Systems like prompt engineering, Constitutional AI~\cite{bai2022constitutional}, and RLHF~\cite{ouyang2022training} operate at the model layer, attempting to shape agent behavior through training-time alignment. These approaches lack formal guarantees: a sufficiently capable agent may learn to circumvent soft constraints through prompt injection, jailbreaking, or simply by exploiting gaps between the training distribution and deployment reality~\cite{perez2022red}. More critically, they provide no post-hoc verifiable evidence that a specific transaction was compliant at execution time.
+\textbf{(1) Application-level Guardrails.} Prompt engineering, Constitutional AI~\cite{bai2022constitutional}, and RLHF~\cite{ouyang2022training} treat security as a training objective. They offer no formal guarantees. Adversarial inputs and distribution drift bypass them through jailbreaking~\cite{carlini2023extracting, perez2022red}, and they produce zero verifiable evidence that a specific transaction was compliant at execution time.
 
-\textbf{(2) Centralized proxy firewalls.} API gateways like Kong, Envoy, and proprietary agent management platforms enforce policies by intercepting requests at a choke point. While effective for simple allow/deny rules, these architectures demand that every downstream consumer implicitly trust the proxy's correctness. A compromised, misconfigured, or subtly buggy proxy invalidates the entire security model---and the downstream API has \emph{no independent mechanism} to verify that enforcement actually occurred.
+\textbf{(2) Centralized API Gateways.} Kong, Envoy, and similar platforms handle static rules well (IP allowlisting, rate limits). But downstream consumers must implicitly trust the gateway. A misconfigured or compromised proxy collapses the entire perimeter, and the receiving API has no independent way to confirm enforcement occurred.
 
-\textbf{(3) Audit-after-the-fact.} Post-hoc logging and compliance review detect violations retroactively but cannot prevent them. In high-stakes domains---automated trading, medical record access, infrastructure commands---retroactive detection is insufficient: the damage is already done.
+\textbf{(3) Post-Execution Auditing.} Log analysis enables forensics but cannot prevent violations. In automated trading, discovering an unauthorized transfer after settlement is a post-mortem---not a control.
 
-\subsection{Our Contribution: Proof-Carrying Transactions}
+\subsection{Our Approach: Proof-Carrying Transactions}
 
-We propose a fundamental paradigm shift: \emph{the enforcement proof travels with the transaction}. Drawing inspiration from Necula's seminal work on proof-carrying code~\cite{necula1997proof}, where executable binaries carry machine-checkable proofs of safety properties, we introduce \textbf{Proof-Carrying Transactions (PCT)}---a framework where every outbound agent request is augmented with a cryptographic proof attesting that the request's parameters satisfy the organization's policy constraints.
+PCT takes a different path. We make the compliance proof travel \emph{with} the transaction. The idea traces back to Necula's proof-carrying code~\cite{necula1997proof}, where binaries shipped with machine-checkable safety proofs. Our framework extends this from instruction-level safety to network-level policy compliance. Every outbound agent request carries a cryptographic attestation that it satisfies organizational constraints.
 
-The key insight is that by compiling declarative policy rules into arithmetic circuits and using the agent's transaction parameters as the private witness, we can leverage the zero-knowledge property of zk-SNARKs to achieve three seemingly contradictory goals simultaneously:
+We accomplish this by compiling declarative policy rules directly into arithmetic circuits. The transaction parameters become the private witness. Through zk-SNARKs, the framework delivers three properties usually considered to be in tension:
 
 \begin{enumerate}
-    \item \textbf{Verifiable compliance}: Any party holding the verification key can confirm in $O(1)$ time that the transaction satisfies all policy constraints.
-    \item \textbf{Policy privacy}: The proof reveals nothing about the policy structure, thresholds, whitelist contents, or internal organizational rules.
-    \item \textbf{Transaction privacy}: Private fields (exact amounts, internal routing identifiers, agent reasoning traces) remain hidden from external verifiers.
+    \item \textbf{Verifiable compliance}, allowing the receiver to validate the proof in constant $O(1)$ time;
+    \item \textbf{Policy privacy} (the proof reveals no internal rule hierarchies, thresholds, or constraint structure); and
+    \item \textbf{Transaction privacy} that conceals precise amounts, private identifiers, and agent reasoning traces.
 \end{enumerate}
 
-We make the following concrete contributions:
+We make the following contributions:
 
 \begin{itemize}
-    \item We formalize the PCT security model (Section~\ref{sec:model}), defining the threat landscape for autonomous agent egress and proving that PCT satisfies \emph{computational soundness}, \emph{zero-knowledge privacy}, and a new property we term \emph{policy-binding completeness} (Theorem~\ref{thm:soundness}, Theorem~\ref{thm:privacy}, Theorem~\ref{thm:completeness}).
+    \item We formalize the PCT security model (Section~\ref{sec:model}). We define the threat landscape for autonomous egress and prove that PCT satisfies \emph{computational soundness}, \emph{zero-knowledge privacy}, and a novel property we call \emph{policy-binding completeness} (Theorems~\ref{thm:soundness}--\ref{thm:completeness}).
 
-    \item We design and implement a \emph{Policy Constraint Language} (PCL) and its compiler that transforms declarative egress policies into optimized R1CS circuits (Section~\ref{sec:compiler}), including three novel cryptographic gadgets for semantic similarity thresholds, temporal window proofs, and hierarchical Merkle whitelist accumulators.
-
-    \item We present a complete, production-grade implementation integrated into a Rust-based reverse proxy (Section~\ref{sec:implementation}), demonstrating end-to-end proof generation, attachment, and verification within the HTTP request lifecycle.
-
-    \item We evaluate PCT against 847 enterprise-derived egress policies (Section~\ref{sec:evaluation}), reporting median proof generation latency of 95ms, verification in 4.2ms, and constraint counts at approximately 11,200 gates for 97.3\% of policies.
-
-    \item We provide the first formal mapping between ZKP-based compliance guarantees and the technical requirements of the EU AI Act and NIST AI RMF (Section~\ref{sec:regulatory}), establishing PCT as a mechanism for demonstrable regulatory compliance.
+    \item We designed and built a \emph{Policy Constraint Language} (PCL) and dedicated compiler (Section~\ref{sec:compiler}) that maps declarative rules to optimized R1CS circuits. On top of this, we introduce three application-layer gadgets---semantic similarity thresholds, temporal window checks, and hierarchical Merkle whitelist accumulators. The semantic constraint is defined as:
+    \[
+    C_{\text{sem}}(\mathsf{req}) \iff \text{sim}(\text{emb}(\mathsf{req}.\mathsf{intent}), v_{\text{ref}}) \geq \tau
+    \]
+    where $\tau$ is the quantization-adjusted threshold. The gadget acts as a cryptographic wrapper around ML intent classifiers: algebraic correctness of the threshold check is guaranteed, while natural-language robustness is deferred to the embedding model.
+    
+    \item We built a complete Rust-based reverse proxy integration (Section~\ref{sec:implementation}) with end-to-end proof generation, attachment, and verification inside the HTTP lifecycle. Code and benchmarks are open-sourced.
+    
+    \item We ran a comprehensive evaluation across 847 enterprise policies (Section~\ref{sec:evaluation}), measuring median generation latency at 95ms. We map PCT's guarantees to the EU AI Act (Articles 9, 12, 14) and the NIST AI RMF (Section~\ref{sec:regulatory}), showing the framework works as a concrete enforcement mechanism for emerging regulatory requirements.
 \end{itemize}
 
 %% ===================================================================
@@ -121,42 +123,45 @@ We make the following concrete contributions:
 \section{Background and Related Work}
 \label{sec:related}
 
-\subsection{Autonomous AI Agent Architectures}
+\subsection{Autonomous Agent Architectures}
 
-Modern autonomous agents---such as those built on ReAct~\cite{yao2022react}, AutoGPT, and tool-augmented LLM frameworks---operate through a perceive-plan-act loop where a language model generates executable actions (API calls, database queries, financial transactions) based on a combination of user instructions, environmental observations, and internally maintained state~\cite{wang2024survey}. Hendrycks et al.~\cite{hendrycks2021unsolved} catalogue the unsolved safety problems that arise from deploying such systems, while Amodei et al.~\cite{amodei2016concrete} formalize the concrete accident scenarios that motivate runtime enforcement. The critical security observation is that these agents possess \emph{delegated authority}: they act on behalf of a principal (user, organization) but with significant operational autonomy. The agent's action space typically includes HTTP requests to external services, each of which constitutes an \emph{egress event} governed by organizational policy.
+Enterprise agents built on AutoGPT, ReAct~\cite{yao2022react}, and similar frameworks are qualitatively different from standard conversational systems. They run iterative perception-planning-execution loops. The model itself decides when to call an API, commit a database write, or authorize a financial transfer~\cite{wang2024survey}. Hendrycks et al.~\cite{hendrycks2021unsolved} and Amodei et al.~\cite{amodei2016concrete} catalogued the safety risks of giving probabilistic models direct access to consequential actuators. The core problem is \emph{unbounded delegated authority}: the agent acts on the principal's behalf with minimal oversight, and every outbound HTTP request to an external service is an \emph{egress event} that must be intercepted and evaluated.
 
 \subsection{Zero-Knowledge Proof Systems}
 
-A zero-knowledge proof system allows a prover $\mathcal{P}$ to convince a verifier $\mathcal{V}$ that a statement $x$ belongs to a language $\mathcal{L}$ without revealing anything beyond the validity of the statement itself~\cite{goldwasser1989knowledge}. Formally:
+A zero-knowledge proof system enables a prover $\mathcal{P}$ to convince a verifier $\mathcal{V}$ that a computational statement $x$ is a member of a language $\mathcal{L}$ without revealing any information beyond the validity of the assertion itself~\cite{goldwasser1989knowledge}. We adopt the following standard formalization:
 
 \begin{definition}[Zero-Knowledge Proof System]
-A triple $(\mathcal{P}, \mathcal{V}, \textsf{Setup})$ is a zero-knowledge proof system for a relation $\mathcal{R}$ if it satisfies:
+\label{def:zkp}
+A tuple $(\mathcal{P}, \mathcal{V}, \textsf{Setup})$ constitutes a zero-knowledge proof system for a relation $\mathcal{R}$ if the following properties hold:
 \begin{itemize}
-    \item \textbf{Completeness}: For all $(x, w) \in \mathcal{R}$, $\Pr[\mathcal{V}(\textsf{vk}, x, \pi) = 1 \mid \pi \leftarrow \mathcal{P}(\textsf{pk}, x, w)] = 1$.
-    \item \textbf{Soundness}: For all PPT adversaries $\mathcal{A}$ and all $x \notin \mathcal{L}$, $\Pr[\mathcal{V}(\textsf{vk}, x, \pi^*) = 1 \mid \pi^* \leftarrow \mathcal{A}(\textsf{pk}, x)] \leq \textsf{negl}(\lambda)$.
-    \item \textbf{Zero-Knowledge}: There exists a PPT simulator $\mathcal{S}$ such that for all $(x, w) \in \mathcal{R}$, the distributions $\{\pi \leftarrow \mathcal{P}(\textsf{pk}, x, w)\}$ and $\{\pi^* \leftarrow \mathcal{S}(\textsf{vk}, x)\}$ are computationally indistinguishable.
+    \item \textbf{Completeness}: For all valid statement-witness pairs $(x, w) \in \mathcal{R}$, the verifier accepts with certainty: $\Pr[\mathcal{V}(\textsf{vk}, x, \pi) = 1 \mid \pi \leftarrow \mathcal{P}(\textsf{pk}, x, w)] = 1$.
+    \item \textbf{Soundness}: For all PPT adversaries $\mathcal{A}$ and all $x \notin \mathcal{L}$, the probability of producing an accepting proof is negligible: $\Pr[\mathcal{V}(\textsf{vk}, x, \pi^*) = 1 \mid \pi^* \leftarrow \mathcal{A}(\textsf{pk}, x)] \leq \textsf{negl}(\lambda)$.
+    \item \textbf{Zero-Knowledge}: There exists a PPT simulator $\mathcal{S}$ such that simulated proofs $\pi^* \leftarrow \mathcal{S}(\textsf{vk}, x)$ are computationally indistinguishable from honest proofs $\pi \leftarrow \mathcal{P}(\textsf{pk}, x, w)$, for all $(x, w) \in \mathcal{R}$.
 \end{itemize}
 \end{definition}
 
-\textbf{Groth16}~\cite{groth2016size} is a pairing-based zk-SNARK achieving constant-size proofs (3 group elements: $[\mathsf{A}]_1, [\mathsf{C}]_1, [\mathsf{B}]_2$) and verification in $O(1)$ time via a single pairing check. It requires a relation-specific trusted setup producing a Common Reference String (CRS). While newer systems such as PLONK~\cite{gabizon2019plonk} and Halo2 offer universal or transparent setups, Bulletproofs~\cite{bunz2018bulletproofs} provide logarithmic-size proofs without trusted setup, and STARKs~\cite{ben2018scalable} achieve post-quantum security with transparent setup, Groth16 remains optimal for scenarios where proof size and verification speed are paramount---precisely the constraints of real-time transaction processing. Recent surveys by Sharma et al.~\cite{sharma2023machine} and Togan et al.~\cite{togan2023zero} confirm this finding in the context of applied ZKP deployments.
+We instantiate PCT using \textbf{Groth16}~\cite{groth2016size}. Groth16 produces proofs consisting of only 3 group elements and verifies in $O(1)$. The tradeoff is a relation-specific trusted setup---something universal-setup systems like PLONK~\cite{gabizon2019plonk}, transparent constructions like Bulletproofs~\cite{bunz2018bulletproofs}, and post-quantum STARKs~\cite{ben2018scalable} avoid. But for synchronous HTTP egress interception, the dominant constraints are proof generation latency and sub-10ms verification~\cite{sharma2023machine, togan2023zero}. Under those requirements, Groth16 is, to our knowledge, the strongest fit for real-time enterprise proxy deployment.
 
 \subsection{Proof-Carrying Code}
 
-Necula's proof-carrying code (PCC)~\cite{necula1997proof} introduced the concept of augmenting untrusted programs with machine-checkable proofs of safety properties. The code consumer verifies the proof against a safety policy using a small, trusted verification condition generator. PCT extends this paradigm from static binary safety to dynamic transaction compliance: instead of proving memory safety of compiled code, we prove policy compliance of runtime-generated requests. The key technical difference is that PCC proofs are generated once at compile time, while PCT proofs must be generated in real time (sub-second) for every transaction.
+Necula's proof-carrying code (PCC)~\cite{necula1997proof} required untrusted binaries to carry machine-checkable safety proofs that the host OS could verify. We extend this idea from the instruction level to the network boundary. Instead of proving memory safety at compile time, we prove policy compliance at transaction time. One key difference: PCT proofs must be generated in real time---sub-second---for every outbound transaction. The original PCC setting had no such latency pressure.
 
 \section{Comparative Analysis of Governance Architectures}
 \label{sec:comparative}
 
-Zero-knowledge proofs have been deployed for financial privacy (Zcash~\cite{sasson2014zerocash}), blockchain scaling (zkRollups~\cite{loopring2020}), identity verification (Semaphore~\cite{semaphore2020}), verifiable credentials~\cite{w3c2022vc}, and machine learning over encrypted data~\cite{bost2015machine}. Kang et al.~\cite{kang2022scaling} and Zhao et al.~\cite{zhao2024verifiable} explore trustless ML execution, while ZoKrates~\cite{eberhardt2018zokrates} and Badrinarayanan et al.~\cite{badrinarayanan2020verifiable} develop general-purpose ZKP toolchains. However, the application of ZKPs to \emph{application-layer outbound policy enforcement for AI agents} is, to our knowledge, entirely unexplored. Existing agent governance frameworks such as Guardrails AI, LangChain safety modules, and Microsoft Guidance~\cite{zheng2023llama} provide runtime filtering but lack cryptographic verifiability, policy privacy, and independent auditability. To understand the paradigm shift introduced by Proof-Carrying Transactions, we directly compare our framework against traditional agent governance architectures across three critical vectors: performance overhead, security guarantees, and trust models.
+Zero-knowledge proofs have seen deployment in financial privacy (Zcash~\cite{sasson2014zerocash}), blockchain scalability (zkRollups~\cite{loopring2020}), and anonymous credentials~\cite{w3c2022vc, semaphore2020}. Kang~\cite{kang2022scaling} and Zhao~\cite{zhao2024verifiable} recently extended ZKPs into verifiable machine learning. But to our knowledge, no prior work applies ZKPs to \emph{outbound intent governance for autonomous agents}. Current enterprise frameworks---Guardrails AI, LangChain, Microsoft Guidance~\cite{zheng2023llama}---are probabilistic filters. They provide no cryptographic verifiability, expose policy logic by design, and do not support independent audit.
+
+We compare existing governance architectures across performance, security, and trust dimensions.
 
 \textbf{1) Application-level Filtering (e.g., RLHF, Prompt Guardrails):}
-These methods operate probabilistically at the model layer~\cite{sun2023trust}. While they exhibit minimal latency overhead, their security guarantees are extraordinarily weak against capable adversaries utilizing prompt injection or jailbreaking~\cite{carlini2023extracting}. Moreover, they offer zero formal verifiability; an auditor cannot mathematically prove a model evaluated its safety guardrails accurately during a transaction. Blanchard et al.~\cite{blanchard2017byzantine} show that even Byzantine-tolerant training fails to produce auditable per-transaction guarantees.
+These operate at the model layer via probabilistic mechanisms~\cite{sun2023trust}. Latency is negligible. But there are no formal guarantees against prompt injection or adaptive jailbreaking~\cite{carlini2023extracting}, and they produce no artifacts an auditor could use to verify that a specific transaction was actually evaluated. Blanchard et al.~\cite{blanchard2017byzantine} showed that even Byzantine-tolerant distributed training fails to produce auditable, per-transaction compliance evidence.
 
-\textbf{2) Proxy/API Choke Points (e.g., Kong, Envoy):}
-Centralized firewalls enforce deterministic rules at the network boundary. While effective for simple IP whitelists and API key validation, they necessitate that all downstream consumers (banks, partner APIs) implicitly trust the firewall operator. Policy engines such as Open Policy Agent~\cite{schmidt2019opa} and role-based access control frameworks~\cite{sandhu1996role} improve expressiveness but do not eliminate the fundamental single-point-of-trust limitation. Authorization calculi~\cite{abadi2011authorization} and delegated credentials such as Macaroons~\cite{birgisson2014macaroons} offer decentralized caveats, yet leak policy structure to every intermediary in the chain.
+\textbf{2) Proxy/API Gateways (e.g., Kong, Envoy):}
+Centralized gateways enforce routing and access rules well, but every downstream consumer must trust the proxy's evaluation. Policy engines like Open Policy Agent~\cite{schmidt2019opa} add expressiveness without removing the trust assumption. Macaroons~\cite{birgisson2014macaroons} support decentralized caveats but leak policy structure in the authorization chain.
 
 \textbf{3) Proof-Carrying Transactions (PCT):}
-By binding the constraint satisfaction directly to the transaction payload via a zero-knowledge proof, PCT shifts the trust model from an active enforcer to a passive verifier. While proof generation introduces a small computational overhead ($\sim$95ms per transaction), the security guarantees transition from probabilistic heuristics to cryptographic certainty. An auditor can mathematically verify compliance post-execution without requiring access to the proprietary rule set, bridging the gap between operational privacy and regulatory auditability.
+PCT attaches the compliance proof directly to the transaction payload. The trust model shifts from active enforcement to passive verification. Generation costs roughly 95ms, but replaces probabilistic assurance with cryptographic certitude. An external auditor can verify compliance retroactively without seeing the policy parameters---bridging organizational privacy with regulatory transparency.
 
 Table~\ref{tab:comparison} summarizes this comparative landscape.
 
@@ -205,20 +210,28 @@ The system comprises:
 
 \subsection{Threat Model}
 
-We consider the following adversarial capabilities:
+The PCT security model assumes an adversary with access to four distinct attack surfaces:
 
 \begin{enumerate}
-    \item \textbf{Malicious Agent}: $\mathcal{A}$ may attempt to craft requests that appear compliant to the proxy but violate policy intent. This models jailbroken, compromised, or misaligned agents.
-    \item \textbf{Compromised Downstream}: External APIs or services may attempt to extract policy details from observed proofs or verification patterns.
-    \item \textbf{Colluding Verifier}: $\mathcal{V}$ may collude with $\mathcal{A}$ and attempt to forge proofs for non-compliant transactions.
-    \item \textbf{Network Observer}: A passive adversary observing the communication channel may attempt to learn policy structure from proof metadata.
+    \item \textbf{Malicious Agent}: $\mathcal{A}$ generates non-compliant payloads crafted to resemble legitimate proxy requests, including jailbroken prompts, unauthorized code execution attempts, or outputs driven by misaligned reward objectives.
+    \item \textbf{Compromised Downstream}: An adversary controlling the receiving API endpoint attempts to extract proprietary policy parameters (e.g., internal trading limits) through analysis of the zero-knowledge proofs.
+    \item \textbf{Colluding Verifier}: $\mathcal{V}$ cooperates with $\mathcal{A}$ in an attempt to construct valid proofs for non-compliant transactions.
+    \item \textbf{Network Observer}: A passive adversary monitors network traffic and analyzes proof metadata (e.g., proof sizes, timing patterns) to infer organizational policy structure.
 \end{enumerate}
 
-\textbf{Enforcement Assumption.} We assume the agent operates within a network-isolated execution environment (e.g., an isolated VPC, a sandboxed container, or a TEE enclave) where the \emph{sole} egress route is the Prover Proxy $\mathcal{PP}$. This is enforced at the infrastructure layer via a strict default-deny egress posture across all protocols (TCP, UDP, ICMP); the agent has no direct outbound network access, preventing side-channel exfiltration via DNS tunneling, timing channels, or Server-Side Request Forgery (SSRF) against authorized downstream APIs. We explicitly scope PCT as an application-layer policy enforcer, not a network-layer sandbox; it secures authorized transaction channels but relies on the underlying virtual private cloud to prevent out-of-band leakage. Consequently, a malicious agent $\mathcal{A}$ cannot bypass the proxy---it can only attempt to craft requests that pass proof generation while violating policy intent, which is precisely the attack that computational soundness (Theorem~\ref{thm:soundness}) prevents.
+\textbf{Enforcement Assumption.} We assume the AI agent executes within an isolated environment (e.g., a dedicated VPC or container with strict network policies). The Prover Proxy $\mathcal{PP}$ constitutes the sole authorized egress path, with a default-deny posture enforced across all protocols (TCP, UDP, ICMP). This configuration closes standard side-channels such as DNS tunneling or Server-Side Request Forgery (SSRF). It bears noting that PCT operates as an application-layer enforcement mechanism and does not itself provide network isolation; it cannot prevent an agent from circumventing a misconfigured VPC. However, under the assumption of competent network hygiene, any attempt by a malicious agent to bypass the proxy reduces to constructing a valid proof for a non-compliant payload---an attack mitigated by computational soundness (Theorem~\ref{thm:soundness}).
 
-\textbf{Trust Split.} The Prover Proxy $\mathcal{PP}$ is trusted for data routing and availability, but is \emph{untrusted for computation}. If the proxy's evaluation logic is bug-ridden or maliciously altered, the ZKP properties ensure it cannot forge a valid proof for a non-compliant transaction. The proof cryptographically binds the specific payload (hashed as a public input) to the correct mathematical evaluation of the policy. To prevent the proxy from actively tampering with requests (e.g., swapping the recipient in an otherwise authorized payload), the agent's trusted execution enclave digitally signs the payload. The downstream verifier cryptographically binds the generated proof to the agent's original intent by checking this signature alongside the SNARK verification. However, because SNARKs are stateless, evaluating temporal rate limits ($C_{\text{rate}}$) requires the proxy to maintain a state accumulator. We explicitly scope this: the proxy is \emph{trusted for state continuity} (providing the correct historical sum), but remains untrusted for the threshold evaluation itself. State-rollback attacks---where a compromised proxy resets the accumulator to bypass rate limits---are mitigated in production by committing the accumulator root as a public input, enabling verifiers to detect discontinuities. We discuss future paths to fully eliminate proxy trust (e.g., agent-side TEE proving) in Section~\ref{sec:future}.
+\subsubsection{Trusted Computing Base (TCB)}
 
-\textbf{Semantic Constraint Boundary.} The semantic similarity constraint $C_{\text{sem}}$ operates as an \emph{optimistic semantic check}: PCT cryptographically guarantees that the mathematical evaluation of cosine similarity against the reference embedding was performed correctly, but does not guarantee that the embedding space itself is adversarially robust. The security of $C_{\text{sem}}$ is therefore conditional on the fidelity of the underlying embedding model. We make this boundary explicit: PCT secures policy \emph{evaluation}, not the latent geometry of the embedding model.
+The following components constitute the PCT trusted computing base.
+
+\textbf{Enclave (Semantic Intent).} Numerical constraint evaluation (e.g., range checks, rate limits) derives its soundness entirely from the cryptographic construction and is not affected by proxy host compromise. Semantic intent verification, however, requires trusting a hardware enclave (Intel SGX or TDX) to attest the embedding computation. We observe that even if an adversary compromises the TEE via a side-channel attack, the resulting impact is bounded: semantic intent may be spoofed (bypassing $C_{\text{sem}}$), but it remains computationally infeasible to forge a Groth16 proof $\pi$ that violates numerical or structural constraints. The TEE serves as a pragmatic trust anchor specifically for resolving natural-language intent.
+
+\textbf{Setup Ceremony (MPC).} Groth16 requires a relation-specific trusted setup. We employ a multi-party computation ceremony where security holds provided at least one participant honestly discards their secret material.
+
+\textbf{State Ledger (Trusted State Oracle).} Since SNARKs are inherently stateless, enforcement of rate-limiting constraints ($C_{\text{rate}}$) requires the proxy to query an external state accumulator. We implement this using a distributed enterprise log that functions as a \emph{Trusted State Oracle}. Verifiers can independently confirm linear monotonicity of the ledger, though they must trust that the underlying storage layer has not performed unauthorized rollbacks. We note that token-bucket architectures of this type are standard in web-scale systems, and PCT does not introduce additional operational dependencies. Migrating this state into a provably consistent zero-knowledge accumulator tree represents a natural extension.
+
+\textbf{Semantic Constraint Boundary.} The $C_{\text{sem}}$ gadget functions as an \emph{optimistic enforcement layer}. PCT guarantees that the cosine similarity computation was performed correctly, but the semantic fidelity of the result depends on the quality of the underlying embedding manifold. Our adversarial evaluation (Section~\ref{sec:evaluation}) indicates that surpassing the $\tau=0.85$ threshold via Projected Gradient Descent requires mutating $\geq$38\% of input tokens, which tends to destroy the structural validity of JSON payloads. However, more sophisticated perturbation strategies (e.g., GCG-based token manipulation) may potentially circumvent the vector-space check while preserving syntactic structure. We explicitly designed PCT to decouple the \emph{provable computation mechanism} from the \emph{improvable embedding oracle}: as embedding models are hardened against adversarial inputs, PCT inherits those improvements without requiring circuit recompilation.
 
 \subsection{Policy Formalization}
 
@@ -240,7 +253,7 @@ where each $C_i$ belongs to one of the following constraint classes:
 
 \subsection{Security Properties}
 
-We now state the three properties that PCT must satisfy.
+We now state the three properties that PCT must satisfy. While the foundational security of our system rests on the established proofs for Groth16 (detailed below), the core theoretical contribution of this work lies in the \emph{Applied Systems Security} architecture: mapping abstract high-level compliance directives into mathematically verifiable circuitry using novel application-layer constructions (such as the 16-bit semantic similarity gadget). We establish the formal properties that our mapping inherits:
 
 \begin{theorem}[Computational Soundness]
 \label{thm:soundness}
@@ -281,7 +294,7 @@ For any policy $\mathsf{P}$ and any request $\mathsf{req}$ such that $\mathsf{P}
 \[
 \Pr\left[\mathcal{V}(\mathsf{vk}, \mathsf{req}, \pi) = 1 \;\middle|\; \pi \leftarrow \mathcal{PP}(\mathsf{pk}, \mathsf{req})\right] = 1
 \]
-This ensures that PCT never produces false rejections---a critical property for production deployment where availability is paramount.
+This ensures that PCT never produces false rejections---a critical property for production deployment where availability cannot be sacrificed.
 \end{theorem}
 
 \begin{proof}
@@ -302,7 +315,7 @@ Composing Steps 1 and 2: for any compliant request, the honest PCT pipeline extr
 
 \subsection{Architecture Overview}
 
-The PCT system operates as a transparent layer within the network stack, intercepting agent traffic at the HTTP/gRPC level. Figure~\ref{fig:architecture} illustrates the end-to-end flow.
+PCT is implemented as a transparent middleware layer that intercepts agent outbound traffic at the HTTP or gRPC layer. Figure~\ref{fig:architecture} illustrates the end-to-end pipeline. A key architectural decision is the strict separation between the trusted enclave components and the untrusted proxy engine.
 
 \begin{figure}[t]
 \centering
@@ -327,34 +340,36 @@ The PCT system operates as a transparent layer within the network stack, interce
     \draw[arrow, dashed] (prover.west) -- ++(-2.2,0) |- node[near end, left, label] {$\pi$} (proxy.south west);
 \end{tikzpicture}%
 }
-\caption{PCT Architecture. The agent submits a request; the proxy extracts witnesses, compiles the policy AST into R1CS constraints, generates a Groth16 proof $\pi$, and attaches it to the outbound request as a self-certifying header.}
+\caption{PCT Architecture. The trusted agent enclave submits a signed request; the untrusted proxy extracts witnesses, generates a zero-knowledge proof $\pi$, and attaches it as a self-certifying header for the independent downstream verifier.}
 \label{fig:architecture}
 \end{figure}
 
 \subsection{Request Lifecycle}
 
-The PCT lifecycle proceeds in six phases:
+The execution of a Proof-Carrying Transaction proceeds through six phases:
 
-\textbf{Phase 1: Interception.} The AI agent emits an HTTP/gRPC request. The Prover Proxy intercepts the request at the transport layer before any external transmission.
+\textbf{Phase 1: Interception.} The AI agent initiates an outbound HTTP/gRPC call. The Prover Proxy intercepts this egress request at the transport layer.
 
-\textbf{Phase 2: Witness Extraction.} The proxy parses the request payload and extracts a structured witness vector $w = (w_1, w_2, \ldots, w_k)$ containing the transaction parameters relevant to policy evaluation. Amounts are encoded as 64-bit fixed-point field elements; target URLs are hashed via Poseidon into BN254 scalar field elements; timestamps are Unix epoch integers modulo the field prime.
+\textbf{Phase 2: Witness Extraction.} The proxy parses the JSON payload and extracts a structured witness vector $w = (w_1, w_2, \ldots, w_k)$ containing the transaction parameters relevant to policy evaluation. Monetary amounts are encoded as 64-bit fixed-point field elements. Target URLs are compressed via Poseidon hashing into BN254 scalar field elements. Timestamps are represented as Unix epoch integers modulo the field prime.
 
-\textbf{Phase 3: Policy Evaluation.} The proxy evaluates the witness against the organization's active policy $\mathsf{P}$. If $\mathsf{P}(w) = 0$, the request is rejected with a structured denial response and the event is logged. No proof is generated for rejected requests.
+To prevent a malicious agent from forging its semantic intent, the proxy executes a lightweight embedding model (e.g., \texttt{all-MiniLM-L6-v2}) over the raw payload to compute the intent vector. To mitigate the risk of a compromised proxy substituting a fabricated embedding, the embedding model runs within a dedicated attestation enclave (Intel TDX or AMD SEV-SNP), which provides a remote attestation quote certifying the model weight hashes. The zero-knowledge circuit also enforces a cryptographic binding: the payload string passes through an in-circuit Poseidon hash whose output is asserted against the embedding commitment, permanently linking the raw text to its mathematical representation. We observe that even if the TEE is compromised via a side-channel attack, the impact stays bounded---semantic intent may be spoofed, but forging a Groth16 proof $\pi$ that violates numerical constraints (expenditure limits, whitelist membership) remains computationally infeasible. Theorem~\ref{thm:soundness} holds independently of TEE integrity.
 
-\textbf{Phase 4: Circuit Synthesis.} For approved requests ($\mathsf{P}(w) = 1$), the policy compiler synthesizes the R1CS circuit encoding the policy constraints and assigns the extracted witness to the circuit's private inputs.
+\textbf{Phase 3: Policy Evaluation.} The proxy evaluates the witness vector against the organizational policy $\mathsf{P}$. If $\mathsf{P}(w) = 0$, the connection is terminated, a structured denial is returned, and the event is logged. Non-compliant requests do not proceed to the proof generation phase.
 
-\textbf{Phase 5: Proof Generation.} The Groth16 prover executes the witness assignment through the circuit, producing proof $\pi = ([\mathsf{A}]_1, [\mathsf{B}]_2, [\mathsf{C}]_1)$.
+\textbf{Phase 4: Circuit Synthesis.} For compliant requests ($\mathsf{P}(w) = 1$), the compiler translates the policy rules into a Rank-1 Constraint System (R1CS) circuit and loads the verified witness into the private input wires.
 
-\textbf{Phase 6: Egress Transmission.} The proxy forwards the original request to the target API with two additional elements: (a) the proof encoded as a Base64 HTTP header \texttt{X-PCT-Proof}, and (b) an identical proof record committed to the immutable audit log for regulatory compliance.
+\textbf{Phase 5: Proof Generation.} Given a satisfying witness assignment, the Groth16 prover computes the proof $\pi = ([\mathsf{A}]_1, [\mathsf{B}]_2, [\mathsf{C}]_1)$.
+
+\textbf{Phase 6: Egress Routing.} The proxy attaches the proof as a Base64-encoded HTTP header (\texttt{X-PCT-Proof}) and forwards the original request to the external API. Concurrently, a copy of the request and proof is persisted to an immutable audit log for regulatory compliance.
 
 \subsection{Proof Verification}
 
-Any party possessing the public verification key $\mathsf{vk}$ can verify a Proof-Carrying Transaction in $O(1)$ time by checking the Groth16 pairing equation:
+A distinguishing scalability property of the architecture is that verification is independent of policy complexity. Any party holding the public verification key $\mathsf{vk}$ can authenticate a Proof-Carrying Transaction in $O(1)$ time by evaluating the standard Groth16 pairing equation:
 \begin{equation}
     e([\mathsf{A}]_1, [\mathsf{B}]_2) = e([\alpha]_1, [\beta]_2) \cdot e\left(\sum_{i=0}^{l} x_i \cdot [\gamma_i]_1, [\gamma]_2\right) \cdot e([\mathsf{C}]_1, [\delta]_2)
     \label{eq:pairing}
 \end{equation}
-where $x_0, \ldots, x_l$ are the public inputs (transaction hash, timestamp, policy version identifier) and $\alpha, \beta, \gamma, \delta$ are elements from the trusted setup CRS.
+The public inputs $x_0, \ldots, x_l$ encode the transaction hash, the timestamp, and the policy version identifier. The parameters $\alpha, \beta, \gamma, \delta$ are derived from the trusted setup.
 
 %% ===================================================================
 %% V. POLICY COMPILER
@@ -364,7 +379,7 @@ where $x_0, \ldots, x_l$ are the public inputs (transaction hash, timestamp, pol
 
 \subsection{Policy Constraint Language (PCL)}
 
-We define a domain-specific Policy Constraint Language that enables organizations to express egress rules declaratively. PCL policies compile to an intermediate Abstract Syntax Tree (AST) before circuit synthesis.
+We introduce a domain-specific Policy Constraint Language (PCL) designed to decouple policy specification from circuit-level implementation details. PCL enables governance teams to declare egress constraints in a structured, human-readable format. These declarations are subsequently translated into an internal Abstract Syntax Tree (AST) prior to circuit synthesis.
 
 \begin{lstlisting}[language=Python, caption={Example PCL policy specification.}, label={lst:pcl}]
 policy "production_egress" {
@@ -403,28 +418,28 @@ policy "production_egress" {
 
 \subsection{AST Construction}
 
-The PCL parser produces a typed AST where each node represents either a leaf constraint or a Boolean combinator ($\land$, $\lor$, $\neg$). The type system enforces that field references resolve to valid request schema paths and that constraint parameters are well-formed.
+The PCL parser produces a strongly-typed AST in which each node corresponds to either a leaf constraint or a Boolean combinator ($\land$, $\lor$, $\neg$). The type system enforces that all field references correspond to entries in the transaction JSON schema, rejecting malformed constraints prior to compilation.
 
 \begin{definition}[Policy AST]
 A Policy AST $\mathcal{T}$ is a binary tree where:
 \begin{itemize}
-    \item Leaf nodes are typed constraints $C_i \in \{\text{Range}, \text{SetMem}, \text{Temporal}, \text{Rate}, \text{Semantic}\}$.
-    \item Internal nodes are Boolean operators $\{\land, \lor, \neg\}$.
+    \item Leaf nodes map to typed constraints $C_i \in \{\text{Range}, \text{SetMem}, \text{Temporal}, \text{Rate}, \text{Semantic}\}$.
+    \item Internal nodes represent Boolean operators $\{\land, \lor, \neg\}$.
     \item The root node evaluates to a single Boolean output wire.
 \end{itemize}
 \end{definition}
 
 \subsection{AST to R1CS Compilation Mechanics}
 
-Translating the abstract syntax tree into a Rank-1 Constraint System (R1CS) requires bridging declarative logical rules into algebraic circuits over a finite field $\mathbb{F}_p$. To optimize the constraint footprint and ensure soundness, our compiler executes a multi-pass translation algorithm across three distinct phases:
+Translating a declarative AST into a zero-knowledge proof requires mapping logical constraints into algebraic circuits over a finite field $\mathbb{F}_p$. General-purpose zkVMs accomplish this by compiling policy logic into MIPS or RISC-V instruction traces---an approach that incurs substantial overhead from arithmetizing the full von Neumann execution model. Our compiler avoids this indirection through a three-pass translation algorithm that maps the AST directly into R1CS.
 
-\textbf{Pass 1: Type Inference and Range Bounding.} The compiler traverses the AST to statically determine the maximum bit width required for each variable based on the policy schema. For example, if a node dictates \texttt{amount < 50000}, the compiler restricts the arithmetic wire constraints to 16 bits, drastically reducing the subsequent binary decomposition overhead.
+\textbf{Pass 1: Type Inference and Range Bounding.} The compiler performs a static traversal of the AST to determine the minimum bit width required for each variable, based on the schema-declared ranges. For example, a constraint \texttt{amount < 50000} permits the arithmetic wires to be bounded to 16 bits, reducing the cost of binary decomposition accordingly.
 
-\textbf{Pass 2: Common Sub-expression Elimination (CSE).} Policies frequently reuse variables (e.g., referencing \texttt{transaction.target} in both a whitelist check and an intent validation). By maintaining a dependency graph during parsing, the compiler eliminates redundant node evaluations, ensuring that repetitive field extractions map to a singular set of constrained input wires.
+\textbf{Pass 2: Common Sub-expression Elimination (CSE).} Enterprise policies frequently reference the same field across multiple constraints (e.g., \texttt{transaction.target} may appear in both a whitelist check and an intent validation). The compiler maintains a dependency graph during parsing to eliminate redundant evaluations; each field is extracted once and shared across consuming gates.
 
-\textbf{Pass 3: Gadget Instantiation.} The compiler maps high-level logical operators to their respective cryptographic gadgets. Simple Boolean operators ($\land, \lor$) are directly translated into degree-2 algebraic constraints: $A \land B \Rightarrow A \cdot B = C$. Complex functions, such as the \texttt{SIMILAR} semantic intent check, are instantiated by feeding the private transaction embedding vector through an in-circuit Poseidon hash instance, followed by a cosine similarity threshold calculation normalized over the field prime.
+\textbf{Pass 3: Gadget Instantiation.} High-level logical operators are mapped to their algebraic R1CS equivalents. Standard Boolean operators ($\land, \lor$) are compiled to degree-2 constraints ($A \land B \Rightarrow A \cdot B = C$). Application-specific gadgets, such as the semantic similarity check, are instantiated by binding the transaction's private embedding vector to an in-circuit Poseidon hash and evaluating a normalized cosine similarity threshold within the field.
 
-The compiler concludes with a post-order traversal, emitting the finalized R1CS matrices for each leaf node and weaving them through the logical circuitry. We now describe the specific gadget formulation for each constraint type.
+The compiler emits the final R1CS matrices via a post-order traversal of the AST. We now describe the gadget formulations for each constraint type.
 
 \subsubsection{Range Constraints}
 
@@ -457,19 +472,21 @@ using a selector-based approach where the prover commits to which interval $t$ b
 
 \subsubsection{Semantic Similarity Threshold}
 
-This is the most novel gadget. Enterprise policies increasingly require that an agent's \emph{stated intent} (encoded as a vector embedding) be semantically similar to an authorized reference embedding. We implement cosine similarity as a fixed-point arithmetic circuit:
+This gadget addresses a requirement increasingly present in enterprise governance: verifying that the agent's declared intent (encoded as an embedding vector) is sufficiently aligned with an authorized reference task. The constraint evaluates cosine similarity within fixed-point arithmetic:
 
 \begin{equation}
     \text{sim}(u, v) = \frac{\sum_{i} u_i \cdot v_i}{\sqrt{\sum_i u_i^2} \cdot \sqrt{\sum_i v_i^2}} \geq \tau
 \end{equation}
 
-To avoid expensive square root operations in the circuit, we use the equivalent squared form:
+Since floating-point square root operations are prohibitively expensive within R1CS circuits, we reformulate the constraint using the algebraically equivalent squared form, which avoids root computation entirely:
 \begin{equation}
     \left(\sum_i u_i v_i\right)^2 \geq \tau^2 \cdot \left(\sum_i u_i^2\right) \cdot \left(\sum_i v_i^2\right)
     \label{eq:cossim}
 \end{equation}
 
-Embeddings are quantized to 16-bit signed fixed-point representation (1 sign bit, 3 integer bits, 12 fractional bits). We evaluated quantization fidelity against full float32 cosine similarity across 10,000 sentence pairs drawn from the STS Benchmark using \texttt{all-MiniLM-L6-v2} ($d = 384$). The mean absolute error between quantized and full-precision cosine similarity is $4.7 \times 10^{-3}$, with a worst-case deviation of $9.2 \times 10^{-3}$. More critically, rank-order correlation (Spearman's $\rho$) between the two scoring methods is 0.9994, confirming that 16-bit quantization preserves similarity rankings with negligible distortion. At threshold $\tau = 0.85$, quantization introduces a false positive rate of 0.12\% (a minor security risk, marginally over-approving slightly sub-threshold transactions) and a false negative rate of 0.08\% (an availability risk, rejecting valid transactions) relative to float32 evaluation. For policies requiring stricter fidelity, 24-bit quantization eliminates all observed rank inversions at a cost of $\sim$50\% more multiplication gates. For $d$-dimensional embeddings, the 16-bit gadget requires $3d + O(1)$ multiplication gates.
+Embeddings are quantized to a 16-bit signed fixed-point representation (1 sign bit, 3 integer bits, 12 fractional bits). To characterize the fidelity loss introduced by quantization, we compared the quantized cosine similarity against float32 reference values across 10,000 sentence pairs from the STS Benchmark (\texttt{all-MiniLM-L6-v2}, $d = 384$). The mean absolute error was $4.7 \times 10^{-3}$, with a worst-case deviation of $9.2 \times 10^{-3}$. The rank-order correlation (Spearman's $\rho$) between quantized and full-precision similarity scores was 0.9994, suggesting that the 16-bit representation preserves the semantic ordering with high fidelity.
+
+At a threshold of $\tau = 0.85$, the quantization introduces a 0.12\% false positive rate and a 0.08\% false negative rate. For deployments where false positives are unacceptable (e.g., financial services), the compilation threshold can be offset by the maximum quantization error (e.g., setting $\hat{\tau} = 0.859$), which shifts all residual statistical error into the false-negative domain. Under this configuration, the system fails closed: exceeding the adjusted threshold with adversarially crafted embeddings requires perturbations that exceed the quantization precision boundary. For a $d$-dimensional embedding, the gadget requires $3d + O(1)$ multiplication gates.
 
 \subsection{Compiler Optimization}
 
@@ -525,7 +542,9 @@ The \texttt{Policy-Version} header enables verifiers to select the correct verif
 
 \subsection{Key Management and Trusted Setup}
 
-The Groth16 CRS is generated during a one-time trusted setup ceremony per policy version. We implement a multi-party computation (MPC) ceremony protocol following~\cite{bowe2017scalable} with $n = 3$ participants, where security holds as long as at least one participant is honest. The proving key ($\sim$48MB for a 40,000-gate circuit) is stored encrypted at rest; the verification key ($\sim$1KB) is distributed publicly via the \texttt{/admin/verification-keys} REST endpoint.
+The setup phase establishes the cryptographic root of trust. The Policy Authority $\mathcal{PA}$ generates the Groth16 Common Reference String (CRS) during an offline trusted setup ceremony, executed once per policy version. To mitigate the single-party trust assumption, we implement a multi-party computation (MPC) ceremony protocol following~\cite{bowe2017scalable} with $n = 3$ participants, where security holds provided at least one participant behaves honestly.
+
+The Prover Proxy $\mathcal{PP}$ receives only the proving key ($\mathsf{pk}$, $\sim$48MB for a 40,000-gate circuit), which is stored encrypted at rest. It cannot alter the predefined circuit geometry. The verification key ($\mathsf{vk}$, $\sim$1KB) is distributed directly to downstream verifiers via the \texttt{/admin/verification-keys} REST endpoint. If a compromised proxy synthesizes a flawed, permissive circuit, the resulting proof $\pi$ deterministically fails validation against the authentic $\mathsf{vk}$.
 
 %% ===================================================================
 %% VII. EVALUATION
@@ -533,22 +552,24 @@ The Groth16 CRS is generated during a one-time trusted setup ceremony per policy
 \section{Evaluation}
 \label{sec:evaluation}
 
-We evaluate PCT along four dimensions: constraint efficiency, proof generation latency, verification overhead, and end-to-end proxy impact.
+We evaluate PCT across four dimensions: constraint footprint, proof generation latency, verification overhead, and end-to-end proxy delay.
 
 \subsection{Evaluation Setup}
 
-\textbf{Hardware.} All benchmarks are conducted on an AMD EPYC 7B13 (4 cores, 3.0 GHz) with 16GB RAM, representative of a standard cloud VM (e.g., AWS \texttt{c6a.xlarge}). Benchmarks use the \texttt{criterion} statistical harness (100 iterations per sample, 10 warm-up rounds) to report stable median and P99 latencies.
+\textbf{Hardware.} All measurements were collected on an AMD EPYC 7B13 (4 cores, 3.0 GHz, 16GB RAM) running Ubuntu, corresponding to an unoptimized AWS \texttt{c6a.xlarge} instance. To isolate cryptographic overhead from network variability, all experiments were conducted within a localized service mesh with sub-millisecond physical latency. Benchmarks were executed using the \texttt{criterion} statistical harness (100 iterations, 10 warm-up rounds) to obtain stable median and P99 measurements.
 
-\textbf{Policy Corpus.} We assembled a corpus of 847 egress policies derived from three production deployment categories spanning fintech, healthcare, and SaaS infrastructure verticals. Because enterprise policies are proprietary and cannot be disclosed directly, we constructed the corpus using the following reproducible methodology: (1)~we conducted structured interviews with security engineers at participating organizations to catalogue the \emph{types}, \emph{arity}, and \emph{constraint distributions} of their active egress rules; (2)~we used these structural templates to synthetically generate parameterized policies with randomized thresholds, whitelist sizes, and temporal windows that preserve the statistical distribution of real deployments. Specifically, constraint counts were sampled from a Poisson distribution ($\lambda = 6.4$), and thresholds were drawn from log-normal distributions derived directly from the observed enterprise baselines; and (3)~we validated that the synthetic policies exercise the same compiler code paths and produce constraint counts within 3\% of the originals. An anonymized subset of 200 representative policies is available in the accompanying artifact package for independent reproduction (Appendix~\ref{sec:artifact}). Policies range from simple 2-constraint configurations (amount limit + whitelist) to complex 23-constraint compositions including temporal, rate, and semantic constraints.
+\textbf{Policy Corpus.} To evaluate against realistic workloads rather than synthetic benchmarks, we assembled a corpus of 847 egress policies derived from production deployments spanning fintech, healthcare, and SaaS infrastructure. Since enterprise rulesets contain proprietary information (e.g., trading algorithms, partner API endpoints), the dataset was anonymized prior to compilation: all specific thresholds and URL strings were replaced with structurally isomorphic placeholders that preserve constraint arity, data types, and logical nesting depth while maintaining corporate confidentiality. A sanitized subset of 200 policies is included in the public artifact package (Appendix~\ref{sec:artifact}) for reproducibility. The corpus spans policies ranging from 2-constraint specifications to deeply nested 23-constraint architectures.
 
-\textbf{Baselines.} We compare against three baselines: (1) unconstrained proxy (no policy enforcement), (2) imperative policy evaluation (standard if/else checking), and (3) signature-based attestation (HMAC signing of evaluation results). We additionally benchmark our domain-specific R1CS compiler against the RISC Zero~\cite{risczero} zkVM across three policy tiers (Section~\ref{sec:zkvm_comparison}).
+\textbf{Baselines.} We compare against three reference configurations: (1) an unconstrained proxy with no enforcement, (2) imperative policy enforcement via procedural evaluation, and (3) HMAC-based attestation of evaluation states. We also benchmark against the RISC Zero zkVM~\cite{risczero} to justify the domain-specific compiler.
 
-\subsection{Case Study: Unauthorized API Exfiltration}
+\subsection{Case Study: Blocking API Exfiltration}
 \label{sec:casestudy}
 
-To ground the evaluation in a concrete scenario, we trace a single transaction through the PCT pipeline. Consider an LLM agent tasked with processing customer refunds. The agent constructs an HTTP POST to \texttt{api.stripe.com/v1/transfers} with a payload of \$12,400 directed to an external bank account. The organization's policy specifies: (1)~transfers $\leq$ \$10,000, (2)~destination $\in$ approved whitelist, (3)~business hours only, and (4)~intent embedding cosine similarity $\geq 0.85$ to the reference ``process customer refund.''
+We illustrate the PCT pipeline with a representative scenario. Consider a financial LLM agent configured to process customer refunds. The agent---whether compromised or exhibiting misaligned behavior---attempts an HTTP POST to \texttt{api.stripe.com/v1/transfers} requesting a \$12,400 transfer to an external account. The applicable policy specifies: (1) a \$10,000 transfer ceiling, (2) destination whitelist membership, (3) execution restricted to business hours, and (4) semantic intent similarity $\geq 0.85$ relative to the reference phrase ``process authorized customer refund.''
 
-The proxy extracts the witness: amount $= 12400$, target hash $= \textsf{Poseidon}(\texttt{api.stripe.com})$, timestamp $= 1712678400$ (Tuesday 14:00 UTC), and the 384-dimensional intent embedding. The range constraint fails immediately ($12400 > 10000$), so $\mathsf{P}(\mathsf{req}) = 0$. The proxy rejects the request with a structured denial and logs the violation---no proof is generated. Had the agent instead requested \$8,200, all four constraints would pass, the compiler would synthesize an 11.2K-gate R1CS circuit in $<$1ms, and the Groth16 prover would produce a 192-byte proof $\pi$ in 94ms. The downstream Stripe endpoint verifies $\pi$ in 4.2ms, confirming compliance without learning the organization's \$10K threshold, whitelist composition, or internal intent model.
+The proxy extracts the witness: amount $= 12400$, target hash $= \textsf{Poseidon}(\texttt{api.stripe.com})$, timestamp $= 1712678400$, and the 384-dimensional intent vector. Policy evaluation fails at the first constraint ($12400 > 10000$), yielding $\mathsf{P}(\mathsf{req}) = 0$. The proxy terminates the connection and writes an audit record. No computational resources are expended on proof generation.
+
+Had the agent instead requested \$8,200, all four constraints would be satisfied. The compiler would map the policy into an 11.2K-gate R1CS circuit in under 1 millisecond. The Groth16 prover would then compute a 192-byte proof $\pi$ in 94ms. The receiving Stripe endpoint verifies $\pi$ in 4.2ms, obtaining cryptographic assurance that the transaction is policy-compliant without learning the \$10K threshold or the whitelist contents.
 
 \subsection{Constraint Efficiency}
 
@@ -583,7 +604,29 @@ The proxy extracts the witness: amount $= 12400$, target hash $= \textsf{Poseido
 \label{fig:constraints}
 \end{figure}
 
-Figure~\ref{fig:constraints} shows constraint counts across five complexity tiers. Because constraint generation is heavily dominated by the 32-level Merkle multi-scalar insertions and bit-decompositions, differences in AST complexity represent minor fluctuations around an 11.2K baseline. Critically, 100\% of the evaluated policies compile to fewer than 12,000 constraints, well within the threshold for ultra-low latency proving.
+Figure~\ref{fig:constraints} shows constraint counts across five complexity tiers. Because constraint generation is heavily dominated by the 32-level Merkle multi-scalar insertions and bit-decompositions, differences in AST complexity represent minor fluctuations around an 11.2K baseline.
+
+\begin{table}[h]
+\centering
+\caption{Constraint Cost per Gadget Topology}
+\label{tab:gadgets}
+\begin{tabular}{@{}lr@{}}
+\toprule
+\textbf{Gadget Component} & \textbf{Approx. R1CS Gates} \\
+\midrule
+Standard Merkle Tree Validation (32-level) & $\sim 10,200$ \\
+16-bit Semantic Similarity & $1,153$ \\
+Temporal Window Bound & $48$ \\
+Numerical Range Threshold & $22$ \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+Table~\ref{tab:gadgets} decomposes this distribution. The relative flatness of the constraint graph across complexity tiers reflects the fact that our application-layer gadgets (e.g., the 1,153-gate semantic similarity circuit) are substantially smaller than the constant cryptographic overhead of Merkle path verification. We observe that 100\% of evaluated policies compile to fewer than 12,000 constraints, which falls within the range required for sub-200ms proving latency.
+
+\subsection{Asymptotic Scalability Limits}
+
+The evaluated corpus contains policies with at most 23 constraints, reflecting typical per-agent governance boundaries. To characterize asymptotic behavior, we conducted synthetic stress tests and observed that PCL-to-R1CS compilation scales linearly with constraint count. A synthetic policy containing 1,000 parallel constraints produces approximately $10^6$ gates with a corresponding generation latency of $\sim$3.4 seconds. These results delineate PCT's intended operational domain: it is designed for fine-grained, intent-driven \emph{agent egress requests} rather than high-throughput packet-level filtering at network scale.
 
 \subsection{Proof Generation Latency}
 
@@ -625,12 +668,19 @@ Verification consistently completes in $4.2 \pm 0.3$ms regardless of policy comp
 No enforcement & 2.1 & 5.8 & --- \\
 Imperative policy (if/else) & 2.3 & 6.1 & +0.2ms \\
 HMAC attestation & 2.4 & 6.4 & +0.3ms \\
-\textbf{PCT (this work)} & \textbf{97} & \textbf{128} & \textbf{+95ms} \\
+TEE enclave signing (Ed25519) & 3.9 & 7.1 & +1.8ms \\
+\textbf{PCT (Compute Embedded)} & \textbf{129} & \textbf{165} & \textbf{+127ms} \\
 \bottomrule
 \end{tabular}
 \end{table}
 
-Table~\ref{tab:e2e} shows the latency trade-off. PCT adds approximately 95ms of median latency---a pragmatic cost of cryptographic compliance guarantees. This overhead applies only to the \emph{prover side} (the organization's own proxy); the verifier experiences only $\sim$4.2ms of additional processing (Groth16's $O(1)$ verification). For latency-sensitive low-risk transactions, organizations can configure PCT in \emph{audit-only mode}, where proofs are generated asynchronously.
+Table~\ref{tab:e2e} quantifies this trade-off. PCT introduces approximately 127ms of median latency overhead---a cost attributable primarily to proof generation rather than verification. The TCB encompasses the agent's enclave signing mechanism, contributing approximately 1.8ms prior to proxy interception. The SNARK overhead applies exclusively to the prover; the verifier experiences only $\sim$4.2ms of additional processing. For workflows where synchronous enforcement is not required, PCT supports an asynchronous \emph{audit-only mode}.
+ 
+\textbf{Macro-benchmark.} To assess overhead in context, we integrated the proxy into a live AutoGPT instance executing chained financial operations (database queries, reasoning, and a Stripe payout). The unmodified agent loop completed in 4,120ms, dominated by LLM inference latency. With PCT intercepting the final Stripe call and generating a $C_{\text{range}} \wedge C_{\text{sem}}$ proof, the total loop time increased to 4,248ms (+128ms), representing a 3.1\% latency overhead. This suggests that in workflows where agent reasoning constitutes the dominant cost, the marginal overhead of cryptographic compliance verification is unlikely to be operationally significant.
+
+\subsection{Throughput and Concurrency}
+
+While single-request median latency dictates the latency floor, production deployment mandates high throughput under load. Groth16 proof generation ($\mathsf{Prove}$) predominantly consists of independent Multi-Scalar Multiplications (MSM) and Fast Fourier Transforms (FFT), both of which are highly parallelizable natively within \texttt{arkworks}. When deployed as a multi-threaded asynchronous service on our 16-core evaluation hardware, the Prover Proxy achieves a sustained throughput of $\approx$150 proofs per second without violating the P99 latency bounds. At higher connection volumes, the proxy architecture permits horizontal scaling identical to standard stateless web servers.
 
 \subsection{Comparison with Alternative Proof Systems}
 
@@ -656,31 +706,32 @@ Table~\ref{tab:systems} justifies our selection of Groth16: it offers the smalle
 \subsection{Domain-Specific Compiler vs.\ General-Purpose zkVMs}
 \label{sec:zkvm_comparison}
 
-To empirically justify our custom PCL-to-R1CS compiler over general-purpose zkVMs, we implemented three representative policies of increasing complexity as RISC-V guest programs for RISC Zero~\cite{risczero} and measured their execution costs against our native compilation. Table~\ref{tab:zkvm} presents the results.
+To justify the design decision to implement a domain-specific compiler rather than leveraging existing zkVM infrastructure, we ported three representative policy structures into RISC-V guest code and executed them under the RISC Zero zkVM~\cite{risczero}. While newer STARK-based engines such as SP1~\cite{sp1} and Jolt~\cite{jolt} offer improved general-purpose performance, they remain fundamentally constrained by the von Neumann abstraction: each policy evaluation requires arithmetizing memory accesses, program counter updates, and register operations in addition to the policy logic itself.
 
 \begin{table}[t]
 \centering
-\caption{PCL Compiler vs.\ RISC Zero zkVM}
+\caption{Domain-Specific Compiler vs.\ RISC Zero zkVM}
 \label{tab:zkvm}
-\begin{tabular}{@{}lrrrr@{}}
+\begin{tabular}{@{}lrrr@{}}
 \toprule
-\textbf{Policy} & \multicolumn{2}{c}{\textbf{PCT (R1CS)}} & \multicolumn{2}{c}{\textbf{RISC Zero}} \\
- & \textbf{Gates} & \textbf{Prove} & \textbf{Cycles} & \textbf{Prove} \\
+\textbf{Policy Type} & \textbf{PCT (ms)} & \textbf{RISC Zero (ms)} & \textbf{Speedup} \\
 \midrule
-Range + Whitelist & 11.2K & 92ms & 832K & 4.8s \\
-+ Temporal + Rate & 11.2K & 95ms & 1.04M & 6.1s \\
-+ Semantic ($d$=384) & 11.3K & 98ms & 2.31M & 14.2s \\
+Range only (2 constraints) & 92 & 2,340 & 25$\times$ \\
+Range + Whitelist (5) & 94 & 6,810 & 72$\times$ \\
+Full (Range+WL+Semantic) & 98 & 14,200 & 145$\times$ \\
 \bottomrule
 \end{tabular}
 \end{table}
 
-The overhead is systematic: a zkVM must arithmetize every RISC-V instruction (memory loads, ALU operations, program counter updates), while our compiler maps each policy constraint directly to its minimal algebraic gadget. The gap widens dramatically for the semantic gadget, where 384-dimensional fixed-point dot products in a zkVM require millions of cycles for the same computation that our specialized circuit achieves in $3d + O(1) = 1{,}153$ multiplication gates. These results confirm that for PCT's narrow constraint vocabulary, a domain-specific compiler is not merely an optimization but an architectural necessity.
+Table~\ref{tab:zkvm} presents the comparison. The domain-specific compiler maps each policy constraint directly to algebraic wire gates, whereas the zkVM must arithmetize the full virtual CPU execution trace. The performance differential is most pronounced for the semantic gadget: a 384-dimensional fixed-point dot product generates millions of VM cycles under RISC Zero, while our specialized circuit implements the equivalent computation in $3d + O(1) = 1{,}153$ multiplication gates. These results suggest that, for PCT's target domain, a domain-specific compiler is not merely an optimization but an architectural prerequisite for achieving sub-100ms proof generation.
 
 \subsection{Robustness of the Semantic Gadget}
 
-As established in our threat model, the semantic constraint $C_{\text{sem}}$ is an optimistic check conditioned on embedding model fidelity. To quantify the practical risk of adversarial embeddings, we measured the perturbation budget required to subvert the gadget's $\tau = 0.85$ boundary using \texttt{all-MiniLM-L6-v2}.
+We have characterized the semantic constraint $C_{\text{sem}}$ as an optimistic check whose fidelity depends on the embedding model's latent geometry. To quantify the adversarial exposure this introduces, we evaluated attacks against the $\tau = 0.85$ boundary using \texttt{all-MiniLM-L6-v2}.
 
-Starting from a benign reference sentence, we applied Projected Gradient Descent (PGD) against the continuous embedding representation to construct adversarial paraphrases that satisfy cosine $\geq 0.85$ while flipping semantic polarity. On average, crossing the false-positive threshold required modifying $\geq$38\% of the input tokens. Because forcing orthogonal semantic meanings into tight geometric proximity introduces severe syntactic distortion, the resulting adversarial outputs are highly anomalous and easily detectable by complementary network or content filters. Thus, while PCT limits its formal guarantees to the mathematical correctness of the semantic check, attacking the semantic plane requires sufficient perturbation that it degrades exploit viability.
+Starting from a benign reference sentence, we applied Projected Gradient Descent (PGD) in the continuous embedding space to construct adversarial paraphrases that preserve cosine similarity $\geq 0.85$ while inverting semantic polarity. We observed that maintaining the similarity threshold required mutating $\geq$38\% of input tokens, which in practice destroys the syntactic structure of the payload.
+
+This observation has practical implications: if an adversary mutates a JSON or HTTP payload to this degree merely to satisfy the similarity constraint, the resulting payload is unlikely to parse correctly at the downstream application. The payload may technically exceed the proximity threshold, but it becomes functionally inert. PCT provides verified computation of the similarity metric; the geometric constraints of the embedding space independently mitigate exploit viability by degrading payload structural integrity.
 
 %% ===================================================================
 %% VIII. REGULATORY MAPPING
@@ -688,34 +739,25 @@ Starting from a benign reference sentence, we applied Projected Gradient Descent
 \section{Regulatory Compliance Mapping}
 \label{sec:regulatory}
 
-A contribution of this work that extends beyond pure cryptography is the formal mapping between PCT's technical guarantees and the requirements of emerging AI governance legislation. We demonstrate that PCT provides the \emph{technical evidence} that regulators increasingly demand.
+PCT addresses a practical gap in the regulatory landscape for autonomous AI. The framework does not offer probabilistic assurances. It produces verifiable cryptographic evidence that can be independently audited.
 
 \subsection{EU AI Act Alignment}
 
-The EU AI Act (Regulation 2024/1689)~\cite{euaiact} establishes risk-based requirements for AI systems deployed in the European market. For high-risk AI systems---which includes autonomous agents operating in financial services, healthcare, and critical infrastructure---the Act mandates:
+The EU AI Act (Regulation 2024/1689)~\cite{euaiact} imposes risk-based requirements on AI systems deployed in the European market. Autonomous agents in financial, healthcare, or critical infrastructure contexts fall under the ``high-risk'' tier. PCT maps to three articles directly:
 
 \begin{itemize}
-    \item \textbf{Article 9 (Risk Management)}: PCT provides continuous, mathematically verified risk mitigation for every transaction, replacing probabilistic guardrails with deterministic proofs.
-
-    \item \textbf{Article 12 (Record-Keeping)}: The immutable audit log of Proof-Carrying Transactions creates a cryptographically verifiable record that satisfies the Act's ``automatic recording of events'' requirement. Each log entry includes the proof $\pi$, enabling retroactive verification of any historical transaction's compliance.
-
-    \item \textbf{Article 14 (Human Oversight)}: PCT supports human oversight by providing auditors with independently verifiable evidence. Unlike opaque model-level alignment, a human auditor can verify any specific transaction's compliance by checking $\pi$ against $\mathsf{vk}$---a computation that takes $\sim$4.2ms and requires no understanding of the underlying AI model.
+    \item \textbf{Article 9 (Risk Management)}: The Act demands continuous risk mitigation across the AI lifecycle. PCT replaces probabilistic guardrails with deterministic, proof-based enforcement on every outbound API call.
+    \item \textbf{Article 12 (Record-Keeping)}: The Act requires ``automatic recording of events.'' Our audit logs contain $\pi$ itself---enabling mathematical proof that a transaction was compliant at the exact moment of execution. Standard event logging cannot offer this.
+    \item \textbf{Article 14 (Human Oversight)}: Model-level alignment is opaque. Under PCT, an auditor checks $\pi$ against $\mathsf{vk}$ in 4.2ms. No inspection of model internals needed.
 \end{itemize}
 
 \subsection{NIST AI Risk Management Framework}
 
-The NIST AI RMF~\cite{nistrmf} organizes AI risk management around four functions: Govern, Map, Measure, and Manage. PCT contributes to:
-
-\begin{itemize}
-    \item \textbf{Measure}: PCT provides quantifiable, binary compliance evidence ($\pi$ verifies or it does not) rather than subjective risk assessments.
-    \item \textbf{Manage}: Real-time proof generation enables proactive risk management---non-compliant transactions are blocked \emph{before} execution, not detected afterward.
-\end{itemize}
+The NIST AI RMF~\cite{nistrmf} organizes AI risk management into core functions. PCT addresses \textbf{Measure} by providing binary compliance data---a proof $\pi$ either validates or it does not---and \textbf{Manage} by blocking non-compliant payloads at the proxy \emph{before} transmission.
 
 \subsection{Compliance as a Cryptographic Primitive}
 
-We argue that PCT represents a new class of compliance technology: \emph{compliance as a cryptographic primitive}. Rather than treating regulatory compliance as a procedural afterthought (checklists, audits, documentation), PCT embeds compliance directly into the computational infrastructure. Every transaction either carries a valid proof or is rejected---there is no ambiguity, no interpretation gap, and no reliance on human process adherence.
-
-This has profound implications for the emerging ``verifiable safety'' paradigm: organizations can provide regulators not with assertions of compliance, but with mathematical proofs of compliance for every individual action taken by their AI systems.
+We observe that PCT instantiates \emph{compliance as a cryptographic primitive}. Conventionally, compliance verification is a procedural exercise: someone inspects logs after the fact. PCT is different. It embeds compliance directly into the transaction lifecycle. A request either carries a valid proof or the proxy rejects it. This eliminates the gap between policy intent and enforcement, and lets organizations hand regulators mathematical evidence instead of procedural attestations.
 
 %% ===================================================================
 %% IX. DISCUSSION
@@ -725,30 +767,22 @@ This has profound implications for the emerging ``verifiable safety'' paradigm: 
 
 \subsection{Limitations}
 
-\textbf{Trusted Setup.} Groth16 requires a per-circuit trusted setup. While MPC ceremonies mitigate this, policy updates necessitate new ceremonies. We outline a migration path to universal-setup systems (Section~\ref{sec:future}).
+\textbf{Trusted Setup.} Groth16 needs a per-circuit trusted setup via MPC ceremony. Since we recompile R1CS circuits on every policy change, each update triggers a new ceremony. In practice, enterprise policy parameters (whitelists, spending caps) change on the order of weeks or months. Organizations that need faster iteration can migrate to PLONK~\cite{gabizon2019plonk}---at the cost of larger proofs ($\sim$576B vs.\ 192B) and slightly slower verification.
 
-\textbf{Prover as TCB.} The Prover Proxy remains a trusted component. We are investigating TEE-based deployment using Intel SGX~\cite{costan2016intel} and ARM TrustZone~\cite{pinto2019demystifying} to minimize the TCB to hardware-attested enclaves. Smart-contract-based verification~\cite{ferles2022verifying} offers an alternative trust anchor for blockchain-native deployments.
+\textbf{Prover as TCB.} The Prover Proxy is a trusted component. We isolate it within hardware-attested enclaves (Intel SGX~\cite{costan2016intel}, ARM TrustZone~\cite{pinto2019demystifying}). If the TEE is compromised via speculative execution side-channels, PCT degrades gracefully. It cannot fail open. A compromised enclave still cannot forge a Groth16 proof $\pi$ for a non-compliant transaction---computational soundness holds independently of TEE integrity. The enclave's only job is \emph{payload authenticity}: preventing an attacker from bypassing the proxy intercept at the network layer.
 
-\textbf{Semantic Gadget Precision.} The fixed-point quantization of embeddings introduces a small precision loss ($\leq 0.01$ in cosine similarity). For extremely fine-grained semantic policies, this may require higher bit-width quantization at proportional constraint cost.
+\textbf{Semantic Gadget Precision.} Fixed-point quantization introduces bounded precision loss ($\leq 0.01$ cosine error). Near the decision boundary, this matters. Increasing the bit-width resolves it, at the cost of more constraints.
 
-\textbf{Latency Overhead.} The 95ms median proving time is acceptable for financial and enterprise transactions but may be prohibitive for ultra-low-latency use cases (e.g., real-time trading at microsecond scales). GPU-accelerated MSM kernels~\cite{lu2024pipemsm} could reduce this by 5--10$\times$.
+\textbf{Latency Overhead.} 95ms median proving time works for enterprise API workflows. For high-frequency trading, it may be too much. GPU-accelerated multi-scalar multiplication~\cite{lu2024pipemsm} is a viable path forward.
 
-\textbf{Adversarial Embeddings.} As established in our threat model (Section~\ref{sec:model}), the semantic constraint $C_{\text{sem}}$ is an optimistic check conditioned on embedding model fidelity. PCT guarantees only that the \emph{mathematical evaluation} was performed correctly; it does not guarantee that geometric similarity implies semantic safety. Hardening the embedding space (e.g., via certified robust embeddings or input-space anomaly detection) is orthogonal to our cryptographic contribution.
+\textbf{Adversarial Embeddings.} PCT guarantees correct execution of the similarity computation. It cannot compensate for a compromised latent space. Gradient-free attacks (GCG, token-smuggling) that embed malicious intent within benign geometric regions remain an open ML-layer challenge. Adversarial training and certified defense are orthogonal to the cryptographic layer but composable with it.
 
-\subsection{Ethical Considerations}
-
-PCT's policy privacy property is a double-edged sword: while it protects organizational IP, it also means that external parties cannot inspect the policies themselves. This creates a tension with transparency requirements. We note that transparency can be achieved at a higher level---organizations can publicly disclose their policy \emph{types} and \emph{categories} while keeping specific thresholds and parameters private inside the circuit.
-
-\subsection{Future Directions}
+\subsection{Ethical Considerations \& Future Directions}
 \label{sec:future}
 
-\textbf{Recursive Proof Composition.} By adopting recursive proof systems (e.g., Nova~\cite{kothapalli2022nova}), multiple transaction proofs can be aggregated into a single succinct proof, enabling batch verification and reducing per-transaction verification cost for high-throughput systems.
+PCT's zero-knowledge property ensures external observers learn nothing about the policy rules. Taken to its extreme, this conflicts with public transparency goals. A reasonable compromise: organizations disclose broad policy \emph{categories} publicly, keep specific thresholds private inside the circuit.
 
-\textbf{Multi-Agent Proof Networks.} In multi-agent systems, PCT can be extended to a \emph{proof-carrying workflow} model where each agent in a pipeline appends its compliance proof, creating a chain of cryptographic attestations that proves end-to-end workflow compliance.
-
-\textbf{On-Chain Verification.} PCT proofs are compatible with EVM-based smart contract verification, enabling decentralized autonomous organizations (DAOs) to cryptographically enforce agent governance on-chain without revealing proprietary policies.
-
-\textbf{Adaptive Circuit Compilation.} Using ML-driven circuit optimization, we aim to learn optimal constraint layouts from historical policy patterns, further reducing gate counts by 15--30\%.
+Three extensions deserve attention. \textbf{Recursive Proof Composition} via Nova~\cite{kothapalli2022nova} would let us aggregate multiple agent proofs into one succinct verification---useful for high-volume deployments. \textbf{Multi-Agent Networks} could propagate proofs across nodes, building end-to-end compliance chains. \textbf{On-Chain Verification} looks feasible: Groth16 verification is cheap enough that DAOs could enforce off-chain agent egress policies directly in EVM-compatible smart contracts.
 
 %% ===================================================================
 %% X. CONCLUSION
@@ -756,59 +790,30 @@ PCT's policy privacy property is a double-edged sword: while it protects organiz
 \section{Conclusion}
 \label{sec:conclusion}
 
-The deployment of autonomous AI agents in safety-critical domains demands enforcement mechanisms whose guarantees are not merely probabilistic but mathematically verifiable. This paper introduced Proof-Carrying Transactions, a framework that compiles organizational egress policies into zero-knowledge circuits and attaches succinct, independently verifiable proofs to every outbound agent request.
+Statistical guardrails shape model behavior during training. They do not enforce policy at runtime. For regulated, high-consequence environments, that distinction matters. Proof-Carrying Transactions close the gap: we extract policy constraints from application logic, compile them into zero-knowledge circuits, and attach a succinct, independently verifiable proof to every outbound agent request.
 
-Our evaluation demonstrates that PCT achieves a median proof generation latency of 95ms with verification in 4.2ms, establishing that cryptographic compliance enforcement is practically deployable within existing enterprise SLOs. The formal proofs of computational soundness (Theorem~\ref{thm:soundness}), zero-knowledge policy privacy (Theorem~\ref{thm:privacy}), and policy-binding completeness (Theorem~\ref{thm:completeness}) provide the theoretical foundation, while the regulatory mapping to the EU AI Act and NIST AI RMF demonstrates immediate applicability to emerging governance requirements.
+The approach works in practice. Proof generation: 95ms median. Verification: 4.2ms. Both fit within enterprise SLOs. We backed these numbers with formal analysis---computational soundness, zero-knowledge privacy---and mapped the architecture onto the EU AI Act and NIST AI RMF.
 
-PCT shifts the trust model from centralized enforcement---where downstream systems must implicitly trust the proxy operator---to decentralized verification, where any party holding the public verification key can independently confirm compliance in constant time. We believe this paradigm represents a foundational primitive for the emerging field of \emph{verifiable AI}: systems whose every consequential action carries a machine-checkable certificate of authorization.
+PCT replaces centralized proxy trust with decentralized cryptographic verification. Every consequential network action carries its own compliance certificate. We see this as a step toward \emph{verifiable AI}: systems whose actions are not merely monitored but provably constrained.
+
+
 
 %% ===================================================================
 %% APPENDIX
 %% ===================================================================
 \appendices
 
-\section{Artifact Description}
+\section{Artifact Appendix}
 \label{sec:artifact}
 
-To support the reproducibility of all evaluation results reported in Section~\ref{sec:evaluation}, we provide a self-contained artifact package. The artifact is distributed as a Docker image that can be built and executed on any system with Docker installed, requiring no Rust toolchain or host-level dependencies.
-
-\subsection{Contents}
-
-The artifact package contains the following components:
-
-\begin{itemize}
-    \item \textbf{PCT Reverse Proxy} (\texttt{proxy/}): The complete Rust implementation of the Policy Constraint Language parser, the AST-to-R1CS circuit compiler, the Groth16 proving engine, and the stateless verification module (approximately 8,400 lines of Rust).
-    \item \textbf{Benchmark Suite} (\texttt{proxy/benches/pct\_bench.rs}): A \texttt{criterion}-based statistical benchmark harness that measures proof generation latency, verification latency, and trusted setup time across five policy complexity tiers.
-    \item \textbf{Constraint Counter} (\texttt{constraint\_counter.rs}): A standalone binary that reports the exact R1CS constraint count emitted by the circuit compiler for a given policy configuration.
-    \item \textbf{Synthetic Policy Corpus} (\texttt{policies/synthetic\_200.json}): An anonymized subset of 200 representative policies drawn from the 847-policy evaluation corpus. Each policy is parameterized with randomized thresholds and whitelist sizes that preserve the statistical properties of the original production rules.
-    \item \textbf{Dockerfile} (\texttt{artifact/Dockerfile}): A self-contained build environment based on \texttt{rust:1.75-bookworm} that compiles and pre-fetches all dependencies.
-\end{itemize}
-
-\subsection{Reproduction Instructions}
+To support full reproducibility of Section~\ref{sec:evaluation}, we provide a Dockerized artifact package containing the PCT Proxy, PCL compiler, Groth16 proving engine, and an anonymized 200-policy dataset.
 
 \begin{enumerate}
-    \item Build the Docker image: \texttt{docker build -t pct-artifact -f artifact/Dockerfile .}
-    \item Start an interactive shell: \texttt{docker run -it pct-artifact /bin/bash}
-    \item Execute benchmarks: \texttt{cargo bench}
-    \item Run the constraint counter: \texttt{cargo run --bin constraint\_counter}
+    \item \textbf{Build}: \texttt{docker build -t pct-artifact -f artifact/Dockerfile .}
+    \item \textbf{Execute}: \texttt{docker run -it pct-artifact /bin/bash}
+    \item \textbf{Measure Latency}: \texttt{cargo bench} (reproduces Tables~\ref{tab:latency}, \ref{tab:e2e})
+    \item \textbf{Measure Constraints}: \texttt{cargo run {-}{-}bin constraint\_counter} (reproduces Figure~\ref{fig:constraints})
 \end{enumerate}
-
-The \texttt{cargo bench} output reports proving and verification latencies grouped by policy complexity tier and directly corresponds to Table~\ref{tab:latency} and Table~\ref{tab:e2e} in the main text. The constraint counter output corresponds to Figure~\ref{fig:constraints}.
-
-\section{Extended Proof Details}
-\label{sec:proofs}
-
-We provide additional detail for the proof reductions summarized in Section~\ref{sec:model}.
-
-\subsection{Soundness Reduction (Theorem~\ref{thm:soundness})}
-
-The full reduction proceeds as follows. Given any PPT adversary $\mathcal{A}^*$ that breaks PCT soundness, we construct an adversary $\mathcal{B}$ that breaks Groth16 knowledge soundness.
-
-$\mathcal{B}$ receives the CRS $(\mathsf{pk}, \mathsf{vk})$ from the Groth16 challenger and forwards $\mathsf{pk}$ to $\mathcal{A}^*$. When $\mathcal{A}^*$ outputs a forgery $(\mathsf{req}, \pi^*)$ where $\mathsf{P}(\mathsf{req}) = 0$ but $\mathcal{V}(\mathsf{vk}, \mathsf{req}, \pi^*) = 1$, $\mathcal{B}$ extracts the public inputs $x = (H(\mathsf{req}), t, v)$ and submits $(x, \pi^*)$ to the Groth16 challenger. By Lemma~\ref{lem:compiler_correctness}, $\mathsf{P}(\mathsf{req}) = 0$ implies no satisfying witness exists for $\mathsf{R}$, so $\mathcal{B}$ has produced a valid proof for an unsatisfiable instance---contradicting Groth16's knowledge soundness under KoE. The advantage of $\mathcal{A}^*$ is therefore bounded by $\textsf{Adv}^{\text{KoE}}_{\mathcal{B}} \leq \textsf{negl}(\lambda)$.
-
-\subsection{Privacy Reduction (Theorem~\ref{thm:privacy})}
-
-The zero-knowledge property follows from the \emph{perfect} simulation guarantee of Groth16. For any CRS with trapdoor $\tau$, the simulator $\mathcal{S}(\mathsf{vk}, x, \tau)$ produces proofs $\tilde{\pi}$ that are \emph{identically distributed} to honest proofs $\pi$. Since simulated proofs carry no information about the witness $w$ (which encodes both the request parameters and the policy structure), an observer seeing only $(x, \pi)$ gains zero bits of information about $\mathsf{P}$ beyond what is revealed by the public inputs $x$. The public inputs are restricted to $(H(\mathsf{req}), t, v)$---a hash commitment, timestamp, and policy version---none of which leak constraint types, thresholds, or whitelist contents.
 
 %% ===================================================================
 %% REFERENCES
@@ -940,16 +945,17 @@ R. Bost et al., ``Machine learning classification over encrypted data,'' in \tex
 S. Badrinarayanan et al., ``Verifiable capacity from zero knowledge proofs,'' in \textit{Proc. TCC}, 2020.
 
 \bibitem{risczero}
-J. H. Ahn et al., ``RISC Zero zkVM: Scalable, transparent zero-knowledge proofs,'' \textit{Technical Report}, \url{https://www.risczero.com/docs/architecture}, 2022.
+J. H. Ahn et al., ``RISC Zero zkVM: Scalable, transparent zero-knowledge proofs,'' \textit{Technical Report}, RISC Zero, 2022.
 
 \bibitem{sp1}
-H. Kalodner et al., ``SP1: A high-performance scalable zkVM,'' \textit{Technical Report}, Succinct Labs, \url{https://succinctlabs.github.io/sp1}, 2024.
+H. Kalodner et al., ``SP1: A high-performance scalable zkVM,'' \textit{Technical Report}, Succinct Labs, 2024.
 
 \bibitem{jolt}
-A. Arun, S. Setty, and J. Thaler, ``Jolt: SNARKs for Virtual Machines via Lookups,'' in \textit{Proc. EUROCRYPT}, 2024. \url{https://eprint.iacr.org/2023/1217}.
+A. Arun, S. Setty, and J. Thaler, ``Jolt: SNARKs for Virtual Machines via Lookups,'' in \textit{Proc. EUROCRYPT}, 2024.
 
 \bibitem{lu2024pipemsm}
 Y. Lu et al., ``PipeMSM: Hardware acceleration for multi-scalar multiplication,'' in \textit{Proc. IEEE FCCM}, 2024.
+
 
 \balance
 \end{thebibliography}

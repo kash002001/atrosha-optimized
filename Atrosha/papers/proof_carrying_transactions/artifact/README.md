@@ -1,6 +1,6 @@
 # Artifact Appendix: Proof-Carrying Transactions
 
-This artifact contains the benchmarking suite necessary to reproduce the evaluation results presented in Section 7, specifically Table II (Latency), Table III (End-to-End), and Figure 2 (R1CS Constraints) of the paper.
+This artifact contains the benchmarking suite necessary to reproduce the evaluation results presented in Section 7, specifically Table II (Gadget Constraints), Table III (Latency), Table IV (End-to-End), and Figure 2 (R1CS Constraints) of the paper.
 
 ## Hardware Requirements
 - **CPU**: AMD EPYC 7B13 or equivalent (4+ cores recommended)
@@ -12,7 +12,7 @@ This artifact contains the benchmarking suite necessary to reproduce the evaluat
 1. **Build the Docker Image**
    From the repository root (parent of the `proxy` folder):
    ```bash
-   docker build -t pct-artifact -f papers/proof_carrying_transactions/artifact/Dockerfile .
+   docker build -t pct-artifact -f artifact/Dockerfile .
    ```
 
 2. **Run the Benchmark Container**
