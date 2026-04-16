@@ -37,9 +37,10 @@ class Atrosha:
         self.agents = Agents(self)
 
     def request(self, method, path, **kwargs):
-        # Route to Dashboard Next.js API running on port 3000
+        import os
+        port = os.environ.get("ATROSHA_DASHBOARD_PORT", "3000")
         if "localhost" in self.base_url and path.startswith('/api'):
-            url = f"http://localhost:3001/{path.lstrip('/')}"
+            url = f"http://localhost:{port}/{path.lstrip('/')}"
         else:
             url = f"{self.base_url}/{path.lstrip('/')}"
             

@@ -80,17 +80,23 @@ impl AuditWorker {
     ) -> Self {
         let mut headers = reqwest::header::HeaderMap::new();
         if let Some(user) = &clickhouse_user {
-            headers.insert("X-ClickHouse-User", user.parse().expect("invalid clickhouse user header"));
+            match user.parse() {
+                Ok(val) => { headers.insert("X-ClickHouse-User", val); }
+                Err(_) => tracing::error!("Invalid ClickHouse User header"),
+            }
         }
         if let Some(pass) = &clickhouse_password {
-            headers.insert("X-ClickHouse-Key", pass.parse().expect("invalid clickhouse key header"));
+            match pass.parse() {
+                Ok(val) => { headers.insert("X-ClickHouse-Key", val); }
+                Err(_) => tracing::error!("Invalid ClickHouse Key header"),
+            }
         }
 
         let client = reqwest::Client::builder()
             .default_headers(headers)
             .timeout(std::time::Duration::from_secs(10))
             .build()
-            .expect("failed to build clickhouse http client");
+            .unwrap_or_else(|_| reqwest::Client::new());
 
         Self {
             rx,

@@ -14,6 +14,7 @@ setup(
     packages=find_packages(),
     install_requires=[
         "requests>=2.25.0",
+        "cbor2>=5.4.6",
     ],
     python_requires=">=3.8",
     classifiers=[

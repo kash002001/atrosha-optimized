@@ -77,11 +77,11 @@ impl ProofGenerator {
         Ok(proof)
     }
 
-    pub fn serialize_proof(proof: &Proof<Bn254>) -> String {
+    pub fn serialize_proof(proof: &Proof<Bn254>) -> Result<String, String> {
         use base64::{Engine as _, engine::general_purpose::STANDARD};
         let mut bytes = Vec::new();
-        proof.serialize_compressed(&mut bytes).unwrap();
-        STANDARD.encode(&bytes)
+        proof.serialize_compressed(&mut bytes).map_err(|e| e.to_string())?;
+        Ok(STANDARD.encode(&bytes))
     }
 
     pub fn deserialize_proof(b64: &str) -> Result<Proof<Bn254>, String> {
@@ -144,11 +144,11 @@ mod tests {
 
         let proof = proof_res.unwrap();
 
-        let b64 = ProofGenerator::serialize_proof(&proof);
+        let b64 = ProofGenerator::serialize_proof(&proof).unwrap();
         assert!(!b64.is_empty());
 
         let decoded = ProofGenerator::deserialize_proof(&b64).unwrap();
-        assert_eq!(ProofGenerator::serialize_proof(&decoded), b64);
+        assert_eq!(ProofGenerator::serialize_proof(&decoded).unwrap(), b64);
     }
 
     #[test]

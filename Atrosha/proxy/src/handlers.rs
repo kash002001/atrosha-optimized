@@ -41,8 +41,13 @@ pub async fn register_agent(
     headers: HeaderMap,
     axum::Json(req): axum::Json<RegisterAgentRequest>,
 ) -> Result<&'static str, StatusCode> {
-    let admin_secret = std::env::var("ADMIN_SECRET")
-        .expect("ADMIN_SECRET must be set in environment");
+    let admin_secret = match std::env::var("ADMIN_SECRET") {
+        Ok(s) => s,
+        Err(_) => {
+            tracing::error!("ADMIN_SECRET is missing from environment during runtime!");
+            return Err(StatusCode::INTERNAL_SERVER_ERROR);
+        }
+    };
     let provided_secret = headers
         .get("X-Atrosha-Admin-Secret")
         .and_then(|v| v.to_str().ok());
@@ -409,7 +414,7 @@ pub async fn proxy_handler(
                 setup, policy, config, witness, whitelist_root, body_hash, ts, pv, seq,
             ) {
                 Ok(proof) => {
-                    let b64 = crate::zkp::prover::ProofGenerator::serialize_proof(&proof);
+                    let b64 = crate::zkp::prover::ProofGenerator::serialize_proof(&proof).unwrap_or_default();
                     generated_proof_b64 = Some(b64.clone());
 
                     // inject PCT headers
