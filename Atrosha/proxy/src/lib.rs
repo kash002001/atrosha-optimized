@@ -17,3 +17,5 @@ pub use state::AppState;
 pub mod validation;
 pub mod whitelist;
 pub mod zkp;
+pub mod tee;
+pub mod model_check;

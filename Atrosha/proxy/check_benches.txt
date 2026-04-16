@@ -1,0 +1,148 @@
+    Checking atrosha-proxy v0.2.0 (C:\Python\Project Atrosha\Atrosha\proxy)
+error[E0432]: unresolved import `crate::AppState`
+ --> src\circuit.rs:2:5
+  |
+2 | use crate::AppState;
+  |     ^^^^^^^^^^^^^^^ no `AppState` in the root
+  |
+help: consider importing this struct instead
+  |
+2 | use crate::state::AppState;
+  |            +++++++
+
+error[E0432]: unresolved import `crate::AppState`
+  --> src\middleware.rs:10:5
+   |
+10 | use crate::AppState;
+   |     ^^^^^^^^^^^^^^^ no `AppState` in the root
+   |
+help: consider importing this struct instead
+   |
+10 | use crate::state::AppState;
+   |            +++++++
+
+error[E0432]: unresolved import `crate::AppState`
+  --> src\ratelimit.rs:11:5
+   |
+11 | use crate::AppState;
+   |     ^^^^^^^^^^^^^^^ no `AppState` in the root
+   |
+help: consider importing this struct instead
+   |
+11 | use crate::state::AppState;
+   |            +++++++
+
+error[E0432]: unresolved import `crate::AppState`
+ --> src\rbac.rs:7:5
+  |
+7 | use crate::AppState;
+  |     ^^^^^^^^^^^^^^^ no `AppState` in the root
+  |
+help: consider importing this struct instead
+  |
+7 | use crate::state::AppState;
+  |            +++++++
+
+warning: unused import: `PreparedVerifyingKey`
+ --> src\zkp\verifier.rs:1:65
+  |
+1 | use ark_groth16::{Groth16, VerifyingKey, prepare_verifying_key, PreparedVerifyingKey, Proof};
+  |                                                                 ^^^^^^^^^^^^^^^^^^^^
+  |
+  = note: `#[warn(unused_imports)]` (part of `#[warn(unused)]`) on by default
+
+error[E0282]: type annotations needed
+  --> src\circuit.rs:14:13
+   |
+14 |         let mut conn = match state.redis_client.get_multiplexed_async_connection().await {
+   |             ^^^^^^^^
+...
+19 |         let count: u32 = conn.get(&key).await.unwrap_or(0);
+   |                          ---- type must be known at this point
+   |
+help: consider giving `conn` an explicit type
+   |
+14 |         let mut conn: /* Type */ = match state.redis_client.get_multiplexed_async_connection().await {
+   |                     ++++++++++++
+
+error[E0282]: type annotations needed
+  --> src\circuit.rs:19:26
+   |
+19 |         let count: u32 = conn.get(&key).await.unwrap_or(0);
+   |                          ^^^^^^^^^^^^^^^^^^^^ cannot infer type
+
+error[E0282]: type annotations needed
+  --> src\circuit.rs:62:13
+   |
+62 |         let mut conn = match state.redis_client.get_multiplexed_async_connection().await {
+   |             ^^^^^^^^
+...
+67 |         let _: Result<(), _> = conn.del(&key).await;
+   |                                ---- type must be known at this point
+   |
+help: consider giving `conn` an explicit type
+   |
+62 |         let mut conn: /* Type */ = match state.redis_client.get_multiplexed_async_connection().await {
+   |                     ++++++++++++
+
+error[E0282]: type annotations needed
+  --> src\middleware.rs:79:9
+   |
+79 |     let pub_bytes = match state.registry.get_pub(&org_id, &agent_id).await {
+   |         ^^^^^^^^^
+...
+87 |     let key_array: [u8; 32] = match pub_bytes.try_into() {
+   |                                     --------- type must be known at this point
+   |
+help: consider giving `pub_bytes` an explicit type
+   |
+79 |     let pub_bytes: /* Type */ = match state.registry.get_pub(&org_id, &agent_id).await {
+   |                  ++++++++++++
+
+error[E0282]: type annotations needed
+  --> src\ratelimit.rs:67:9
+   |
+67 |     let mut conn = match state.redis_client.get_multiplexed_async_connection().await {
+   |         ^^^^^^^^
+...
+73 |     let custom: Option<u32> = conn.hget(&key, "rate_limit_rpm").await.ok().flatten();
+   |                               ---- type must be known at this point
+   |
+help: consider giving `conn` an explicit type
+   |
+67 |     let mut conn: /* Type */ = match state.redis_client.get_multiplexed_async_connection().await {
+   |                 ++++++++++++
+
+error[E0282]: type annotations needed
+  --> src\ratelimit.rs:73:31
+   |
+73 |     let custom: Option<u32> = conn.hget(&key, "rate_limit_rpm").await.ok().flatten();
+   |                               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ cannot infer type
+
+error[E0282]: type annotations needed
+  --> src\ratelimit.rs:80:34
+   |
+80 |     let org_limit: Option<u32> = conn.hget(&org_key, "rate_limit_rpm").await.ok().flatten();
+   |                                  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ cannot infer type
+
+warning: unused variable: `diff`
+   --> src\zkp\compiler.rs:253:9
+    |
+253 |     let diff = b - a;
+    |         ^^^^ help: if this is intentional, prefix it with an underscore: `_diff`
+    |
+    = note: `#[warn(unused_variables)]` (part of `#[warn(unused)]`) on by default
+
+warning: unused variable: `config`
+   --> src\zkp\compiler.rs:294:5
+    |
+294 |     config: &PoseidonConfig<Fr>
+    |     ^^^^^^ help: if this is intentional, prefix it with an underscore: `_config`
+
+Some errors have detailed explanations: E0282, E0432.
+For more information about an error, try `rustc --explain E0282`.
+warning: `atrosha-proxy` (lib) generated 3 warnings
+error: could not compile `atrosha-proxy` (lib) due to 11 previous errors; 3 warnings emitted
+warning: build failed, waiting for other jobs to finish...
+warning: `atrosha-proxy` (lib test) generated 3 warnings (3 duplicates)
+error: could not compile `atrosha-proxy` (lib test) due to 11 previous errors; 3 warnings emitted

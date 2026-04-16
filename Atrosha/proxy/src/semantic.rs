@@ -162,6 +162,132 @@ impl SemanticClient {
 
         Ok(result)
     }
+
+    // fetch 16-bit fixed-point quantized embeddings for SNARK circuit
+    pub async fn embed_fixed(
+        &self,
+        intent: &str,
+        action: &str,
+    ) -> Result<EmbedFixedResult, SemanticError> {
+        let t0 = Instant::now();
+
+        let req = serde_json::json!({
+            "intent": intent,
+            "action": action,
+        });
+
+        let url = format!("{}/embed-fixed", self.base_url);
+
+        let resp = self.client
+            .post(&url)
+            .json(&req)
+            .send()
+            .await
+            .map_err(|e| {
+                tracing::warn!(error = %e, "semantic engine /embed-fixed unreachable");
+                SemanticError::Unavailable
+            })?;
+
+        if resp.status() != ReqwestStatus::OK {
+            tracing::warn!(status = %resp.status(), "semantic engine /embed-fixed returned non-200");
+            return Err(SemanticError::BadResponse);
+        }
+
+        let result: EmbedFixedResult = resp.json().await.map_err(|e| {
+            tracing::warn!(error = %e, "failed to parse embed-fixed result");
+            SemanticError::BadResponse
+        })?;
+
+        tracing::debug!(
+            dim = result.dim,
+            latency_ms = %result.latency_ms,
+            total_ms = ?t0.elapsed().as_millis(),
+            "embed-fixed vectors received"
+        );
+
+        Ok(result)
+    }
+}
+
+#[derive(Debug, Clone, Deserialize)]
+pub struct EmbedFixedResult {
+    pub u: Vec<i64>,
+    pub v: Vec<i64>,
+    pub dim: usize,
+    pub latency_ms: f64,
+}
+
+// pillar 2: causal intent verification (do-calculus)
+
+#[derive(Debug, Clone, Serialize)]
+pub struct CausalVerifyRequest {
+    pub intent: String,
+    pub action: String,
+    pub trace: Vec<serde_json::Value>,
+}
+
+#[derive(Debug, Clone, Deserialize)]
+pub struct CausalVerdict {
+    pub verdict: String,     // CAUSAL or ACAUSAL
+    pub ate: f64,            // average treatment effect
+    pub p_value: f64,
+    pub treated: f64,
+    pub control: f64,
+    pub dag_nodes: usize,
+    pub dag_edges: usize,
+    pub latency_ms: f64,
+    pub reason: String,
+}
+
+impl SemanticClient {
+    pub async fn causal_verify(
+        &self,
+        intent: &str,
+        action: &str,
+        trace: Vec<serde_json::Value>,
+    ) -> Result<CausalVerdict, SemanticError> {
+        let t0 = Instant::now();
+
+        let req = CausalVerifyRequest {
+            intent: intent.to_string(),
+            action: action.to_string(),
+            trace,
+        };
+
+        let url = format!("{}/causal-verify", self.base_url);
+
+        let resp = self.client
+            .post(&url)
+            .json(&req)
+            .send()
+            .await
+            .map_err(|e| {
+                tracing::warn!(error = %e, "semantic engine /causal-verify unreachable");
+                SemanticError::Unavailable
+            })?;
+
+        if resp.status() != ReqwestStatus::OK {
+            tracing::warn!(status = %resp.status(), "semantic engine /causal-verify returned non-200");
+            return Err(SemanticError::BadResponse);
+        }
+
+        let result: CausalVerdict = resp.json().await.map_err(|e| {
+            tracing::warn!(error = %e, "failed to parse causal verdict");
+            SemanticError::BadResponse
+        })?;
+
+        tracing::info!(
+            verdict = %result.verdict,
+            ate = %result.ate,
+            p_value = %result.p_value,
+            dag_nodes = result.dag_nodes,
+            engine_latency_ms = %result.latency_ms,
+            total_latency_ms = ?t0.elapsed().as_millis(),
+            "causal verification verdict"
+        );
+
+        Ok(result)
+    }
 }
 
 #[derive(Debug, thiserror::Error)]

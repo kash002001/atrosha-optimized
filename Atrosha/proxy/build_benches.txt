@@ -1,0 +1,129 @@
+   Compiling zerocopy-derive v0.8.39
+   Compiling num-traits v0.2.19
+   Compiling ppv-lite86 v0.2.21
+   Compiling itertools v0.10.5
+   Compiling clap_lex v1.1.0
+   Compiling ciborium-io v0.2.2
+   Compiling anstyle v1.0.14
+   Compiling plotters-backend v0.3.7
+   Compiling cast v0.3.0
+   Compiling tinytemplate v1.2.1
+   Compiling is-terminal v0.4.17
+   Compiling oorandom v11.1.5
+   Compiling anes v0.1.6
+   Compiling plotters-svg v0.3.7
+   Compiling clap_builder v4.6.0
+   Compiling rand_chacha v0.3.1
+   Compiling rand v0.8.5
+   Compiling num-integer v0.1.46
+   Compiling chrono v0.4.44
+   Compiling plotters v0.3.7
+   Compiling num-bigint v0.4.6
+   Compiling fixed-hash v0.8.0
+   Compiling ethbloom v0.13.0
+   Compiling primitive-types v0.12.2
+   Compiling criterion-plot v0.5.0
+   Compiling zerocopy v0.8.39
+   Compiling clap v4.6.0
+   Compiling simple_asn1 v0.6.4
+   Compiling jsonwebtoken v8.3.0
+   Compiling jsonwebtoken v9.3.1
+   Compiling ethereum-types v0.14.1
+   Compiling ethabi v18.0.0
+   Compiling open-fastrlp v0.1.4
+   Compiling ethers-core v2.0.14
+   Compiling ahash v0.8.12
+   Compiling half v2.7.1
+   Compiling hashbrown v0.13.2
+   Compiling ciborium-ll v0.2.2
+   Compiling ciborium v0.2.2
+   Compiling criterion v0.5.1
+   Compiling ark-std v0.4.0
+   Compiling tungstenite v0.20.1
+   Compiling enr v0.10.0
+   Compiling coins-bip39 v0.8.7
+   Compiling eth-keystore v0.5.0
+   Compiling ark-serialize v0.4.2
+   Compiling ark-ff v0.4.2
+   Compiling tokio-tungstenite v0.20.1
+   Compiling ethers-contract-abigen v2.0.14
+   Compiling ethers-contract-derive v2.0.14
+   Compiling ark-poly v0.4.2
+   Compiling ark-relations v0.4.0
+   Compiling ark-snark v0.4.0
+   Compiling ark-ec v0.4.2
+   Compiling ethers-providers v2.0.14
+   Compiling ethers-etherscan v2.0.14
+   Compiling ethers-signers v2.0.14
+   Compiling ethers-addressbook v2.0.14
+   Compiling ark-r1cs-std v0.4.0
+   Compiling ark-bn254 v0.4.0
+   Compiling ethers-contract v2.0.14
+   Compiling ark-crypto-primitives v0.4.0
+   Compiling ark-groth16 v0.4.0
+   Compiling ethers-middleware v2.0.14
+   Compiling ethers v2.0.14
+   Compiling atrosha-proxy v0.2.0 (C:\Python\Project Atrosha\Atrosha\proxy)
+warning: unused import: `PreparedVerifyingKey`
+ --> src\zkp\verifier.rs:1:65
+  |
+1 | use ark_groth16::{Groth16, VerifyingKey, prepare_verifying_key, PreparedVerifyingKey, Proof};
+  |                                                                 ^^^^^^^^^^^^^^^^^^^^
+  |
+  = note: `#[warn(unused_imports)]` (part of `#[warn(unused)]`) on by default
+
+warning: unused variable: `diff`
+   --> src\zkp\compiler.rs:253:9
+    |
+253 |     let diff = b - a;
+    |         ^^^^ help: if this is intentional, prefix it with an underscore: `_diff`
+    |
+    = note: `#[warn(unused_variables)]` (part of `#[warn(unused)]`) on by default
+
+warning: unused variable: `config`
+   --> src\zkp\compiler.rs:294:5
+    |
+294 |     config: &PoseidonConfig<Fr>
+    |     ^^^^^^ help: if this is intentional, prefix it with an underscore: `_config`
+
+warning: `atrosha-proxy` (lib) generated 3 warnings (run `cargo fix --lib -p atrosha-proxy` to apply 3 suggestions)
+warning: unused import: `Bn254`
+ --> benches\pct_bench.rs:2:17
+  |
+2 | use ark_bn254::{Bn254, Fr};
+  |                 ^^^^^
+  |
+  = note: `#[warn(unused_imports)]` (part of `#[warn(unused)]`) on by default
+
+error[E0560]: struct `PolicyWitness` has no field named `tx_intent_embedding`
+  --> benches\pct_bench.rs:89:13
+   |
+89 |             tx_intent_embedding: vec![Fr::from(1u32); 384], // dummy embedding
+   |             ^^^^^^^^^^^^^^^^^^^ `PolicyWitness` does not have this field
+   |
+   = note: available fields are: `agent_daily_limit`, `agent_per_tx_limit`, `agent_daily_spent`, `agent_consecutive_denials`, `agent_is_suspended` ... and 3 others
+
+error[E0308]: mismatched types
+  --> benches\pct_bench.rs:94:76
+   |
+94 |             b.iter(|| ProofGenerator::generate_proof(s, p, config.clone(), w.clone(), whitelist_root).unwrap());
+   |                       ------------------------------                       ^^^^^^^^^ expected `PolicyWitness`, found `&PolicyWitness`
+   |                       |
+   |                       arguments to this function are incorrect
+   |
+note: associated function defined here
+  --> C:\Python\Project Atrosha\Atrosha\proxy\src\zkp\prover.rs:44:12
+   |
+44 |     pub fn generate_proof(
+   |            ^^^^^^^^^^^^^^
+help: consider using clone here
+   |
+94 |             b.iter(|| ProofGenerator::generate_proof(s, p, config.clone(), w.clone().clone(), whitelist_root).unwrap());
+   |                                                                                     ++++++++
+
+Some errors have detailed explanations: E0308, E0560.
+For more information about an error, try `rustc --explain E0308`.
+warning: `atrosha-proxy` (bench "pct_bench") generated 1 warning
+error: could not compile `atrosha-proxy` (bench "pct_bench") due to 2 previous errors; 1 warning emitted
+warning: build failed, waiting for other jobs to finish...
+warning: `atrosha-proxy` (lib test) generated 3 warnings (3 duplicates)

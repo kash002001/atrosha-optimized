@@ -42,8 +42,9 @@ ark-relations = "0.4"
 ark-r1cs-std = "0.4"
 ark-crypto-primitives = { version = "0.4", features = ["r1cs", "crh", "sponge"] }
 ark-serialize = "0.4"
-ark-std = "0.4"
+ark-std = { version = "0.4", features = ["parallel"] }
 rand = "0.8"
+rayon = "1.10"
 
 [dev-dependencies]
 criterion = "0.5"

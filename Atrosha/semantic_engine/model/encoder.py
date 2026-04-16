@@ -91,11 +91,18 @@ class TransformerEncoder(nn.Module):
             if p.dim() > 1:
                 nn.init.xavier_uniform_(p)
 
-    def forward(self, input_ids, attention_mask=None):
-        B, T = input_ids.shape
-        positions = torch.arange(T, device=input_ids.device).unsqueeze(0).expand(B, T)
+    def forward(self, input_ids=None, attention_mask=None, inputs_embeds=None):
+        if inputs_embeds is None:
+            B, T = input_ids.shape
+            x = self.token_emb(input_ids)
+            device = input_ids.device
+        else:
+            B, T, _ = inputs_embeds.shape
+            x = inputs_embeds
+            device = inputs_embeds.device
 
-        x = self.token_emb(input_ids) + self.pos_emb(positions)
+        positions = torch.arange(T, device=device).unsqueeze(0).expand(B, T)
+        x = x + self.pos_emb(positions)
         x = self.drop(x)
 
         for block in self.blocks:

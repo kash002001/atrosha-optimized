@@ -7,6 +7,9 @@ use crate::audit::AuditLogger;
 use crate::adapters::{HttpAdapter, EvmAdapter, AchAdapter};
 use crate::semantic::SemanticClient;
 use crate::whitelist::EgressWhitelist;
+use crate::zkp::state_oracle::StateOracle;
+use ark_crypto_primitives::sponge::poseidon::PoseidonConfig;
+use ark_bn254::Fr;
 
 #[derive(Clone)]
 pub struct AppState {
@@ -22,4 +25,6 @@ pub struct AppState {
     pub egress_whitelist: Arc<EgressWhitelist>,
     pub zkp_setup: Option<Arc<crate::zkp::prover::Groth16Setup>>,
     pub zkp_policy: Option<Arc<crate::zkp::policy_lang::Policy>>,
+    pub state_oracle: Option<Arc<StateOracle>>,
+    pub poseidon_config: Option<Arc<PoseidonConfig<Fr>>>,
 }

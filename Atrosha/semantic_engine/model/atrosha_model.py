@@ -28,8 +28,8 @@ class AtroshaSemanticModel(nn.Module):
         )
         self.classifier = ClassificationHead(cfg.hidden_dim, cfg.num_classes, cfg.dropout)
 
-    def forward(self, input_ids, attention_mask=None):
-        enc_out = self.encoder(input_ids, attention_mask)
+    def forward(self, input_ids=None, attention_mask=None, inputs_embeds=None):
+        enc_out = self.encoder(input_ids, attention_mask, inputs_embeds=inputs_embeds)
         logits = self.classifier(enc_out)
         return logits
 

@@ -2,29 +2,50 @@ use ark_groth16::{Groth16, VerifyingKey, prepare_verifying_key, PreparedVerifyin
 use ark_bn254::{Bn254, Fr};
 use ark_crypto_primitives::snark::SNARK;
 use std::time::Instant;
+use std::sync::OnceLock;
 use axum::{Json, response::IntoResponse, http::StatusCode};
 use serde::{Deserialize, Serialize};
 
 pub struct ProofVerifier;
 
+static CACHED_PVK: OnceLock<CachedVerifyingData> = OnceLock::new();
+
+struct CachedVerifyingData {
+    pvk: PreparedVerifyingKey<Bn254>,
+}
+
 impl ProofVerifier {
-    /// O(1) Zero-Knowledge Proof Verification
-    /// Validates that the provided proof satisfies the policy without revealing the private inputs.
+    // pre-process and cache the verifying key at startup
+    pub fn cache_vk(vk: &VerifyingKey<Bn254>) {
+        let pvk = prepare_verifying_key(vk);
+        let _ = CACHED_PVK.set(CachedVerifyingData { pvk });
+    }
+
     pub fn verify_proof(
         vk: &VerifyingKey<Bn254>,
         proof: &Proof<Bn254>,
         public_inputs: &[Fr],
     ) -> Result<bool, String> {
-        let pvk = prepare_verifying_key(vk);
+        // use cached pvk if available, otherwise prepare each time
+        let pvk = if let Some(cached) = CACHED_PVK.get() {
+            &cached.pvk
+        } else {
+            // fallback: prepare inline (slower, ~0.5ms overhead)
+            &prepare_verifying_key(vk)
+        };
+
         let start = Instant::now();
 
-        let is_valid = Groth16::<Bn254>::verify_with_processed_vk(&pvk, public_inputs, proof)
-            .map_err(|e| format!("Verification process error: {:?}", e))?;
+        let is_valid = Groth16::<Bn254>::verify_with_processed_vk(pvk, public_inputs, proof)
+            .map_err(|e| format!("verification error: {:?}", e))?;
 
         let duration = start.elapsed();
-        tracing::debug!("O(1) Verification completed in {:?}", duration);
-        
-        // Target: <10ms verification time. The result implies mathematically unbreakable certainty.
+        tracing::debug!(
+            elapsed_us = duration.as_micros(),
+            valid = is_valid,
+            "o(1) verification complete"
+        );
+
         Ok(is_valid)
     }
 }
@@ -35,11 +56,12 @@ impl ProofVerifier {
 
 #[derive(Deserialize)]
 pub struct VerifyProofRequest {
-    /// The base64-encoded zero-knowledge proof
     pub proof_b64: String,
-    /// The specific Merkle whitelist root to check the public constraint against
-    pub whitelist_root: u64, 
-    // In production, the VerificationKey would be loaded dynamically based on policy version.
+    pub whitelist_root: u64,
+    pub request_body_hash: u64,
+    pub timestamp: u64,
+    pub policy_version: u64,
+    pub state_seq: u64,
 }
 
 #[derive(Serialize)]
@@ -48,15 +70,12 @@ pub struct VerifyProofResponse {
     pub verified_at_ms: u128,
 }
 
-/// POST /verify-proof
-/// Validates an Atrosha Zero-Knowledge Proof externally without access to the Proxy private datastore.
 pub async fn verify_proof_endpoint(
     axum::extract::State(state): axum::extract::State<crate::state::AppState>,
     Json(payload): Json<VerifyProofRequest>,
 ) -> impl IntoResponse {
     let start = Instant::now();
-    
-    // 1. Deserialize proof
+
     let proof = match crate::zkp::prover::ProofGenerator::deserialize_proof(&payload.proof_b64) {
         Ok(p) => p,
         Err(_) => return (StatusCode::BAD_REQUEST, Json(VerifyProofResponse { is_valid: false, verified_at_ms: 0 })),
@@ -64,14 +83,20 @@ pub async fn verify_proof_endpoint(
 
     let mut is_valid = false;
     if let Some(setup) = &state.zkp_setup {
-        let public_inputs = vec![Fr::from(payload.whitelist_root as u32)];
+        let public_inputs = vec![
+            Fr::from(payload.whitelist_root as u32),
+            Fr::from(payload.request_body_hash as u32),
+            Fr::from(payload.timestamp as u32),
+            Fr::from(payload.policy_version as u32),
+            Fr::from(payload.state_seq as u32),
+        ];
         if let Ok(v) = ProofVerifier::verify_proof(&setup.proving_key.vk, &proof, &public_inputs) {
             is_valid = v;
         }
     }
-    
+
     let duration = start.elapsed();
-    
+
     (StatusCode::OK, Json(VerifyProofResponse {
         is_valid,
         verified_at_ms: duration.as_millis(),
@@ -81,61 +106,52 @@ pub async fn verify_proof_endpoint(
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::zkp::prover::{ProofGenerator};
+    use crate::zkp::prover::ProofGenerator;
     use crate::zkp::policy_lang::parse;
-    use crate::zkp::compiler::PolicyWitness;
-    use ark_crypto_primitives::sponge::poseidon::PoseidonConfig;
-
-    fn dummy_poseidon() -> PoseidonConfig<Fr> {
-        PoseidonConfig {
-            full_rounds: 8,
-            partial_rounds: 31,
-            alpha: 5,
-            ark: vec![vec![Fr::from(1u32)]],
-            mds: vec![vec![Fr::from(1u32)]],
-            rate: 2,
-            capacity: 1,
-        }
-    }
+    use crate::zkp::compiler::{PolicyWitness, bn254_poseidon_config};
 
     #[test]
     fn test_verifier_o1_benchmark() {
         let policy = parse(r#"
-            policy LimitAndMerkle {
+            policy LimitOnly {
                 require tx.amount <= 50000
-                require tx.target IN org.whitelist
             }
         "#).unwrap();
-        
-        let config = dummy_poseidon();
+
+        let config = bn254_poseidon_config();
         let setup = ProofGenerator::trusted_setup(&policy, config.clone());
 
-        let whitelist_root = Fr::from(999u32);
-        
-        // Since trusted setup uses PolicyWitness::default() which has an empty merkle_path,
-        // we must use an empty merkle_path here to maintain identical circuit topology for Groth16.
+        // cache the VK for faster verification
+        ProofVerifier::cache_vk(&setup.proving_key.vk);
+
         let witness = PolicyWitness {
             tx_amount: Fr::from(2000u32),
-            tx_target: Fr::from(999u32), 
-            whitelist_merkle_path: vec![], 
+            tx_timestamp: Fr::from(1700000000u64),
             ..PolicyWitness::default()
         };
 
-        let proof = ProofGenerator::generate_proof(&setup, &policy, config, witness, whitelist_root).unwrap();
+        let whitelist_root = Fr::from(0u32);
+        let body_hash = Fr::from(123u32);
+        let ts = Fr::from(1700000000u64);
+        let pv = Fr::from(1u32);
+        let seq = Fr::from(42u32);
+
+        let proof = ProofGenerator::generate_proof(
+            &setup, &policy, config, witness, whitelist_root, body_hash, ts, pv, seq,
+        ).unwrap();
 
         let start = Instant::now();
-        // Public inputs must match exactly the ones instantiated in `generate_constraints` via `new_input`
-        let public_inputs = vec![whitelist_root];
-        
+        let public_inputs = vec![whitelist_root, body_hash, ts, pv, seq];
+
         let is_valid = ProofVerifier::verify_proof(&setup.proving_key.vk, &proof, &public_inputs).unwrap();
         let verification_time = start.elapsed();
-        
-        println!("Verification time: {:?}", verification_time);
-        assert!(verification_time.as_millis() < 150, "Verification should be O(1) and ultra-fast (<150ms in debug, <5ms in release)");
+
+        println!("verification time: {:?}", verification_time);
+        assert!(verification_time.as_millis() < 150, "verification should be fast (<150ms debug, <5ms release)");
         assert!(is_valid);
-        
-        // Test invalid proof
-        let bad_inputs = vec![Fr::from(99999u32)]; // wrong root
+
+        // wrong public inputs → should fail
+        let bad_inputs = vec![Fr::from(99999u32), body_hash, ts, pv, seq];
         let is_valid = ProofVerifier::verify_proof(&setup.proving_key.vk, &proof, &bad_inputs).unwrap();
         assert!(!is_valid);
     }

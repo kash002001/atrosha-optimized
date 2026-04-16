@@ -16,6 +16,7 @@ from server.audit_sink import push_verdict
 _session = None
 _tokenizer = None
 _st_model = None  # sentence-transformers for /verify
+_causal_engine = None  # pillar 2: do-calculus causal verification
 
 def download_if_missing(file_path: str, url: str):
     if not os.path.exists(file_path):
@@ -30,7 +31,7 @@ def download_if_missing(file_path: str, url: str):
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    global _session, _tokenizer, _st_model
+    global _session, _tokenizer, _st_model, _causal_engine
     import onnxruntime as ort
     from tokenizer.train_tokenizer import load_tokenizer
     from sentence_transformers import SentenceTransformer
@@ -72,6 +73,19 @@ async def lifespan(app: FastAPI):
         print(f"[!] failed to load sentence-transformer: {e}")
         _st_model = None
 
+    # pillar 2: causal intent verification engine
+    if _st_model is not None:
+        from causal.engine import CausalEngine
+        _causal_engine = CausalEngine(
+            embed_fn=lambda text: _st_model.encode(text, normalize_embeddings=True),
+            ate_threshold=float(os.environ.get("CAUSAL_ATE_THRESHOLD", 0.15)),
+            p_threshold=float(os.environ.get("CAUSAL_P_THRESHOLD", 0.10)),
+            n_permutations=int(os.environ.get("CAUSAL_N_PERMS", 200)),
+        )
+        print(f"[+] causal engine ready (ate_thr={_causal_engine.ate_threshold}, p_thr={_causal_engine.p_threshold})")
+    else:
+        print("[!] causal engine skipped — sentence-transformer not loaded")
+
     print("[+] semantic engine ready")
 
     yield
@@ -79,6 +93,7 @@ async def lifespan(app: FastAPI):
     _session = None
     _tokenizer = None
     _st_model = None
+    _causal_engine = None
 
 app = FastAPI(title="Atrosha Semantic Engine", lifespan=lifespan)
 
@@ -251,12 +266,121 @@ async def verify_intent(req: VerifyRequest):
     )
 
 
+# --- Pillar 2: Causal Intent Verification (do-calculus) ---
+
+class CausalVerifyRequest(BaseModel):
+    intent: str              # human's locked prompt
+    action: str              # agent's proposed outbound action
+    trace: list[dict] = []   # reasoning chain: [{"kind": "reasoning", "content": "..."}]
+    ate_threshold: float | None = None
+    p_threshold: float | None = None
+
+
+class CausalVerdictResponse(BaseModel):
+    verdict: str           # CAUSAL or ACAUSAL
+    ate: float             # average treatment effect
+    p_value: float
+    treated: float         # E[Y|do(intent)]
+    control: float         # E[Y|do(¬intent)]
+    dag_nodes: int
+    dag_edges: int
+    latency_ms: float
+    reason: str = ""
+
+
+@app.post("/causal-verify", response_model=CausalVerdictResponse)
+async def causal_verify(req: CausalVerifyRequest):
+    if _causal_engine is None:
+        raise HTTPException(503, "causal engine not loaded")
+
+    # override thresholds per-request if provided
+    engine = _causal_engine
+    if req.ate_threshold is not None:
+        engine.ate_threshold = req.ate_threshold
+    if req.p_threshold is not None:
+        engine.p_threshold = req.p_threshold
+
+    result = engine.verify(
+        intent=req.intent,
+        action=req.action,
+        trace_steps=req.trace,
+    )
+
+    print(f"[CAUSAL] {result.verdict} | ATE={result.ate:.4f} p={result.p_value:.4f} | {result.latency_ms:.1f}ms")
+    print(f"  intent: {req.intent[:80]}")
+    print(f"  action: {req.action[:80]}")
+    if req.trace:
+        print(f"  trace_steps: {len(req.trace)}")
+
+    return CausalVerdictResponse(
+        verdict=result.verdict,
+        ate=result.ate,
+        p_value=result.p_value,
+        treated=result.treated,
+        control=result.control,
+        dag_nodes=result.dag_nodes,
+        dag_edges=result.dag_edges,
+        latency_ms=result.latency_ms,
+        reason=result.reason,
+    )
+
+
+# --- PCT: fixed-point embedding for SNARK circuit binding ---
+
+FRAC_BITS = 12
+SCALE = 1 << FRAC_BITS  # 4096
+CLAMP_MIN = -(1 << 15)   # -32768
+CLAMP_MAX = (1 << 15) - 1 # 32767
+
+
+class EmbedFixedRequest(BaseModel):
+    intent: str
+    action: str
+
+
+class EmbedFixedResponse(BaseModel):
+    u: list[int]      # intent vector, 16-bit signed fixed-point
+    v: list[int]      # action vector, 16-bit signed fixed-point
+    dim: int
+    latency_ms: float
+
+
+def quantize_fp16(vec: np.ndarray) -> list[int]:
+    scaled = np.round(vec * SCALE).astype(np.int32)
+    clamped = np.clip(scaled, CLAMP_MIN, CLAMP_MAX)
+    return clamped.tolist()
+
+
+@app.post("/embed-fixed", response_model=EmbedFixedResponse)
+async def embed_fixed(req: EmbedFixedRequest):
+    if _st_model is None:
+        raise HTTPException(503, "sentence-transformer not loaded")
+
+    t0 = time.perf_counter()
+
+    vec_a = _st_model.encode(req.intent, normalize_embeddings=True)
+    vec_b = _st_model.encode(req.action, normalize_embeddings=True)
+
+    u = quantize_fp16(vec_a)
+    v = quantize_fp16(vec_b)
+
+    latency = (time.perf_counter() - t0) * 1000
+    print(f"[EMBED-FIXED] d={len(u)} | {latency:.1f}ms")
+
+    return EmbedFixedResponse(
+        u=u, v=v,
+        dim=len(u),
+        latency_ms=round(latency, 2),
+    )
+
+
 @app.get("/health")
 def health():
     return {
         "status": "alive",
         "model_loaded": _session is not None,
         "st_model_loaded": _st_model is not None,
+        "causal_engine_loaded": _causal_engine is not None,
         "audit_sink": os.environ.get("SUPABASE_URL") is not None,
     }
 
@@ -265,3 +389,4 @@ if __name__ == "__main__":
     import uvicorn
     port = int(os.environ.get("PORT", 8002))
     uvicorn.run(app, host="0.0.0.0", port=port)
+

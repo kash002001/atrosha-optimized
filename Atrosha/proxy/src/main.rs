@@ -20,8 +20,6 @@ use crate::semantic::SemanticClient;
 use crate::state::AppState;
 use crate::whitelist::EgressWhitelist;
 use crate::handlers::{health_check, register_agent, rotate_key_handler, proxy_handler};
-use ark_crypto_primitives::sponge::poseidon::PoseidonConfig;
-use ark_bn254::Fr;
 
 #[tokio::main]
 async fn main() -> anyhow::Result<()> {
@@ -76,23 +74,24 @@ async fn main() -> anyhow::Result<()> {
         .unwrap_or_else(|_| "http://127.0.0.1:8002".into());
 
     // Initialize ZKP Global Proving Context
-    tracing::info!("Initializing Atrosha Zero-Knowledge Prove Setup...");
+    tracing::info!("initializing zero-knowledge proving pipeline...");
     let zkp_policy_tree = crate::zkp::policy_lang::parse(r#"
         policy MasterApproval {
             require tx.amount <= 9999999
         }
     "#).unwrap();
-    let poseidon_config = PoseidonConfig {
-        full_rounds: 8,
-        partial_rounds: 31,
-        alpha: 5,
-        ark: vec![vec![Fr::from(1u32)]],
-        mds: vec![vec![Fr::from(1u32)]],
-        rate: 2,
-        capacity: 1,
-    };
-    let global_zkp_setup = Arc::new(crate::zkp::prover::ProofGenerator::trusted_setup(&zkp_policy_tree, poseidon_config));
+    let poseidon_config = crate::zkp::compiler::bn254_poseidon_config();
+    let global_zkp_setup = Arc::new(crate::zkp::prover::ProofGenerator::trusted_setup(&zkp_policy_tree, poseidon_config.clone()));
+
+    // pre-process and cache the verifying key for O(1) verification
+    crate::zkp::verifier::ProofVerifier::cache_vk(&global_zkp_setup.proving_key.vk);
+    tracing::info!("verifying key cached for O(1) verification");
+
     let zkp_policy = Arc::new(zkp_policy_tree);
+
+    // state oracle for CAS reserve-commit budget management
+    let state_oracle = Arc::new(crate::zkp::state_oracle::StateOracle::new(redis_client.clone()));
+    tracing::info!("state oracle initialized");
 
     let state = AppState {
         policy_engine,
@@ -113,6 +112,8 @@ async fn main() -> anyhow::Result<()> {
         egress_whitelist: Arc::new(EgressWhitelist::new(redis_client.clone())),
         zkp_setup: Some(global_zkp_setup),
         zkp_policy: Some(zkp_policy),
+        state_oracle: Some(state_oracle),
+        poseidon_config: Some(Arc::new(poseidon_config)),
     };
 
     // warm the egress whitelist cache and start background refresh

@@ -14,6 +14,9 @@ use crate::audit::{AuditDecision, AuditRecord};
 use crate::circuit;
 use crate::permit::{compute_req_intent_hash, SpendPermit};
 use crate::adapters::RailAdapter;
+use crate::model_check::engine::ModelChecker;
+use crate::model_check::ltl::BuchiAutomaton;
+use crate::zkp::policy_lang::Constraint;
 
 // max body we'll buffer before rejecting
 const MAX_BODY_BYTES: usize = 10 * 1024 * 1024;
@@ -205,6 +208,51 @@ pub async fn proxy_handler(
         }
     }
 
+    // pillar 2: causal intent verification (do-calculus)
+    // fires after basic intent match; tests whether intent *causally drives* the action
+    if let Some(_sid) = &session_id {
+        let intent_text = headers.get("X-Atrosha-Intent-Text")
+            .and_then(|v| v.to_str().ok())
+            .unwrap_or("");
+
+        if !intent_text.is_empty() {
+            let action_desc = format!(
+                "{} {} | body: {}",
+                method, target_url,
+                String::from_utf8_lossy(&body_vec).chars().take(200).collect::<String>()
+            );
+
+            // reasoning trace steps from the agent (optional header, JSON array)
+            let trace: Vec<serde_json::Value> = headers
+                .get("X-Atrosha-Trace")
+                .and_then(|v| v.to_str().ok())
+                .and_then(|s| serde_json::from_str(s).ok())
+                .unwrap_or_default();
+
+            match state.semantic.causal_verify(intent_text, &action_desc, trace).await {
+                Ok(cv) if cv.verdict == "ACAUSAL" => {
+                    tracing::warn!(
+                        agent_id = %agent_id,
+                        ate = %cv.ate,
+                        p_value = %cv.p_value,
+                        "CAUSAL INTEGRITY FAILED — intent does not causally drive action"
+                    );
+                    log_audit(&state, &org_id, agent_id, &req_id, amount, target_url, AuditDecision::Denied, start, false, None::<String>, SignatureStatus::Verified, Some(format!("Causal Integrity: ACAUSAL (ATE={:.4}, p={:.4})", cv.ate, cv.p_value)), 0.0, None::<String>, None::<String>);
+                    circuit::CircuitBreaker::record_denial(&state, agent_id).await;
+                    return Err(StatusCode::FORBIDDEN);
+                }
+                Ok(cv) => {
+                    tracing::info!(
+                        ate = %cv.ate,
+                        p_value = %cv.p_value,
+                        "causal integrity verified"
+                    );
+                }
+                Err(_) => tracing::warn!("causal engine unavailable — fail-open"),
+            }
+        }
+    }
+
     if amount > 10000.0 {
         log_audit(&state, &org_id, agent_id, &req_id, amount, target_url, AuditDecision::Denied, start, false, None::<String>, SignatureStatus::Verified, Some("Transaction > $10k requires Human-in-the-Loop MFA".to_string()), 0.0, None::<String>, None::<String>);
         return Err(StatusCode::PAYMENT_REQUIRED);
@@ -225,6 +273,36 @@ pub async fn proxy_handler(
     };
 
     let (sim, matched_policy_id) = if let Some(p) = &permit { (p.sim, p.matched_policy_id.clone()) } else { (0.0, None::<String>) };
+    
+    // pillar 5: temporal logic bounded model check
+    if let Some(oracle) = &state.state_oracle {
+        if let Some(policy) = &state.zkp_policy {
+            if let Ok(history) = oracle.get_history_trace(agent_id, 100).await {
+                // Construct current physical mapping for model checker
+                let current_tx = serde_json::json!({
+                    "timestamp": chrono::Utc::now().timestamp() as u64,
+                    "target": target_url,
+                    "amount": amount
+                });
+
+                if let Some(root_constraint) = policy.rules.iter()
+                    .map(|r| r.constraint.clone())
+                    .reduce(|a, b| Constraint::And(Box::new(a), Box::new(b))) {
+                    
+                    let b_auto = BuchiAutomaton::compile(&root_constraint);
+                    if let Ok(passes) = ModelChecker::verify_trace(&b_auto, &current_tx, &history) {
+                        if !passes {
+                            tracing::warn!(agent_id = %agent_id, "TEMPORAL LOGIC INTEGRITY FAILED");
+                            log_audit(&state, &org_id, agent_id, &req_id, amount, target_url, AuditDecision::Denied, start, false, permit_id.clone(), sig_status, Some("Temporal Integrity: LTL Bounds Violated".to_string()), sim, matched_policy_id.clone(), None::<String>);
+                            circuit::CircuitBreaker::record_denial(&state, agent_id).await;
+                            return Err(StatusCode::FORBIDDEN);
+                        }
+                    }
+                }
+            }
+        }
+    }
+
     let decision = match state.policy_engine.check_and_commit_spend(agent_id, amount).await {
         Ok(_) => {
             circuit::CircuitBreaker::record_approval(&state, agent_id).await;
@@ -258,31 +336,111 @@ pub async fn proxy_handler(
     if matches!(decision, AuditDecision::Approved) {
         if let (Some(setup), Some(policy)) = (&state.zkp_setup, &state.zkp_policy) {
             use ark_bn254::Fr;
-            use crate::zkp::compiler::PolicyWitness;
-            let target_hash = crate::permit::compute_req_intent_hash(method.as_str(), target_url, &body_vec);
-            let target_num = target_hash.len() as u32; // Just a mock deterministic constraint input
+            use crate::zkp::compiler::{PolicyWitness, bn254_poseidon_config, SEMANTIC_DIM, MERKLE_DEPTH};
+            use sha2::{Sha256, Digest};
 
+            let config = state.poseidon_config
+                .as_ref()
+                .map(|c| c.as_ref().clone())
+                .unwrap_or_else(bn254_poseidon_config);
+
+            // 1. body hash for circuit binding
+            let body_digest = Sha256::digest(&body_vec);
+            let body_hash_val = u32::from_le_bytes(body_digest[0..4].try_into().unwrap_or([0;4]));
+            let now_ts = chrono::Utc::now().timestamp() as u64;
+
+            // 2. state oracle: reserve budget, get monotonic seq
+            let (seq_num, _budget_remaining) = if let Some(oracle) = &state.state_oracle {
+                match oracle.reserve(agent_id, amount as u64).await {
+                    Ok((s, r)) => {
+                        tracing::debug!(seq = s, remaining = r, "budget reserved");
+                        (s, r)
+                    }
+                    Err(e) => {
+                        tracing::warn!(error = %e, "state oracle reserve failed — using seq=0");
+                        (0u64, 0u64)
+                    }
+                }
+            } else {
+                (0u64, 0u64)
+            };
+
+            // 3. semantic engine: get 16-bit fixed-point embedding vectors
+            let intent_text = headers.get("X-Atrosha-Intent-Text")
+                .and_then(|v| v.to_str().ok())
+                .unwrap_or("transaction");
+            let action_text = format!("{} {} {}", method, target_url, String::from_utf8_lossy(&body_vec[..body_vec.len().min(200)]));
+
+            let (sem_u, sem_v) = match state.semantic.embed_fixed(intent_text, &action_text).await {
+                Ok(result) => {
+                    let u: Vec<Fr> = result.u.iter().map(|x| Fr::from(*x as u32)).collect();
+                    let v: Vec<Fr> = result.v.iter().map(|x| Fr::from(*x as u32)).collect();
+                    (u, v)
+                }
+                Err(_) => {
+                    // fail-open: default zero vectors (similarity check passes trivially)
+                    tracing::warn!("embed-fixed unavailable — using zero semantic vectors");
+                    (vec![Fr::from(0u32); SEMANTIC_DIM], vec![Fr::from(0u32); SEMANTIC_DIM])
+                }
+            };
+
+            // 4. build full witness
             let witness = PolicyWitness {
                 tx_amount: Fr::from(amount as u32),
-                tx_target: Fr::from(target_num),
-                whitelist_merkle_path: vec![],
+                tx_target: Fr::from(0u32),
+                tx_timestamp: Fr::from(now_ts),
+                agent_role: Fr::from(1u32),
+                whitelist_merkle_path: vec![Fr::from(0u32); MERKLE_DEPTH],
+                whitelist_path_directions: vec![false; MERKLE_DEPTH],
+                semantic_u: sem_u,
+                semantic_v: sem_v,
+                semantic_threshold_sq: Fr::from(7225u32), // τ=0.85 → 7225
                 ..PolicyWitness::default()
             };
-            
-            let dummy_config = ark_crypto_primitives::sponge::poseidon::PoseidonConfig {
-                full_rounds: 8, partial_rounds: 31, alpha: 5,
-                ark: vec![vec![Fr::from(1u32)]], mds: vec![vec![Fr::from(1u32)]],
-                rate: 2, capacity: 1,
-            };
-            
-            let whitelist_root = Fr::from(target_num); // Matching default path bounds
 
-            if let Ok(proof) = crate::zkp::prover::ProofGenerator::generate_proof(setup, policy, dummy_config, witness, whitelist_root) {
-                let b64 = crate::zkp::prover::ProofGenerator::serialize_proof(&proof);
-                {
+            let whitelist_root = Fr::from(0u32);
+            let body_hash = Fr::from(body_hash_val);
+            let ts = Fr::from(now_ts);
+            let pv = Fr::from(1u32);
+            let seq = Fr::from(seq_num as u32);
+
+            // 5. generate groth16 proof
+            match crate::zkp::prover::ProofGenerator::generate_proof(
+                setup, policy, config, witness, whitelist_root, body_hash, ts, pv, seq,
+            ) {
+                Ok(proof) => {
+                    let b64 = crate::zkp::prover::ProofGenerator::serialize_proof(&proof);
                     generated_proof_b64 = Some(b64.clone());
+
+                    // inject PCT headers
                     if let Ok(hval) = axum::http::HeaderValue::from_str(&b64) {
-                        header_map.insert("X-Atrosha-Proof", hval);
+                        header_map.insert("X-PCT-Proof", hval);
+                    }
+                    if let Ok(hval) = axum::http::HeaderValue::from_str(&now_ts.to_string()) {
+                        header_map.insert("X-PCT-Timestamp", hval);
+                    }
+                    if let Ok(hval) = axum::http::HeaderValue::from_str("1") {
+                        header_map.insert("X-PCT-Policy-Version", hval);
+                    }
+                    if let Ok(hval) = axum::http::HeaderValue::from_str(&seq_num.to_string()) {
+                        header_map.insert("X-PCT-Seq", hval);
+                    }
+
+                    // 6. commit reservation on success
+                    if let Some(oracle) = &state.state_oracle {
+                        if let Err(e) = oracle.commit(agent_id, seq_num).await {
+                            tracing::warn!(error = %e, "state oracle commit failed");
+                        }
+                    }
+                }
+                Err(e) => {
+                    tracing::error!(error = %e, "proof generation failed");
+
+                    // release reservation on failure
+                    if let Some(oracle) = &state.state_oracle {
+                        if let Err(re) = oracle.release(agent_id, seq_num).await {
+                            tracing::warn!(error = %re, "state oracle release failed");
+                        }
                     }
                 }
             }

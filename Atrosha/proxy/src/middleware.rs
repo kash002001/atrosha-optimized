@@ -40,6 +40,20 @@ pub async fn verify_sig(
             return Err(StatusCode::UNAUTHORIZED);
         }
     };
+    
+    // Pillar 4: Hardware-Rooted Identity (TEE validation)
+    let attestation_base64 = match headers.get("X-Atrosha-Attestation").and_then(|h| h.to_str().ok()) {
+        Some(att) => att.to_string(),
+        None => {
+            tracing::warn!(agent_id = %agent_id, "rejected: missing TEE attestation document");
+            return Err(StatusCode::UNAUTHORIZED);
+        }
+    };
+    
+    if let Err(e) = crate::tee::verify_enclave_attestation(&attestation_base64) {
+        tracing::error!(agent_id = %agent_id, error = %e, "rejected: TEE enclave verification failed");
+        return Err(StatusCode::FORBIDDEN);
+    }
 
     let org_id = headers
         .get("X-Atrosha-Org-ID")
