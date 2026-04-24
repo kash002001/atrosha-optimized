@@ -15,6 +15,14 @@ export async function middleware(req: NextRequest) {
     res.headers.set("Referrer-Policy", "strict-origin-when-cross-origin");
     res.headers.set("Strict-Transport-Security", "max-age=31536000; includeSubDomains; preload");
 
+    // supabase sometimes drops ?code= on the wrong page — catch it and forward to the callback route
+    const authCode = req.nextUrl.searchParams.get('code');
+    if (authCode && path !== '/auth/callback') {
+        const callbackUrl = new URL('/auth/callback', req.url);
+        callbackUrl.searchParams.set('code', authCode);
+        return NextResponse.redirect(callbackUrl);
+    }
+
     if (path.startsWith('/api/')) {
         // L1: parse to first IP only — x-forwarded-for can be a comma-separated chain
         const ip = (req.headers.get("x-real-ip") ?? req.headers.get("x-forwarded-for")?.split(",")[0])?.trim() ?? "anonymous";
