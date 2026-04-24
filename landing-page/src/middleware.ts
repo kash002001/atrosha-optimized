@@ -18,14 +18,13 @@ export async function middleware(req: NextRequest) {
     // supabase drops ?code= on the root page when it rejects the redirectTo — handle the exchange inline
     const authCode = req.nextUrl.searchParams.get('code');
     if (authCode && path !== '/auth/callback' && process.env.NEXT_PUBLIC_SUPABASE_URL && process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY) {
-        if (authCode.length <= 512 && /^[\w\-]+$/.test(authCode)) {
-            const hostname = req.headers.get('host') || 'localhost';
-            const prodHost = hostname.includes('atrosha.bond');
-            const cookieDomain = prodHost ? '.atrosha.bond' : undefined;
+        const hostname = req.headers.get('host') || 'localhost';
+        const prodHost = hostname.includes('atrosha.bond');
+        const cookieDomain = prodHost ? '.atrosha.bond' : undefined;
+        const dashTarget = prodHost ? 'https://app.atrosha.bond' : 'http://localhost:3001';
 
-            const exchangeRes = NextResponse.redirect(
-                new URL(prodHost ? 'https://app.atrosha.bond' : 'http://localhost:3001', req.url)
-            );
+        try {
+            const exchangeRes = NextResponse.redirect(new URL(dashTarget, req.url));
 
             const supaExchange = createServerClient(
                 process.env.NEXT_PUBLIC_SUPABASE_URL,
@@ -50,7 +49,13 @@ export async function middleware(req: NextRequest) {
 
             const { error: exchErr } = await supaExchange.auth.exchangeCodeForSession(authCode);
             if (!exchErr) return exchangeRes;
-            // exchange failed — fall through to normal page load
+
+            // exchange failed — send to login with error so user sees something useful
+            console.error('middleware code exchange failed:', exchErr.message);
+            return NextResponse.redirect(new URL('/login?error=exchange_failed', req.url));
+        } catch (e) {
+            console.error('middleware code exchange threw:', e);
+            return NextResponse.redirect(new URL('/login?error=exchange_failed', req.url));
         }
     }
 
