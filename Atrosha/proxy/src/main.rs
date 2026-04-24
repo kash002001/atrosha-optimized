@@ -67,6 +67,14 @@ async fn main() -> anyhow::Result<()> {
     let base_http_client = reqwest::Client::builder()
         .use_rustls_tls()
         .timeout(std::time::Duration::from_secs(30))
+        .https_only(true) // financial traffic must be encrypted
+        .build()?;
+
+    // separate client for internal services (semantic engine, loopback) that may use plain HTTP
+    // prefixed _ until wired into SemanticClient or similar internal adapter
+    let _internal_http_client = reqwest::Client::builder()
+        .use_rustls_tls()
+        .timeout(std::time::Duration::from_secs(10))
         .https_only(false)
         .build()?;
 
@@ -74,12 +82,19 @@ async fn main() -> anyhow::Result<()> {
         .unwrap_or_else(|_| "http://127.0.0.1:8002".into());
 
     // Initialize ZKP Global Proving Context
-    tracing::info!("initializing zero-knowledge proving pipeline...");
-    let zkp_policy_tree = crate::zkp::policy_lang::parse(r#"
-        policy MasterApproval {
-            require tx.amount <= 9999999
-        }
-    "#).unwrap();
+    // L6: amount unit is CENTS — 9999999 = $99,999.99. Override via PROXY_ZKP_AMOUNT_LIMIT_CENTS.
+    let zkp_limit_cents: u64 = std::env::var("PROXY_ZKP_AMOUNT_LIMIT_CENTS")
+        .ok()
+        .and_then(|v| v.parse().ok())
+        .unwrap_or(9_999_999); // default: $99,999.99 per transaction
+
+    tracing::info!(zkp_limit_cents, "initializing zero-knowledge proving pipeline...");
+    let policy_src = format!(r#"
+        policy MasterApproval {{
+            require tx.amount <= {}
+        }}
+    "#, zkp_limit_cents);
+    let zkp_policy_tree = crate::zkp::policy_lang::parse(&policy_src).unwrap();
     let poseidon_config = crate::zkp::compiler::bn254_poseidon_config();
     let global_zkp_setup = Arc::new(crate::zkp::prover::ProofGenerator::trusted_setup(&zkp_policy_tree, poseidon_config.clone()));
 
@@ -126,10 +141,15 @@ async fn main() -> anyhow::Result<()> {
         .layer(axum_middleware::from_fn(validation::validation_middleware))
         .layer(axum_middleware::from_fn_with_state(state.clone(), ratelimit::rate_limit_middleware));
 
+    // admin routes get their own stricter rate limit (10 req/min) — separate from proxy bucket (H2)
+    let admin_routes = Router::new()
+        .route("/agents", post(register_agent))
+        .route("/verification-keys", get(crate::handlers::get_verification_keys))
+        .layer(axum_middleware::from_fn_with_state(state.clone(), ratelimit::rate_limit_middleware));
+
     let app = Router::new()
         .route("/health", get(health_check))
-        .route("/admin/agents", post(register_agent))
-        .route("/admin/verification-keys", get(crate::handlers::get_verification_keys))
+        .nest("/admin", admin_routes)
         .route("/rotate-key", post(rotate_key_handler).layer(axum_middleware::from_fn_with_state(state.clone(), verify_sig)))
         .nest("/proxy", proxy_routes)
         .route("/verify-proof", post(crate::zkp::verifier::verify_proof_endpoint))

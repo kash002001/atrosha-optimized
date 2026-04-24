@@ -1,18 +1,24 @@
 'use client';
 
-import { Shield, Hammer, ToggleLeft, Trash2, Cpu, FileJson, Play } from "lucide-react";
+import { Shield, Hammer, ToggleLeft, Trash2, Cpu, FileJson } from "lucide-react";
 import { useState, useEffect, useCallback } from "react";
 import { useUser } from "../context/UserContext";
 import { createClient } from "@/lib/supabase-client";
+import { addRule, deleteRule, toggleRule } from "./actions";
+
+// L1: proper types instead of any
+interface CompiledPolicy {
+    type: string;
+    conditions: string[];
+}
 
 interface Rule {
     id: string;
     nl_text: string;
-    compiled_policy: any;
+    compiled_policy: CompiledPolicy | Record<string, unknown>;
     agent_id?: string;
     status: string;
     created_at: string;
-    agent?: { name: string };
 }
 
 export default function RulesClient() {
@@ -20,13 +26,13 @@ export default function RulesClient() {
     const [rules, setRules] = useState<Rule[]>([]);
     const [showSimulate, setShowSimulate] = useState(false);
     const [prompt, setPrompt] = useState("");
-    const [simulating, setSimulating] = useState(false);
-    const [simResult, setSimResult] = useState<any>(null);
     const [loading, setLoading] = useState(true);
+    const [actionError, setActionError] = useState<string | null>(null);
 
     const fetchRules = useCallback(async () => {
         try {
             const supabase = createClient();
+            // L2 pattern: supabase client respects RLS; org filter enforced server-side in addRule/deleteRule actions
             const { data, error } = await supabase.from('rules').select('*').order('created_at', { ascending: false });
             if (error) throw error;
             setRules(data || []);
@@ -41,58 +47,40 @@ export default function RulesClient() {
         fetchRules();
     }, [fetchRules, entityId, role]);
 
-    const handleSimulate = () => {
-        if (!prompt.trim()) return;
-        setSimulating(true);
-        setTimeout(() => {
-            setSimResult({
-                intent: prompt,
-                action: "TRANSFER",
-                params: { amount: 500, currency: "USD" },
-                policy: {
-                    type: "ALLOW",
-                    conditions: ["amount < 1000", "approved_vendor"]
-                },
-                signature: "0x" + Math.random().toString(16).substring(2, 42)
-            });
-            setSimulating(false);
-        }, 1500);
-    };
-
-    const handleCommit = async () => {
-        if (!simResult) return;
+    // H2: "Commit" now routes through the server action which adds organization_id
+    const handleCommit = async (nl: string, compiled: string) => {
+        setActionError(null);
         try {
-            const supabase = createClient();
-            const { error } = await supabase.from('rules').insert({
-                nl_text: simResult.intent,
-                compiled_policy: simResult.policy,
-                status: 'active',
-                effect: 'allow',
-                priority: 100,
-            });
-            if (error) throw error;
+            await addRule(nl, compiled, "Global");
             setShowSimulate(false);
-            setSimResult(null);
             setPrompt("");
             setLoading(true);
             fetchRules();
-        } catch (e) {
-            alert("Failed to save rule");
-            console.error(e);
+        } catch (e: unknown) {
+            setActionError(e instanceof Error ? e.message : "Failed to save rule");
         }
     };
 
+    // H2: delete routes through server action which enforces org_id equality
     const handleDelete = async (id: string) => {
         if (!confirm("Are you sure?")) return;
+        setActionError(null);
         try {
-            const supabase = createClient();
-            const { error } = await supabase.from('rules').delete().eq('id', id);
-            if (error) throw error;
+            await deleteRule(id);
             setLoading(true);
             fetchRules();
-        } catch (e) {
-            alert("Failed to delete rule");
-            console.error(e);
+        } catch (e: unknown) {
+            setActionError(e instanceof Error ? e.message : "Failed to delete rule");
+        }
+    };
+
+    const handleToggle = async (id: string, currentStatus: string) => {
+        setActionError(null);
+        try {
+            await toggleRule(id, currentStatus);
+            fetchRules();
+        } catch (e: unknown) {
+            setActionError(e instanceof Error ? e.message : "Failed to toggle rule");
         }
     };
 
@@ -113,9 +101,21 @@ export default function RulesClient() {
                 )}
             </div>
 
+            {actionError && (
+                <div style={{ padding: "10px 14px", marginBottom: 16, borderRadius: 6, background: "rgba(239,68,68,0.08)", border: "1px solid rgba(239,68,68,0.2)", color: "#ef4444", fontSize: 13 }}>
+                    {actionError}
+                </div>
+            )}
+
             {showSimulate && (
                 <div className="chart-card" style={{ marginBottom: 20, border: "1px solid var(--accent)", background: "rgba(139, 92, 246, 0.05)" }}>
-                    <h4 style={{ margin: "0 0 16px" }}>Simulate Natural Language Intent</h4>
+                    {/* L6: clearly marked as demo — the simulate endpoint is not yet wired to the semantic engine */}
+                    <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 12 }}>
+                        <h4 style={{ margin: 0 }}>Add Natural Language Intent</h4>
+                        <span style={{ fontSize: 10, background: "rgba(245,158,11,0.1)", color: "#f59e0b", border: "1px solid rgba(245,158,11,0.2)", borderRadius: 4, padding: "2px 8px", fontWeight: 700 }}>
+                            DRAFT MODE
+                        </span>
+                    </div>
                     <div style={{ display: "flex", gap: 12, marginBottom: 16 }}>
                         <textarea
                             value={prompt}
@@ -126,44 +126,19 @@ export default function RulesClient() {
                     </div>
                     <div style={{ display: "flex", gap: 12 }}>
                         <button
-                            onClick={handleSimulate}
-                            disabled={simulating}
-                            style={{ background: "var(--accent)", color: "white", border: "none", padding: "8px 20px", borderRadius: 6, cursor: "pointer", fontWeight: 600, display: "flex", alignItems: "center", gap: 8 }}
+                            onClick={() => handleCommit(prompt, JSON.stringify({ type: "ALLOW", conditions: ["natural_language"] }))}
+                            disabled={!prompt.trim()}
+                            style={{ background: "var(--accent)", color: "white", border: "none", padding: "8px 20px", borderRadius: 6, cursor: "pointer", fontWeight: 600, display: "flex", alignItems: "center", gap: 8, opacity: prompt.trim() ? 1 : 0.5 }}
                         >
-                            {simulating ? "Compiling..." : <><Cpu size={14} /> Simulate Compiled Intent</>}
+                            <Cpu size={14} /> Save Rule
                         </button>
                         <button
-                            onClick={() => { setShowSimulate(false); setSimResult(null); }}
+                            onClick={() => { setShowSimulate(false); setPrompt(""); }}
                             style={{ background: "transparent", color: "var(--text-muted)", border: "1px solid var(--border)", padding: "8px 16px", borderRadius: 6, cursor: "pointer" }}
                         >
                             Cancel
                         </button>
                     </div>
-
-                    {simResult && (
-                        <div style={{ marginTop: 24, borderTop: "1px solid var(--border)", paddingTop: 24 }}>
-                            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 24 }}>
-                                <div>
-                                    <h5 style={{ margin: "0 0 8px", fontSize: 12, color: "var(--text-muted)", textTransform: "uppercase" }}>Compiled Policy</h5>
-                                    <pre style={{ background: "#000", padding: 16, borderRadius: 6, fontSize: 12, color: "#10b981", border: "1px solid #333", margin: 0 }}>
-                                        {JSON.stringify(simResult.policy, null, 2)}
-                                    </pre>
-                                </div>
-                                <div>
-                                    <h5 style={{ margin: "0 0 8px", fontSize: 12, color: "var(--text-muted)", textTransform: "uppercase" }}>Cryptographic Proof</h5>
-                                    <div style={{ background: "#000", padding: 16, borderRadius: 6, fontSize: 11, color: "var(--text-muted)", border: "1px solid #333", fontFamily: "monospace", wordBreak: "break-all" }}>
-                                        {simResult.signature}
-                                    </div>
-                                    <button
-                                        onClick={handleCommit}
-                                        style={{ marginTop: 16, width: "100%", background: "var(--primary)", color: "white", border: "none", padding: "10px", borderRadius: 6, cursor: "pointer", fontWeight: 700 }}
-                                    >
-                                        Commit to Proxy Kernel
-                                    </button>
-                                </div>
-                            </div>
-                        </div>
-                    )}
                 </div>
             )}
 
@@ -196,18 +171,31 @@ export default function RulesClient() {
                                     <td style={{ fontSize: 12 }}>{r.agent_id ? "Agent" : "Global"}</td>
                                     <td style={{ fontSize: 12 }}>{new Date(r.created_at).toLocaleDateString()}</td>
                                     <td>
-                                        <span style={{ fontSize: 10, fontWeight: 700, padding: "2px 6px", borderRadius: 4, background: "rgba(34,197,94,0.1)", color: "#22c55e", border: "1px solid rgba(34,197,94,0.2)" }}>
-                                            ENFORCED
+                                        <span style={{
+                                            fontSize: 10, fontWeight: 700, padding: "2px 6px", borderRadius: 4,
+                                            background: r.status === "active" ? "rgba(34,197,94,0.1)" : "rgba(107,114,128,0.1)",
+                                            color: r.status === "active" ? "#22c55e" : "#6b7280",
+                                            border: `1px solid ${r.status === "active" ? "rgba(34,197,94,0.2)" : "rgba(107,114,128,0.2)"}`,
+                                        }}>
+                                            {r.status === "active" ? "ENFORCED" : "DISABLED"}
                                         </span>
                                     </td>
                                     <td>
                                         <div style={{ display: "flex", gap: 12 }}>
-                                            <button style={{ background: "transparent", border: "none", color: "var(--text-muted)", padding: 0, cursor: "pointer" }}><ToggleLeft size={16} /></button>
+                                            <button
+                                                onClick={() => handleToggle(r.id, r.status)}
+                                                title={r.status === "active" ? "Disable" : "Enable"}
+                                                style={{ background: "transparent", border: "none", color: "var(--text-muted)", padding: 0, cursor: "pointer" }}
+                                            >
+                                                <ToggleLeft size={16} />
+                                            </button>
                                             {role === "ADMIN" && (
                                                 <button
                                                     onClick={() => handleDelete(r.id)}
                                                     style={{ background: "transparent", border: "none", color: "#ef4444", padding: 0, cursor: "pointer" }}
-                                                ><Trash2 size={16} /></button>
+                                                >
+                                                    <Trash2 size={16} />
+                                                </button>
                                             )}
                                         </div>
                                     </td>

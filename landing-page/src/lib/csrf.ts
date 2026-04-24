@@ -1,16 +1,26 @@
 import { NextResponse } from "next/server";
 
+const SAFE_METHODS = new Set(["GET", "HEAD", "OPTIONS"]);
+
 export function checkOrigin(req: Request): NextResponse | null {
     const origin = req.headers.get("origin") || req.headers.get("referer") || "";
 
-    // If no origin/referer, let it pass (same-origin request without headers)
-    if (!origin) return null;
+    // For mutation requests, missing origin is suspicious — block it.
+    // GET/HEAD/OPTIONS without origin are fine (direct nav, RSS readers, etc).
+    if (!origin) {
+        if (!SAFE_METHODS.has(req.method.toUpperCase())) {
+            return NextResponse.json(
+                { error: "Forbidden: origin required for mutations" },
+                { status: 403 }
+            );
+        }
+        return null;
+    }
 
     try {
         const originUrl = new URL(origin);
         const host = originUrl.hostname;
 
-        // Allow any atrosha.bond subdomain (including apex and www), localhost, and vercel.app
         const isAllowed =
             host.endsWith("atrosha.bond") ||
             host === "localhost" ||

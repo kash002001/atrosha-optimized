@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
 import { checkOrigin } from "@/lib/csrf";
+import { checkRateLimit } from "@/lib/rate-limit";
 
 export const dynamic = "force-dynamic";
 
@@ -14,6 +15,16 @@ function getSupabase() {
 export async function POST(req: Request) {
     const blocked = checkOrigin(req);
     if (blocked) return blocked;
+
+    // M3: prevent flood — 3 attempts per IP per hour
+    const ip = (
+        req.headers.get('x-real-ip') ??
+        req.headers.get('x-forwarded-for')?.split(',')[0]
+    )?.trim() ?? 'anonymous';
+    const { success } = checkRateLimit(`waitlist:${ip}`, 3, 3_600_000);
+    if (!success) {
+        return NextResponse.json({ error: "Too many requests" }, { status: 429 });
+    }
 
     try {
         const { email } = await req.json();

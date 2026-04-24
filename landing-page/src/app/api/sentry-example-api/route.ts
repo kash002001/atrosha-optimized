@@ -8,10 +8,14 @@ class SentryExampleAPIError extends Error {
   }
 }
 
-// A faulty API route to test Sentry's error monitoring
 export function GET() {
+  // H3: no debug endpoints in production
+  if (process.env.NODE_ENV === "production") {
+    return new Response(null, { status: 404 });
+  }
   Sentry.logger.info("Sentry example API called");
   throw new SentryExampleAPIError(
     "This error is raised on the backend called by the example page.",
   );
 }
+

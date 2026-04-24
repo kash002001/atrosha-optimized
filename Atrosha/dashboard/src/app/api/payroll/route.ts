@@ -33,14 +33,19 @@ export async function GET(req: NextRequest) {
             .select('id, name, daily_limit_cents, per_tx_limit_cents, is_active')
             .eq('organization_id', orgId);
 
-        // fetch today's aggregates
-        const { data: aggs } = await supabase
-            .from('daily_aggregates')
-            .select('agent_id, total_cents, tx_count, denied_count')
-            .eq('day', new Date().toISOString().split('T')[0]);
+        // M1: filter by this org's agents — same cross-tenant fix as agent-stats H6
+        const agentIds = (agents || []).map(a => a.id);
+        const { data: aggs } = agentIds.length > 0
+            ? await supabase
+                .from('daily_aggregates')
+                .select('agent_id, total_cents, tx_count, denied_count')
+                .eq('day', new Date().toISOString().split('T')[0])
+                .in('agent_id', agentIds)
+            : { data: [] };
 
-        // build agent lookup with budget info
-        const agentMap: Record<string, any> = {};
+        // L1: typed agent budget map
+        interface AgentBudget { name: string; dailyLimit: number; perTxLimit: number; todaySpent: number; remaining: number; }
+        const agentMap: Record<string, AgentBudget> = {};
         for (const a of agents || []) {
             const agg = (aggs || []).find(g => g.agent_id === a.id);
             agentMap[a.id] = {
@@ -53,11 +58,13 @@ export async function GET(req: NextRequest) {
         }
 
         return NextResponse.json({ transactions: txs || [], agents: agentMap });
-    } catch (err: any) {
+    } catch (err: unknown) {
         console.error("payroll GET error:", err);
         return NextResponse.json({ error: "internal" }, { status: 500 });
     }
 }
+
+const MAX_BATCH = 100;
 
 export async function POST(req: NextRequest) {
     try {
@@ -75,6 +82,14 @@ export async function POST(req: NextRequest) {
 
         if (!transactionIds?.length || !decision) {
             return NextResponse.json({ error: "missing transactionIds or decision" }, { status: 400 });
+        }
+
+        // M1: cap batch size — prevents DB hammering and limits blast radius for insider abuse
+        if (transactionIds.length > MAX_BATCH) {
+            return NextResponse.json(
+                { error: `Batch size exceeds maximum of ${MAX_BATCH}` },
+                { status: 400 }
+            );
         }
 
         // update transaction status
@@ -103,7 +118,7 @@ export async function POST(req: NextRequest) {
         if (apErr) console.error("approval insert warning:", apErr);
 
         return NextResponse.json({ ok: true, count: transactionIds.length });
-    } catch (err: any) {
+    } catch (err: unknown) {
         console.error("payroll POST error:", err);
         return NextResponse.json({ error: "internal" }, { status: 500 });
     }

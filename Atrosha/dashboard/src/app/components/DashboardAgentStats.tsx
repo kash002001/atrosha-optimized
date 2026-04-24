@@ -43,8 +43,8 @@ export default function DashboardAgentStats() {
             const data: AgentStatsPayload = await res.json();
             setStats(data);
             setErr(null);
-        } catch (e: any) {
-            setErr(e.message || "Failed to load");
+        } catch (e: unknown) {
+            setErr(e instanceof Error ? e.message : "Failed to load");
         } finally {
             setLoading(false);
         }

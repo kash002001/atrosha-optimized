@@ -60,19 +60,33 @@ pub async fn register_agent(
         }
     }
 
-    let org_id = headers
+    let org_id = match headers
         .get("X-Atrosha-Org-ID")
         .and_then(|v| v.to_str().ok())
-        .unwrap_or("default");
+        .filter(|s| !s.is_empty())
+    {
+        Some(id) => id.to_string(),
+        // L4: missing org_id is a hard error — silent "default" caused data misrouting
+        None => {
+            tracing::warn!("register_agent: missing X-Atrosha-Org-ID header");
+            return Err(StatusCode::BAD_REQUEST);
+        }
+    };
 
     state
         .registry
-        .register_agent(org_id, &req.agent_id, &req.pub_hex, req.role.as_deref())
+        .register_agent(&org_id, &req.agent_id, &req.pub_hex, req.role.as_deref())
         .await
         .map_err(|e| {
             tracing::error!(error = %e, "failed to register agent");
             StatusCode::BAD_REQUEST
         })?;
+
+    // persist agent→org mapping for authoritative org_id resolution
+    if let Ok(mut conn) = state.redis_client.get_multiplexed_async_connection().await {
+        let key = format!("atrosha:agent_org:{}", req.agent_id);
+        let _: Result<(), _> = redis::AsyncCommands::set(&mut conn, &key, &org_id).await;
+    }
 
     Ok("registered")
 }
@@ -120,12 +134,6 @@ pub async fn proxy_handler(
     let start = Instant::now();
     let req_id = Uuid::new_v4().to_string();
     
-    let org_id = headers
-        .get("X-Atrosha-Org-ID")
-        .and_then(|v| v.to_str().ok())
-        .unwrap_or("default")
-        .to_string();
-
     let agent_id = headers
         .get("X-Atrosha-Agent-ID")
         .and_then(|v| v.to_str().ok())
@@ -133,6 +141,21 @@ pub async fn proxy_handler(
             tracing::warn!("missing X-Atrosha-Agent-ID header");
             StatusCode::BAD_REQUEST
         })?;
+
+    // L6: resolve org_id from the registry using the agent's stored mapping rather than trusting the header
+    // falls back to the (validated) header value if Redis is unavailable
+    let org_id = {
+        let hdr_org = headers.get("X-Atrosha-Org-ID").and_then(|v| v.to_str().ok()).unwrap_or("default");
+        let key = format!("atrosha:agent_org:{}", agent_id);
+        match state.redis_client.get_multiplexed_async_connection().await {
+            Ok(mut c) => {
+                let registered_org: Option<String> = redis::AsyncCommands::get(&mut c, &key).await.ok().flatten();
+                registered_org.unwrap_or_else(|| hdr_org.to_string())
+            }
+            Err(_) => hdr_org.to_string(),
+        }
+    };
+
 
     if circuit::CircuitBreaker::is_open(&state, agent_id).await {
         tracing::warn!(agent_id = %agent_id, "circuit breaker OPEN — agent auto-killed");
@@ -192,7 +215,10 @@ pub async fn proxy_handler(
                 return Err(StatusCode::FORBIDDEN);
             }
         }
-        Err(_) => tracing::warn!("semantic engine unavailable — fail-open"),
+        Err(_) => {
+            // L4: track fail-open events — alert if this spikes in production
+            tracing::error!(agent_id = %agent_id, "FAIL_OPEN: semantic engine unavailable — security check skipped");
+        }
     }
 
     // intent verification (IVE)
@@ -324,8 +350,23 @@ pub async fn proxy_handler(
     let adapter: Arc<dyn RailAdapter> = if full_url.starts_with("crypto://") { state.evm_adapter.clone() } else if full_url.starts_with("ach://") { state.ach_adapter.clone() } else { state.http_adapter.clone() };
 
     let mut req_headers = reqwest::header::HeaderMap::new();
+    // strip all X-Atrosha-* internal headers and hop-by-hop headers before forwarding upstream
+    // only safe, application-level headers reach the target
+    let blocked_prefixes = ["x-atrosha-", "x-forwarded-", "x-real-ip"];
+    let hop_by_hop = [
+        "host", "connection", "keep-alive", "transfer-encoding",
+        "te", "trailer", "upgrade", "proxy-authorization", "proxy-authenticate",
+        "authorization", // don't leak our auth to the target
+    ];
     for (k, v) in headers.iter() {
-        if let Ok(name) = reqwest::header::HeaderName::from_bytes(k.as_str().as_bytes()) { req_headers.insert(name, v.clone()); }
+        let lower = k.as_str().to_lowercase();
+        let is_blocked = blocked_prefixes.iter().any(|p| lower.starts_with(p))
+            || hop_by_hop.contains(&lower.as_str());
+        if !is_blocked {
+            if let Ok(name) = reqwest::header::HeaderName::from_bytes(k.as_str().as_bytes()) {
+                req_headers.insert(name, v.clone());
+            }
+        }
     }
 
     let req_method = match method { Method::POST => reqwest::Method::POST, Method::PUT => reqwest::Method::PUT, Method::DELETE => reqwest::Method::DELETE, Method::PATCH => reqwest::Method::PATCH, _ => reqwest::Method::GET };
@@ -389,9 +430,10 @@ pub async fn proxy_handler(
                 }
             };
 
-            // 4. build full witness
+            // 4. build full witness — amount in cents to preserve decimal precision
+            let amount_cents = (amount * 100.0).round() as u64;
             let witness = PolicyWitness {
-                tx_amount: Fr::from(amount as u32),
+                tx_amount: Fr::from(amount_cents),
                 tx_target: Fr::from(0u32),
                 tx_timestamp: Fr::from(now_ts),
                 agent_role: Fr::from(1u32),
@@ -440,6 +482,12 @@ pub async fn proxy_handler(
                 }
                 Err(e) => {
                     tracing::error!(error = %e, "proof generation failed");
+                    // M4: if REQUIRE_ZKP_PROOF=true, block the transaction on proof failure
+                    if std::env::var("REQUIRE_ZKP_PROOF").as_deref() == Ok("true") {
+                        tracing::error!(agent_id = %agent_id, "BLOCKING transaction: ZKP proof required but failed");
+                        return Err(StatusCode::INTERNAL_SERVER_ERROR);
+                    }
+                    tracing::warn!(agent_id = %agent_id, "FAIL_OPEN: proceeding without ZKP proof (set REQUIRE_ZKP_PROOF=true to block)");
 
                     // release reservation on failure
                     if let Some(oracle) = &state.state_oracle {

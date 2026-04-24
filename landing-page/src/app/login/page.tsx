@@ -44,9 +44,8 @@ export default function LoginPage() {
             const hostname = typeof window !== 'undefined' ? window.location.hostname : 'localhost';
             const isProd = hostname.includes('atrosha.bond');
             let dashUrl = process.env.NEXT_PUBLIC_DASHBOARD_URL || "https://app.atrosha.bond";
-
-            if (isProd && dashUrl.includes('localhost')) {
-                dashUrl = "https://app.atrosha.bond";
+            if (!isProd && dashUrl.includes('atrosha.bond')) {
+                dashUrl = "http://localhost:3001";
             }
 
             window.location.replace(dashUrl);

@@ -28,7 +28,7 @@ pub async fn rate_limit_middleware(
         .and_then(|h| h.to_str().ok())
     {
         Some(id) => id.to_string(),
-        None => return Ok(next.run(req).await),
+        None => return Err(StatusCode::UNAUTHORIZED), // validation_middleware already enforces this, belt+suspenders
     };
 
     let org_id = headers

@@ -1,44 +1,94 @@
 'use client';
 
-import { useState, useEffect } from "react";
-import { Webhook, Plus, Trash2, Activity } from "lucide-react";
+import { useState, useEffect, useCallback } from "react";
+import { Webhook, Plus, Trash2, Activity, AlertCircle, Loader2 } from "lucide-react";
 import { useUser } from "../context/UserContext";
+import { createClient } from "@/lib/supabase-client";
 
 interface WebhookRecord {
-    id: number;
+    id: string;
     url: string;
     created_at: string;
 }
 
-const seedWebhooks: WebhookRecord[] = [
-    { id: 1, url: "https://hooks.slack.com/services/T0x.../B0x.../xyzABC", created_at: "2026-03-15T10:30:00Z" },
-    { id: 2, url: "https://api.pagerduty.com/webhooks/atrosha-alerts", created_at: "2026-03-20T14:15:00Z" },
-];
-
-let nextId = 10;
-
 export default function WebhookClient() {
-    const { entityId, role } = useUser();
+    const { orgId, entityId, role } = useUser();
     const [webhooks, setWebhooks] = useState<WebhookRecord[]>([]);
     const [newUrl, setNewUrl] = useState("");
     const [loading, setLoading] = useState(true);
+    const [saving, setSaving] = useState(false);
+    const [error, setError] = useState<string | null>(null);
+    const [urlError, setUrlError] = useState<string | null>(null);
+
+    // C2: fetch from Supabase — no more seed data
+    const fetchWebhooks = useCallback(async () => {
+        if (!orgId) return;
+        setLoading(true);
+        try {
+            const supabase = createClient();
+            const { data, error: dbErr } = await supabase
+                .from("webhooks")
+                .select("id, url, created_at")
+                .eq("organization_id", orgId)
+                .order("created_at", { ascending: false });
+            if (dbErr) throw dbErr;
+            setWebhooks(data || []);
+        } catch (e: unknown) {
+            setError(e instanceof Error ? e.message : "Failed to load webhooks");
+        }
+        setLoading(false);
+    }, [orgId]);
 
     useEffect(() => {
-        const t = setTimeout(() => {
-            setWebhooks(seedWebhooks);
-            setLoading(false);
-        }, 300);
-        return () => clearTimeout(t);
-    }, [entityId, role]);
+        fetchWebhooks();
+    }, [fetchWebhooks, entityId]);
 
-    const addWebhook = () => {
-        if (!newUrl.trim()) return;
-        setWebhooks(prev => [...prev, { id: nextId++, url: newUrl.trim(), created_at: new Date().toISOString() }]);
-        setNewUrl("");
+    const validateUrl = (url: string) => {
+        try {
+            const parsed = new URL(url);
+            return parsed.protocol === "https:" ? null : "Webhook URL must use HTTPS";
+        } catch {
+            return "Must be a valid URL (e.g. https://your-api.com/hooks)";
+        }
     };
 
-    const deleteWebhook = (id: number) => {
-        setWebhooks(prev => prev.filter(w => w.id !== id));
+    const addWebhook = async () => {
+        setUrlError(null);
+        setError(null);
+        const urlValidation = validateUrl(newUrl.trim());
+        if (urlValidation) { setUrlError(urlValidation); return; }
+        if (!orgId) { setError("No organization found."); return; }
+
+        setSaving(true);
+        try {
+            const supabase = createClient();
+            const { error: dbErr } = await supabase
+                .from("webhooks")
+                .insert({ organization_id: orgId, url: newUrl.trim() });
+            if (dbErr) throw dbErr;
+            setNewUrl("");
+            await fetchWebhooks();
+        } catch (e: unknown) {
+            setError(e instanceof Error ? e.message : "Failed to register webhook");
+        }
+        setSaving(false);
+    };
+
+    const deleteWebhook = async (id: string) => {
+        if (!confirm("Remove this webhook endpoint?")) return;
+        setError(null);
+        try {
+            const supabase = createClient();
+            const { error: dbErr } = await supabase
+                .from("webhooks")
+                .delete()
+                .eq("id", id)
+                .eq("organization_id", orgId!);
+            if (dbErr) throw dbErr;
+            setWebhooks(prev => prev.filter(w => w.id !== id));
+        } catch (e: unknown) {
+            setError(e instanceof Error ? e.message : "Failed to remove webhook");
+        }
     };
 
     if (role !== "ADMIN") {
@@ -53,22 +103,36 @@ export default function WebhookClient() {
                 </div>
                 <div>
                     <h2 style={{ margin: 0, fontSize: 24, fontWeight: 700 }}>Developer Webhooks</h2>
-                    <p style={{ margin: "4px 0 0", fontSize: 14, color: "var(--text-muted)" }}>Subscribe external systems to agent intelligence events (Entity {entityId})</p>
+                    <p style={{ margin: "4px 0 0", fontSize: 14, color: "var(--text-muted)" }}>Subscribe external systems to agent intelligence events</p>
                 </div>
             </div>
+
+            {error && (
+                <div style={{ display: "flex", alignItems: "center", gap: 8, padding: "10px 14px", marginBottom: 20, borderRadius: 8, background: "rgba(239,68,68,0.08)", border: "1px solid rgba(239,68,68,0.2)", color: "#ef4444", fontSize: 13 }}>
+                    <AlertCircle size={14} /> {error}
+                </div>
+            )}
 
             <div className="chart-card" style={{ padding: 24, marginBottom: 32 }}>
                 <h3 style={{ margin: "0 0 16px", fontSize: 18, borderBottom: "1px solid var(--border)", paddingBottom: 8 }}>Register Endpoint</h3>
                 <div style={{ display: "flex", gap: 12 }}>
-                    <input
-                        placeholder="https://your-api.com/webhooks/atrosha"
-                        value={newUrl}
-                        onChange={e => setNewUrl(e.target.value)}
-                        onKeyDown={e => { if (e.key === 'Enter') addWebhook(); }}
-                        style={{ flex: 1, padding: '8px 12px', background: 'var(--bg-body)', border: '1px solid var(--border)', borderRadius: 6, color: 'var(--text)' }}
-                    />
-                    <button onClick={addWebhook} style={{ display: "flex", alignItems: "center", gap: 8, padding: '8px 16px', borderRadius: 6, background: 'var(--primary)', color: '#fff', border: 'none', cursor: 'pointer' }}>
-                        <Plus size={16} /> Add Webhook
+                    <div style={{ flex: 1 }}>
+                        <input
+                            placeholder="https://your-api.com/webhooks/atrosha"
+                            value={newUrl}
+                            onChange={e => { setNewUrl(e.target.value); setUrlError(null); }}
+                            onKeyDown={e => { if (e.key === 'Enter') addWebhook(); }}
+                            style={{ width: "100%", padding: '8px 12px', background: 'var(--bg-body)', border: `1px solid ${urlError ? "#ef4444" : "var(--border)"}`, borderRadius: 6, color: 'var(--text)', boxSizing: "border-box" }}
+                        />
+                        {urlError && <p style={{ margin: "4px 0 0", fontSize: 11, color: "#ef4444" }}>{urlError}</p>}
+                    </div>
+                    <button
+                        onClick={addWebhook}
+                        disabled={saving || !newUrl.trim()}
+                        style={{ display: "flex", alignItems: "center", gap: 8, padding: '8px 16px', borderRadius: 6, background: 'var(--primary)', color: '#fff', border: 'none', cursor: saving || !newUrl.trim() ? 'not-allowed' : 'pointer', opacity: saving || !newUrl.trim() ? 0.6 : 1 }}
+                    >
+                        {saving ? <Loader2 size={16} className="animate-spin" /> : <Plus size={16} />}
+                        {saving ? "Saving..." : "Add Webhook"}
                     </button>
                 </div>
             </div>
@@ -83,7 +147,7 @@ export default function WebhookClient() {
                         </tr>
                     </thead>
                     <tbody>
-                        {loading && webhooks.length === 0 && (
+                        {loading && (
                             <tr>
                                 <td colSpan={3} style={{ padding: 40, textAlign: "center", color: "var(--text-muted)" }}>
                                     <Activity size={24} style={{ margin: "0 auto 12px" }} />
@@ -96,16 +160,16 @@ export default function WebhookClient() {
                                 <td colSpan={3} style={{ padding: 40, textAlign: "center", color: "var(--text-muted)" }}>
                                     <Webhook size={32} style={{ margin: "0 auto 16px", opacity: 0.5 }} />
                                     <p style={{ margin: 0, fontSize: 16 }}>No webhooks registered</p>
-                                    <p style={{ margin: "4px 0 0", fontSize: 14 }}>Add an endpoint above to receive event payloads via HTTP POST.</p>
+                                    <p style={{ margin: "4px 0 0", fontSize: 14 }}>Add an HTTPS endpoint above to receive event payloads via HTTP POST.</p>
                                 </td>
                             </tr>
                         )}
                         {webhooks.map(wh => (
                             <tr key={wh.id} style={{ borderBottom: "1px solid var(--border)" }}>
-                                <td style={{ padding: "16px 24px", fontFamily: "monospace", fontSize: 14 }}>
+                                <td style={{ padding: "16px 24px", fontFamily: "monospace", fontSize: 14, wordBreak: "break-all" }}>
                                     {wh.url}
                                 </td>
-                                <td style={{ padding: "16px 24px", color: "var(--text-muted)", fontSize: 14 }}>
+                                <td style={{ padding: "16px 24px", color: "var(--text-muted)", fontSize: 14, whiteSpace: "nowrap" }}>
                                     {new Date(wh.created_at).toLocaleString()}
                                 </td>
                                 <td style={{ padding: "16px 24px", textAlign: "right" }}>

@@ -8,7 +8,9 @@ export async function addRule(nl: string, compiled: string, agentName: string) {
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) throw new Error("Unauthorized");
 
+    // L2: explicit guard — undefined orgId would create unscoped global rules
     const orgId = user.user_metadata?.org_id;
+    if (!orgId) throw new Error("No organization found. Complete onboarding first.");
     let agentId = null;
     if (agentName && agentName !== "Global") {
         const { data: agent } = await supabase
@@ -71,7 +73,9 @@ export async function testRule(payloadStr: string): Promise<{
     reason: string;
     latency_ms: number;
 }> {
-    const engineUrl = process.env.SEMANTIC_ENGINE_URL || "https://atrosha-engine.onrender.com";
+    // M2: no hardcoded fallback — a missing or dead URL should fail loudly, not silently
+    const engineUrl = process.env.SEMANTIC_ENGINE_URL;
+    if (!engineUrl) throw new Error("SEMANTIC_ENGINE_URL is not configured");
 
     let payload: Record<string, unknown>;
     try { payload = JSON.parse(payloadStr) as Record<string, unknown>; }

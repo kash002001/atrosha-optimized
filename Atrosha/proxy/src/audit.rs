@@ -182,6 +182,14 @@ impl AuditWorker {
     }
 
     async fn insert_records(&self, records: &[AuditRecord]) -> Result<(), AuditError> {
+        // escape a string for ClickHouse inline SQL — wraps in quotes and escapes internal quotes
+        fn esc(s: &str) -> String {
+            format!("'{}'", s.replace('\\', "\\\\").replace('\'', "\\'"))
+        }
+        fn esc_opt(o: &Option<String>) -> String {
+            o.as_deref().map(esc).unwrap_or_else(|| "NULL".to_string())
+        }
+
         let mut values = Vec::new();
         for r in records {
             let decision_str = match r.decision {
@@ -197,56 +205,32 @@ impl AuditWorker {
                 SignatureStatus::KeyNotFound => "KEY_NOT_FOUND",
             };
 
-            let permit_id_sql = r
-                .permit_id
-                .as_ref()
-                .map(|id| format!("'{}'", id))
-                .unwrap_or_else(|| "NULL".to_string());
-
-            let denial_reason_sql = r
-                .denial_reason
-                .as_ref()
-                .map(|reason| format!("'{}'", reason.replace("'", "''")))
-                .unwrap_or_else(|| "NULL".to_string());
-
-            let matched_policy_id_sql = r
-                .matched_policy_id
-                .as_ref()
-                .map(|id| format!("'{}'", id))
-                .unwrap_or_else(|| "NULL".to_string());
-
             let amount_cents = (r.amount * 100.0) as i64;
 
             let rule_ids_sql = r.matched_policy_id
                 .as_ref()
-                .map(|id| format!("['{}']" , id))
+                .map(|id| format!("['{}']", id.replace('\'', "\\'")))
                 .unwrap_or_else(|| "[]".to_string());
 
-            let zkp_proof_sql = r
-                .zkp_proof
-                .as_ref()
-                .map(|p| format!("'{}'", p.replace("'", "''")))
-                .unwrap_or_else(|| "''".to_string());
-
             values.push(format!(
-                "('{}', '{}', '{}', '{}', '{}', '{}', {}, 'USD', '{}', {}, {}, {}, {}, '{}', {}, {}, {}, {})",
-                r.ts.format("%Y-%m-%d %H:%M:%S.%3f"),
-                r.org_id,
-                r.agent_id,
-                r.req_id,
-                r.action,
-                r.target_url,
+                "({}, {}, {}, {}, {}, {}, {}, 'USD', '{}', {}, {}, {}, {}, '{}', {}, {}, {}, {})",
+                esc(&r.ts.format("%Y-%m-%d %H:%M:%S.%3f").to_string()),
+                esc(&r.org_id),
+                esc(&r.agent_id),
+                esc(&r.req_id),
+                esc(&r.action),
+                esc(&r.target_url),
                 amount_cents,
                 decision_str,
                 r.latency_us,
                 rule_ids_sql,
                 if r.shadow_mode { 1 } else { 0 },
-                permit_id_sql,
+                esc_opt(&r.permit_id),
                 sig_status_str,
-                denial_reason_sql,
+                esc_opt(&r.denial_reason),
                 r.sim,
-                matched_policy_id_sql,
-                zkp_proof_sql
+                esc_opt(&r.matched_policy_id),
+                esc_opt(&r.zkp_proof),
             ));
         }
 

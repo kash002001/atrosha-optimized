@@ -13,6 +13,11 @@ at_os_logs
 .vercel
 .env*.local
 
+# root-level one-off scripts — may contain secrets or email lists (L8)
+demo.py
+send_outreach.py
+test_imap_sync.py
+
 .venv
 .venv_gpu
 venv

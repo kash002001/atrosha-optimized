@@ -15,7 +15,7 @@ interface Agent {
 }
 
 export default function AgentsClient() {
-    const { entityId, role } = useUser();
+    const { entityId, role, orgId } = useUser();
     const [agents, setAgents] = useState<Agent[]>([]);
     const [showNewAgent, setShowNewAgent] = useState(false);
     const [newName, setNewName] = useState("");
@@ -28,7 +28,9 @@ export default function AgentsClient() {
         setLoading(true);
         try {
             const supabase = createClient();
-            const { data, error } = await supabase.from('agents').select('*').order('created_at', { ascending: false });
+            // L2: explicit org filter alongside RLS — defense-in-depth
+            const query = supabase.from('agents').select('*').order('created_at', { ascending: false });
+            const { data, error } = orgId ? await query.eq('organization_id', orgId) : await query;
             if (error) throw error;
             setAgents(data || []);
         } catch (e) {
@@ -40,7 +42,7 @@ export default function AgentsClient() {
 
     useEffect(() => {
         fetchAgents();
-    }, [entityId, role]);
+    }, [entityId, role, orgId]);
 
     const global = [
         { icon: AlertTriangle, label: "HITL Threshold", value: "$50,000", desc: "Transactions above this require human-in-the-loop MFA" },

@@ -21,7 +21,6 @@ import {
     BarChart3,
 } from "lucide-react";
 
-
 import { useUser } from "../context/UserContext";
 
 const nav = [
@@ -39,11 +38,19 @@ const nav = [
     { href: "/agents", label: "Agents", icon: Shield, roles: ["ADMIN"] },
 ];
 
+const ROLE_LABELS: Record<string, string> = {
+    ADMIN: "Admin",
+    APPROVER: "Approver",
+    AUDITOR: "Auditor",
+    VIEWER: "Viewer",
+};
+
 export default function Sidebar() {
     const path = usePathname();
-    const { user, role, entityId, setRole, setEntityId, setUser } = useUser();
+    // C1: context no longer exposes setRole/setEntityId — roles come from server JWT only
+    const { user, role, entityId, loading } = useUser();
 
-    const filteredNav = nav.filter(n => n.roles.includes(role));
+    const filteredNav = role ? nav.filter(n => n.roles.includes(role)) : [];
 
     return (
         <>
@@ -60,7 +67,7 @@ export default function Sidebar() {
                     border: '1px solid var(--border)',
                     borderRadius: '8px',
                     padding: '8px',
-                    display: 'none', // Hidden on desktop
+                    display: 'none',
                 }}
             >
                 <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
@@ -72,27 +79,28 @@ export default function Sidebar() {
                 @media (max-width: 768px) {
                     .mobile-toggle { display: block !important; }
                 }
-                .context-switcher {
+                .context-info {
                     padding: 12px;
                     border-top: 1px solid var(--border);
                     font-size: 0.8rem;
                     display: flex;
                     flex-direction: column;
-                    gap: 8px;
+                    gap: 6px;
                     background: rgba(255,255,255,0.02);
                 }
-                .context-switcher select {
-                    background: var(--bg-body);
-                    border: 1px solid var(--border);
-                    color: var(--text-main);
-                    padding: 4px;
-                    border-radius: 4px;
-                    outline: none;
+                .context-info-row {
+                    display: flex;
+                    justify-content: space-between;
+                    align-items: center;
+                    color: var(--text-muted);
+                }
+                .context-info-value {
+                    font-weight: 600;
+                    color: var(--text);
                 }
             `}</style>
 
             <aside className="sidebar" onClick={(e) => {
-                // Close when clicking link on mobile
                 if ((e.target as HTMLElement).closest('a')) {
                     document.querySelector('.sidebar')?.classList.remove('open');
                 }
@@ -102,17 +110,21 @@ export default function Sidebar() {
                 </div>
                 <nav className="sidebar-nav">
                     <div className="sidebar-section">Main</div>
-                    {filteredNav.map((n) => (
-                        <Link
-                            key={n.href}
-                            href={n.href}
-                            className={`sidebar-link ${path === n.href ? "active" : ""}`}
-                        >
-                            <n.icon />
-                            {n.label}
-                        </Link>
-                    ))}
-                    
+                    {loading ? (
+                        <div style={{ padding: "12px 16px", color: "var(--text-muted)", fontSize: 13 }}>Loading...</div>
+                    ) : (
+                        filteredNav.map((n) => (
+                            <Link
+                                key={n.href}
+                                href={n.href}
+                                className={`sidebar-link ${path === n.href ? "active" : ""}`}
+                            >
+                                <n.icon />
+                                {n.label}
+                            </Link>
+                        ))
+                    )}
+
                     {role === "ADMIN" && (
                         <>
                             <div className="sidebar-section">System</div>
@@ -136,23 +148,23 @@ export default function Sidebar() {
                     )}
                 </nav>
 
-                <div className="context-switcher">
-                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                {/* C1: read-only role/entity display — no switcher dropdown */}
+                <div className="context-info">
+                    <div className="context-info-row">
                         <span>Role</span>
-                        <select value={role} onChange={(e) => setRole(e.target.value)}>
-                            <option value="ADMIN">Admin</option>
-                            <option value="APPROVER">Approver</option>
-                            <option value="AUDITOR">Auditor</option>
-                        </select>
+                        <span className="context-info-value">{ROLE_LABELS[role] ?? role ?? "—"}</span>
                     </div>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                        <span>Entity</span>
-                        <select value={entityId} onChange={(e) => setEntityId(parseInt(e.target.value))}>
-                            <option value={1}>Main Entity</option>
-                            <option value={2}>Subsidiary A</option>
-                            <option value={3}>Region West</option>
-                        </select>
-                    </div>
+                    {entityId > 0 && (
+                        <div className="context-info-row">
+                            <span>Entity</span>
+                            <span className="context-info-value">#{entityId}</span>
+                        </div>
+                    )}
+                    {user && (
+                        <div className="context-info-row" style={{ fontSize: "0.72rem" }}>
+                            <span style={{ overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{user}</span>
+                        </div>
+                    )}
                 </div>
 
                 <div className="sidebar-footer">

@@ -1,6 +1,14 @@
 import { createClient } from "@/lib/supabase-server";
 import { NextResponse } from "next/server";
-import crypto from "crypto";
+import { createHash, randomBytes } from "crypto";
+
+function getAdmin() {
+    const { createClient: createSBClient } = require("@supabase/supabase-js");
+    return createSBClient(
+        process.env.NEXT_PUBLIC_SUPABASE_URL!,
+        process.env.SUPABASE_SERVICE_ROLE_KEY!
+    );
+}
 
 export async function POST() {
     const supabase = await createClient();
@@ -10,22 +18,26 @@ export async function POST() {
         return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    // Generate new key
-    const newKey = `sk_live_${crypto.randomBytes(24).toString("hex")}`;
-
-    // Hash it for storage (if we were storing it hashed, but for MVP we might store raw or hashed)
-    // For this phase, we'll assume we store it in user_metadata or a separate 'api_keys' table.
-    // Let's use user_metadata for simplicity as per previous phases, or 'organizations' table.
-    // Checking previous 'onboard' logic would be ideal, but let's stick to metadata for now
-    // as it's the specific "Developer Key".
-
-    const { error } = await supabase.auth.updateUser({
-        data: { api_key: newKey }
-    });
-
-    if (error) {
-        return NextResponse.json({ error: error.message }, { status: 500 });
+    const orgId = user.user_metadata?.org_id;
+    if (!orgId) {
+        return NextResponse.json({ error: "No organization found. Complete onboarding first." }, { status: 403 });
     }
 
-    return NextResponse.json({ api_key: newKey });
+    // C2: generate key, store only the SHA-256 hash in the organizations table
+    const rawKey = `atrosha_${randomBytes(24).toString("hex")}`;
+    const keyHash = createHash("sha256").update(rawKey).digest("hex");
+
+    const admin = getAdmin();
+    const { error } = await admin
+        .from("organizations")
+        .update({ api_key_hash: keyHash, updated_at: new Date().toISOString() })
+        .eq("id", orgId);
+
+    if (error) {
+        console.error("regenerate-key DB error:", error.message);
+        return NextResponse.json({ error: "Failed to rotate key" }, { status: 500 });
+    }
+
+    // return the raw key once — it will never be stored or retrievable again
+    return NextResponse.json({ api_key: rawKey });
 }

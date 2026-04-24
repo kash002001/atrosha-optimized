@@ -4,6 +4,11 @@ import { createServerClient } from '@supabase/ssr';
 import { cookies } from 'next/headers';
 
 export async function GET() {
+    // never expose in production — leaks DB counts, proxy URL, and auth state
+    if (process.env.NODE_ENV === 'production') {
+        return NextResponse.json({ error: 'Not Found' }, { status: 404 });
+    }
+
     const cookieStore = await cookies();
     const allCookies = cookieStore.getAll();
 

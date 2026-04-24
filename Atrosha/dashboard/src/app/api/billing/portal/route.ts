@@ -32,9 +32,8 @@ export async function POST() {
 
     let stripeCustomerId = org?.stripe_cust;
 
-    // Lazy Creation: If no customer ID exists, create one now.
+    // lazy-create Stripe customer if none exists yet
     if (!stripeCustomerId) {
-        console.log("No Stripe Customer ID found. Creating one...");
         const customer = await stripe.customers.create({
             email: user.email,
             metadata: {
@@ -60,7 +59,8 @@ export async function POST() {
 
         return NextResponse.json({ url: session.url });
     } catch (err: unknown) {
-        console.error(err);
-        return NextResponse.json({ error: err instanceof Error ? err.message : String(err) }, { status: 500 });
+        // H4: log full error server-side, return generic message to client
+        console.error("billing portal error:", err);
+        return NextResponse.json({ error: "Billing portal unavailable. Please try again." }, { status: 500 });
     }
 }

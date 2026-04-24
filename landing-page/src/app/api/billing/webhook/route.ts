@@ -62,23 +62,28 @@ export async function POST(req: Request) {
 
             case "customer.subscription.deleted": {
                 const subscription = event.data.object as Stripe.Subscription;
-                const stripeCustomerId = subscription.customer;
+                const stripeCustomerId = subscription.customer as string;
 
                 console.log(`Subscription canceled: ${subscription.id}`);
                 const { error } = await admin
                     .from("organizations")
                     .update({
                         subscription_status: "canceled",
-                        plan_tier: "explorer"
+                        plan_tier: "explorer",
+                        updated_at: new Date().toISOString(),
                     })
                     .eq("stripe_customer_id", stripeCustomerId);
 
-                if (error) console.error("Error canceling sub:", error);
+                // non-2xx forces Stripe to retry — DB failure must not be swallowed
+                if (error) {
+                    console.error("WEBHOOK: failed to cancel subscription in DB:", error);
+                    return NextResponse.json({ error: "DB update failed" }, { status: 500 });
+                }
                 break;
             }
         }
     } catch (err: unknown) {
-        console.error("ONBOARD ERROR:", err);
+        console.error("WEBHOOK ERROR:", err);
         return NextResponse.json({ error: err instanceof Error ? err.message : "Internal error" }, { status: 500 });
     }
 

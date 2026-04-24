@@ -27,7 +27,7 @@ export async function sendWelcomeEmail(email: string, orgName: string) {
         </head>
         <body>
             <div class="container">
-                <h1>Welcome to Atrosha, ${orgName}!</h1>
+                <h1>Welcome to Atrosha, ${orgName.replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;")}!</h1>
                 <p>Your organization has been successfully created. You are now ready to secure your autonomous agents.</p>
                 
                 <p><strong>Next Steps:</strong></p>

@@ -18,10 +18,11 @@ export default async function SettingsPage() {
     }
 
     const userMetadata = user.user_metadata || {};
-    const orgName = userMetadata.org_name || "Atrosha Corp";
-    const role = userMetadata.role || "Administrator";
+    const orgName = userMetadata.org_name || "";
+    const role = userMetadata.role || "Member";
     const initials = (user.email?.[0] || "U").toUpperCase();
-    const orgId = userMetadata.organization_id;
+    // H1: was organization_id — mismatch meant alertConfig was always null for every user
+    const orgId = userMetadata.org_id;
 
     // fetch alert config for this org
     let alertConfig = null;

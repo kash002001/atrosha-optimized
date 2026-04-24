@@ -3,10 +3,16 @@
 import { useState, useCallback } from "react";
 import { Upload, FileText, CheckCircle2, AlertTriangle, ShieldCheck, Layers } from "lucide-react";
 
+interface InvoiceData {
+    vendor: string;
+    amount: number;
+    currency: string;
+}
+
 interface BatchResult {
     file_name: string;
     status: 'uploading' | 'parsing' | 'success' | 'review' | 'error';
-    invoice?: { vendor: string; amount: number; currency: string };
+    invoice?: InvoiceData;
     auto_approved?: boolean;
     session_id?: string;
     message?: string;
@@ -16,6 +22,8 @@ export default function BatchClient() {
     const [isDragging, setIsDragging] = useState(false);
     const [results, setResults] = useState<BatchResult[]>([]);
     const [isProcessing, setIsProcessing] = useState(false);
+    // H1: inline error instead of alert()
+    const [batchError, setBatchError] = useState<string | null>(null);
 
     const handleDrop = useCallback(async (e: React.DragEvent) => {
         e.preventDefault();
@@ -30,32 +38,38 @@ export default function BatchClient() {
         const files = Array.from(e.target.files).filter(f => f.type === "application/pdf");
         if (files.length === 0) return;
         processFiles(files);
+        e.target.value = '';
     };
 
     const processFiles = async (files: File[]) => {
-        if (files.length > 50) { alert("Maximum 50 files allowed per batch."); return; }
+        setBatchError(null);
+        // H1: inline error — no alert()
+        if (files.length > 50) {
+            setBatchError("Maximum 50 files allowed per batch. Please reduce your selection.");
+            return;
+        }
         setIsProcessing(true);
 
         const initial: BatchResult[] = files.map(f => ({ file_name: f.name, status: 'parsing' }));
         setResults(prev => [...prev, ...initial]);
 
-        // simulate OCR for each file sequentially
+        // simulate OCR pipeline delay
         await new Promise(r => setTimeout(r, 2000));
 
         setResults(prev => {
             const updated = [...prev];
             updated.forEach((r, i) => {
                 if (r.status !== 'parsing') return;
-                const amount = Math.round((200 + Math.random() * 8000) * 100) / 100;
-                const vendor = r.file_name.replace(/\.[^/.]+$/, "").replace(/[_-]/g, " ");
-                const autoApprove = amount < 5000;
+                // M1: amount starts at 0 — user must verify/enter real value
+                // random generation was removed: it drove auto-approve on fabricated numbers
+                const vendor = r.file_name.replace(/\.[^/.]+$/, "").replace(/[_-]/g, " ").trim() || "Unknown Vendor";
                 updated[i] = {
                     ...r,
-                    status: autoApprove ? 'success' : 'review',
-                    invoice: { vendor, amount, currency: "USD" },
-                    auto_approved: autoApprove,
-                    session_id: "sess_" + Math.random().toString(36).substring(2, 10),
-                    message: autoApprove ? "Below $5,000 — auto-approved by policy" : "Above threshold — manual review required",
+                    status: 'review',
+                    invoice: { vendor, amount: 0, currency: "USD" },
+                    auto_approved: false,
+                    session_id: "sess_" + crypto.randomUUID().replace(/-/g, "").substring(0, 8),
+                    message: "OCR complete — please verify extracted amount before approving",
                 };
             });
             return updated;
@@ -64,6 +78,15 @@ export default function BatchClient() {
     };
 
     const handleAuthorize = async (index: number) => {
+        const result = results[index];
+        if (result.invoice && result.invoice.amount <= 0) {
+            setResults(prev => {
+                const n = [...prev];
+                n[index] = { ...n[index], message: "Enter a valid amount before authorizing." };
+                return n;
+            });
+            return;
+        }
         setResults(prev => {
             const n = [...prev];
             n[index] = { ...n[index], status: 'uploading' };
@@ -77,10 +100,16 @@ export default function BatchClient() {
         });
     };
 
-    const updateInvoiceField = (index: number, field: string, value: any) => {
+    // M2: typed to only accept real InvoiceData keys — no more string/any
+    const updateInvoiceField = (index: number, field: keyof InvoiceData, value: InvoiceData[keyof InvoiceData]) => {
         setResults(prev => {
             const n = [...prev];
-            if (n[index].invoice) (n[index].invoice as any)[field] = value;
+            if (n[index].invoice) {
+                n[index] = {
+                    ...n[index],
+                    invoice: { ...n[index].invoice!, [field]: value },
+                };
+            }
             return n;
         });
     };
@@ -97,6 +126,18 @@ export default function BatchClient() {
                 </div>
             </div>
 
+            {batchError && (
+                <div style={{
+                    display: "flex", alignItems: "center", gap: 8,
+                    padding: "10px 14px", marginBottom: 20, borderRadius: 8,
+                    background: "rgba(239,68,68,0.08)", border: "1px solid rgba(239,68,68,0.2)",
+                    color: "#ef4444", fontSize: 13,
+                }}>
+                    <AlertTriangle size={14} style={{ flexShrink: 0 }} />
+                    {batchError}
+                </div>
+            )}
+
             <div
                 onDragOver={e => { e.preventDefault(); setIsDragging(true); }}
                 onDragLeave={() => setIsDragging(false)}
@@ -110,7 +151,7 @@ export default function BatchClient() {
                     cursor: "pointer",
                     transition: "all 0.2s",
                     marginBottom: 32,
-                    position: "relative"
+                    position: "relative",
                 }}
             >
                 <input
@@ -123,7 +164,7 @@ export default function BatchClient() {
                     <Upload size={28} style={{ color: "var(--text-muted)" }} />
                 </div>
                 <h3 style={{ margin: "0 0 8px" }}>Drop PDF Invoices Here</h3>
-                <p style={{ margin: 0, color: "var(--text-muted)", fontSize: 14 }}>or click to browse multiple files</p>
+                <p style={{ margin: 0, color: "var(--text-muted)", fontSize: 14 }}>or click to browse — up to 50 files per batch</p>
             </div>
 
             {results.length > 0 && (
@@ -132,6 +173,12 @@ export default function BatchClient() {
                         <h3 style={{ margin: 0, fontSize: 14, fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.5px", color: "var(--text-dim)" }}>
                             Processing Queue ({results.length})
                         </h3>
+                        <button
+                            onClick={() => setResults([])}
+                            style={{ fontSize: 11, color: "var(--text-muted)", background: "transparent", border: "none", cursor: "pointer" }}
+                        >
+                            Clear all
+                        </button>
                     </div>
                     <table className="data-table" style={{ width: "100%", borderCollapse: "collapse" }}>
                         <thead>
@@ -162,16 +209,20 @@ export default function BatchClient() {
                                                     value={r.invoice.vendor}
                                                     onChange={e => updateInvoiceField(i, "vendor", e.target.value)}
                                                     disabled={r.status === 'success'}
+                                                    placeholder="Vendor name"
                                                     style={{ padding: "4px 8px", background: "var(--bg)", border: "1px solid var(--border)", borderRadius: 4, color: "var(--text)", fontSize: 13 }}
                                                 />
                                                 <div style={{ display: "flex", alignItems: "center", gap: 4 }}>
                                                     <span style={{ color: "var(--text-muted)", fontSize: 13 }}>$</span>
                                                     <input
                                                         type="number"
-                                                        value={r.invoice.amount}
+                                                        value={r.invoice.amount || ""}
                                                         onChange={e => updateInvoiceField(i, "amount", parseFloat(e.target.value) || 0)}
                                                         disabled={r.status === 'success'}
-                                                        style={{ padding: "4px 8px", background: "var(--bg)", border: "1px solid var(--border)", borderRadius: 4, color: "var(--text)", fontSize: 13, width: "100%" }}
+                                                        placeholder="Enter amount"
+                                                        min={0}
+                                                        step={0.01}
+                                                        style={{ padding: "4px 8px", background: "var(--bg)", border: `1px solid ${r.invoice.amount <= 0 && r.status !== 'success' ? "rgba(245,158,11,0.5)" : "var(--border)"}`, borderRadius: 4, color: "var(--text)", fontSize: 13, width: "100%" }}
                                                     />
                                                 </div>
                                             </div>
@@ -195,7 +246,9 @@ export default function BatchClient() {
                                         ) : (
                                             <div style={{ color: "var(--text-muted)", fontSize: 13 }}>{r.status}...</div>
                                         )}
-                                        {r.message && r.status !== 'error' && <div style={{ fontSize: 11, color: "var(--text-muted)", marginTop: 4 }}>{r.message}</div>}
+                                        {r.message && r.status !== 'error' && (
+                                            <div style={{ fontSize: 11, color: "var(--text-muted)", marginTop: 4 }}>{r.message}</div>
+                                        )}
                                     </td>
                                     <td style={{ padding: "16px 24px", textAlign: "right", verticalAlign: "top" }}>
                                         {r.status === 'review' && (

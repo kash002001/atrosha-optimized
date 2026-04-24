@@ -18,14 +18,16 @@ interface Transaction {
 }
 
 export default function TransactionsClient() {
-    const { entityId, role } = useUser();
+    const { entityId, role, orgId } = useUser();
     const [transactions, setTransactions] = useState<Transaction[]>([]);
     const [loading, setLoading] = useState(true);
 
     const fetchTransactions = useCallback(async () => {
         try {
             const supabase = createClient();
-            const { data, error } = await supabase.from('transactions').select('*').order('created_at', { ascending: false });
+            // H1: explicit org filter alongside RLS — same pattern as agents/payroll
+            const query = supabase.from('transactions').select('*').order('created_at', { ascending: false });
+            const { data, error } = orgId ? await query.eq('organization_id', orgId) : await query;
             if (error) throw error;
             setTransactions(data || []);
         } catch (e) {
@@ -33,11 +35,11 @@ export default function TransactionsClient() {
             setTransactions([]);
         }
         setLoading(false);
-    }, []);
+    }, [orgId]);
 
     useEffect(() => {
         fetchTransactions();
-    }, [fetchTransactions, entityId, role]);
+    }, [fetchTransactions, entityId, role, orgId]);
 
     return (
         <>

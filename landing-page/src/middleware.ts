@@ -16,7 +16,8 @@ export async function middleware(req: NextRequest) {
     res.headers.set("Strict-Transport-Security", "max-age=31536000; includeSubDomains; preload");
 
     if (path.startsWith('/api/')) {
-        const ip = req.headers.get("x-forwarded-for") ?? "anonymous";
+        // L1: parse to first IP only — x-forwarded-for can be a comma-separated chain
+        const ip = (req.headers.get("x-real-ip") ?? req.headers.get("x-forwarded-for")?.split(",")[0])?.trim() ?? "anonymous";
         const { success, headers: rlHeaders } = checkRateLimit(ip, 60, 60000);
         
         const allowedOrigins = isProd 
@@ -87,11 +88,15 @@ export async function middleware(req: NextRequest) {
     );
 
     try {
-        const fetchUser = supabase.auth.getUser();
-        const timeout = new Promise((_, reject) => setTimeout(() => reject(new Error('timeout')), 1000));
-        await Promise.race([fetchUser, timeout]);
+        const { data: { user } } = await supabase.auth.getUser();
+        // redirect authenticated users away from auth pages
+        if (user && (path === '/login' || path === '/signup')) {
+            const dashUrl = process.env.NEXT_PUBLIC_DASHBOARD_URL || '/';
+            // M2: must pass req.url as base — new URL('/') with no base throws TypeError
+            return NextResponse.redirect(new URL(dashUrl, req.url));
+        }
     } catch {
-        // silent fail to avoid edge crashing
+        // silent fail — edge timeout or missing env
     }
 
     return res;
@@ -99,6 +104,6 @@ export async function middleware(req: NextRequest) {
 
 export const config = {
     matcher: [
-        "/((?!_next/static|_next/image|favicon.ico|api).*)",
+        "/((?!_next/static|_next/image|favicon.ico).*)",
     ],
 };

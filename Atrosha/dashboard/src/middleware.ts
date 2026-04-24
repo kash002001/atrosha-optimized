@@ -44,9 +44,21 @@ export async function middleware(req: NextRequest) {
         // edge timeout fallback
     }
 
-    const loginUrl = process.env.NEXT_PUBLIC_LOGIN_URL || "https://atrosha.bond/login";
+    let rawLoginUrl = process.env.NEXT_PUBLIC_LOGIN_URL || "https://atrosha.bond/login";
+    const reqHost = req.headers.get('host') || 'localhost';
+    if (!reqHost.includes('atrosha.bond') && rawLoginUrl.includes('atrosha.bond')) {
+        rawLoginUrl = "http://localhost:3000/login";
+    }
+    
+    let loginRedirect: URL;
+    try {
+        loginRedirect = new URL(rawLoginUrl);
+    } catch {
+        loginRedirect = new URL("https://atrosha.bond/login");
+    }
+
     if (!user) {
-        return NextResponse.redirect(loginUrl);
+        return NextResponse.redirect(loginRedirect);
     }
 
     // Security Headers

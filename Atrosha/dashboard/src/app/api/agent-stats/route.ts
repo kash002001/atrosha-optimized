@@ -11,8 +11,9 @@ export async function GET() {
         if (!user) return NextResponse.json({ error: "unauthorized" }, { status: 401 });
 
         const orgId = user.user_metadata?.org_id;
+        if (!orgId) return NextResponse.json({ error: "onboarding incomplete" }, { status: 403 });
 
-        const [txRes, agentRes, ruleRes, pendingRes, dailyRes] = await Promise.all([
+        const [txRes, agentRes, ruleRes, pendingRes] = await Promise.all([
             supabase
                 .from('transactions')
                 .select('id, amount, status', { count: 'exact' })
@@ -26,20 +27,26 @@ export async function GET() {
                 .select('*', { count: 'exact', head: true })
                 .eq('organization_id', orgId)
                 .eq('status', 'active'),
-            // pending payroll-type or escalated transactions
             supabase
                 .from('transactions')
                 .select('*', { count: 'exact', head: true })
                 .eq('organization_id', orgId)
                 .eq('status', 'pending'),
-            supabase
-                .from('daily_aggregates')
-                .select('agent_id, total_cents, tx_count, denied_count')
-                .eq('day', new Date().toISOString().split('T')[0]),
         ]);
 
         const txs = txRes.data || [];
         const agents = agentRes.data || [];
+
+        // H6: filter daily_aggregates by agent IDs from this org only — prevents cross-org data leakage
+        const agentIds = agents.map(a => a.id);
+        const dailyRes = agentIds.length > 0
+            ? await supabase
+                .from('daily_aggregates')
+                .select('agent_id, total_cents, tx_count, denied_count')
+                .eq('day', new Date().toISOString().split('T')[0])
+                .in('agent_id', agentIds)
+            : { data: [] };
+
         const dailyAggs = dailyRes.data || [];
 
         const totalSpendCents = txs
@@ -50,7 +57,6 @@ export async function GET() {
             .filter(t => t.status === 'denied')
             .reduce((s, t) => s + (t.amount || 0), 0);
 
-        // build per-agent burn stats from daily_aggregates
         const agentBurn = new Map<string, { spent: number; count: number }>();
         for (const agg of dailyAggs) {
             agentBurn.set(agg.agent_id, { spent: agg.total_cents, count: agg.tx_count });
@@ -78,7 +84,7 @@ export async function GET() {
             agents: enrichedAgents,
             ts: Date.now(),
         });
-    } catch (err: any) {
+    } catch (err: unknown) {
         console.error("agent-stats error:", err);
         return NextResponse.json({ error: "internal" }, { status: 500 });
     }

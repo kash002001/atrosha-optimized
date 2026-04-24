@@ -1,11 +1,12 @@
 'use client';
 
 import { useEffect, useState, useCallback } from "react";
-import { Users, Search, Edit2, CheckCircle2 } from "lucide-react";
+import { Users, Search, Edit2, CheckCircle2, AlertTriangle, RefreshCw } from "lucide-react";
 import { useUser } from "../context/UserContext";
+import { createClient } from "@/lib/supabase-client";
 
 interface Vendor {
-    id: number;
+    id: string;
     name: string;
     auto_approve_below: number;
     first_seen: string;
@@ -13,41 +14,68 @@ interface Vendor {
     total_paid: number;
 }
 
-const seedVendors: Vendor[] = [
-    { id: 1, name: "Amazon Web Services", auto_approve_below: 5000, first_seen: "2025-08-12", last_seen: "2026-03-27", total_paid: 142800 },
-    { id: 2, name: "Vercel Inc", auto_approve_below: 2000, first_seen: "2025-11-03", last_seen: "2026-03-26", total_paid: 28400 },
-    { id: 3, name: "Stripe", auto_approve_below: 10000, first_seen: "2025-06-01", last_seen: "2026-03-27", total_paid: 67200 },
-    { id: 4, name: "Google Cloud Platform", auto_approve_below: 8000, first_seen: "2025-09-15", last_seen: "2026-03-25", total_paid: 95600 },
-    { id: 5, name: "Supabase Inc", auto_approve_below: 1500, first_seen: "2026-01-10", last_seen: "2026-03-24", total_paid: 4800 },
-    { id: 6, name: "OpenAI", auto_approve_below: 3000, first_seen: "2025-12-01", last_seen: "2026-03-27", total_paid: 18900 },
-    { id: 7, name: "Cloudflare", auto_approve_below: 500, first_seen: "2025-10-20", last_seen: "2026-03-20", total_paid: 3200 },
-    { id: 8, name: "Figma", auto_approve_below: 0, first_seen: "2026-02-14", last_seen: "2026-03-15", total_paid: 1200 },
-];
-
 export default function VendorClient() {
-    const { entityId, role } = useUser();
+    const { orgId } = useUser();
     const [vendors, setVendors] = useState<Vendor[]>([]);
     const [loading, setLoading] = useState(true);
+    const [error, setError] = useState<string | null>(null);
     const [searchTerm, setSearchTerm] = useState("");
-    const [editingId, setEditingId] = useState<number | null>(null);
-    const [editValue, setEditValue] = useState<string>("");
+    const [editingId, setEditingId] = useState<string | null>(null);
+    const [editValue, setEditValue] = useState("");
+    const [saving, setSaving] = useState<string | null>(null);
+    const [saveError, setSaveError] = useState<string | null>(null);
+
+    const fetchVendors = useCallback(async () => {
+        if (!orgId) return;
+        setLoading(true);
+        setError(null);
+        const supabase = createClient();
+        const { data, error: fetchErr } = await supabase
+            .from('vendors')
+            .select('id, name, auto_approve_below, first_seen, last_seen, total_paid')
+            .eq('organization_id', orgId)
+            .order('total_paid', { ascending: false });
+
+        if (fetchErr) {
+            setError("Failed to load vendor directory.");
+            console.error("vendor fetch:", fetchErr);
+        } else {
+            setVendors(data || []);
+        }
+        setLoading(false);
+    }, [orgId]);
 
     useEffect(() => {
-        const t = setTimeout(() => {
-            setVendors(seedVendors);
-            setLoading(false);
-        }, 300);
-        return () => clearTimeout(t);
-    }, [entityId, role]);
+        fetchVendors();
+    }, [fetchVendors]);
 
-    const handleSaveThreshold = (id: number) => {
+    const handleSaveThreshold = async (id: string) => {
         const val = parseFloat(editValue);
-        if (isNaN(val) || val < 0) return;
-        setVendors(prev => prev.map(v => v.id === id ? { ...v, auto_approve_below: val } : v));
-        setEditingId(null);
+        if (isNaN(val) || val < 0) { setSaveError("Invalid amount."); return; }
+
+        setSaving(id);
+        setSaveError(null);
+        const supabase = createClient();
+
+        const { error: updateErr } = await supabase
+            .from('vendors')
+            .update({ auto_approve_below: val })
+            .eq('id', id)
+            .eq('organization_id', orgId); // defense-in-depth — org scope on write too
+
+        if (updateErr) {
+            setSaveError("Failed to save threshold. Please try again.");
+            console.error("vendor update:", updateErr);
+        } else {
+            setVendors(prev => prev.map(v => v.id === id ? { ...v, auto_approve_below: val } : v));
+            setEditingId(null);
+        }
+        setSaving(null);
     };
 
-    const filtered = vendors.filter(v => v.name.toLowerCase().includes(searchTerm.toLowerCase()));
+    const filtered = vendors.filter(v =>
+        v.name.toLowerCase().includes(searchTerm.toLowerCase())
+    );
 
     return (
         <div style={{ maxWidth: 1000, margin: "0 auto", paddingBottom: 60 }}>
@@ -62,25 +90,60 @@ export default function VendorClient() {
                     </div>
                 </div>
 
-                <div style={{ position: "relative" }}>
-                    <Search size={16} style={{ position: "absolute", left: 12, top: 10, color: "var(--text-muted)" }} />
-                    <input
-                        type="text"
-                        placeholder="Search vendors..."
-                        value={searchTerm}
-                        onChange={e => setSearchTerm(e.target.value)}
-                        style={{
-                            padding: "8px 12px 8px 36px",
-                            borderRadius: 6,
-                            background: "var(--bg-card)",
-                            border: "1px solid var(--border)",
-                            color: "var(--text)",
-                            fontSize: 14,
-                            width: 250
-                        }}
-                    />
+                <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+                    <button
+                        onClick={fetchVendors}
+                        disabled={loading}
+                        style={{ background: "none", border: "none", cursor: "pointer", color: "var(--text-muted)", display: "flex", opacity: loading ? 0.4 : 1 }}
+                        title="Refresh"
+                    >
+                        <RefreshCw size={16} style={{ animation: loading ? "spin 1s linear infinite" : "none" }} />
+                    </button>
+                    <div style={{ position: "relative" }}>
+                        <Search size={16} style={{ position: "absolute", left: 12, top: 10, color: "var(--text-muted)" }} />
+                        <input
+                            type="text"
+                            placeholder="Search vendors..."
+                            value={searchTerm}
+                            onChange={e => setSearchTerm(e.target.value)}
+                            style={{
+                                padding: "8px 12px 8px 36px",
+                                borderRadius: 6,
+                                background: "var(--bg-card)",
+                                border: "1px solid var(--border)",
+                                color: "var(--text)",
+                                fontSize: 14,
+                                width: 250,
+                            }}
+                        />
+                    </div>
                 </div>
             </div>
+
+            {error && (
+                <div style={{
+                    display: "flex", alignItems: "center", gap: 8, padding: "10px 14px",
+                    marginBottom: 20, borderRadius: 8,
+                    background: "rgba(239,68,68,0.08)", border: "1px solid rgba(239,68,68,0.2)",
+                    color: "#ef4444", fontSize: 13,
+                }}>
+                    <AlertTriangle size={14} style={{ flexShrink: 0 }} />
+                    {error}
+                    <button onClick={fetchVendors} style={{ marginLeft: "auto", fontSize: 12, background: "none", border: "none", color: "#ef4444", cursor: "pointer", textDecoration: "underline" }}>Retry</button>
+                </div>
+            )}
+
+            {saveError && (
+                <div style={{
+                    display: "flex", alignItems: "center", gap: 8, padding: "10px 14px",
+                    marginBottom: 20, borderRadius: 8,
+                    background: "rgba(239,68,68,0.08)", border: "1px solid rgba(239,68,68,0.2)",
+                    color: "#ef4444", fontSize: 13,
+                }}>
+                    <AlertTriangle size={14} style={{ flexShrink: 0 }} />
+                    {saveError}
+                </div>
+            )}
 
             <div className="chart-card" style={{ padding: 0, overflow: "hidden" }}>
                 <table className="data-table" style={{ width: "100%", borderCollapse: "collapse" }}>
@@ -96,13 +159,24 @@ export default function VendorClient() {
                         {loading ? (
                             <tr><td colSpan={4} style={{ textAlign: "center", padding: 40, color: "var(--text-muted)" }}>Loading vendors...</td></tr>
                         ) : filtered.length === 0 ? (
-                            <tr><td colSpan={4} style={{ textAlign: "center", padding: 40, color: "var(--text-muted)" }}>No vendors found.</td></tr>
+                            <tr>
+                                <td colSpan={4} style={{ textAlign: "center", padding: 48, color: "var(--text-muted)" }}>
+                                    <Users size={28} style={{ marginBottom: 8, opacity: 0.3 }} />
+                                    <div style={{ fontSize: 14, fontWeight: 500 }}>
+                                        {searchTerm ? "No vendors match your search." : "No vendors yet — they appear automatically as your agents transact."}
+                                    </div>
+                                </td>
+                            </tr>
                         ) : (
                             filtered.map(v => (
                                 <tr key={v.id} style={{ borderBottom: "1px solid var(--border)" }}>
                                     <td style={{ padding: "16px 24px", fontWeight: 500 }}>
                                         {v.name}
-                                        {v.auto_approve_below > 0 && <span style={{ marginLeft: 8, fontSize: 10, background: "var(--green-bg)", color: "var(--green)", padding: "2px 6px", borderRadius: 4, verticalAlign: "middle" }}>TRUSTED</span>}
+                                        {v.auto_approve_below > 0 && (
+                                            <span style={{ marginLeft: 8, fontSize: 10, background: "var(--green-bg)", color: "var(--green)", padding: "2px 6px", borderRadius: 4, verticalAlign: "middle" }}>
+                                                TRUSTED
+                                            </span>
+                                        )}
                                     </td>
                                     <td style={{ padding: "16px 24px", textAlign: "right" }}>
                                         {editingId === v.id ? (
@@ -112,21 +186,34 @@ export default function VendorClient() {
                                                     type="number"
                                                     value={editValue}
                                                     onChange={e => setEditValue(e.target.value)}
-                                                    onKeyDown={e => { if (e.key === 'Enter') handleSaveThreshold(v.id); if (e.key === 'Escape') setEditingId(null); }}
+                                                    onKeyDown={e => {
+                                                        if (e.key === 'Enter') handleSaveThreshold(v.id);
+                                                        if (e.key === 'Escape') { setEditingId(null); setSaveError(null); }
+                                                    }}
+                                                    min={0}
+                                                    step={0.01}
                                                     style={{ width: 80, padding: "4px 8px", background: "var(--bg)", border: "1px solid var(--primary)", borderRadius: 4, color: "var(--text)" }}
                                                     autoFocus
+                                                    disabled={saving === v.id}
                                                 />
-                                                <button onClick={() => handleSaveThreshold(v.id)} style={{ background: "none", border: "none", color: "var(--green)", cursor: "pointer", display: "flex" }} title="Save">
+                                                <button
+                                                    onClick={() => handleSaveThreshold(v.id)}
+                                                    disabled={saving === v.id}
+                                                    style={{ background: "none", border: "none", color: "var(--green)", cursor: "pointer", display: "flex", opacity: saving === v.id ? 0.4 : 1 }}
+                                                    title="Save"
+                                                >
                                                     <CheckCircle2 size={16} />
                                                 </button>
                                             </div>
                                         ) : (
-                                            <div className="group" style={{ display: "flex", alignItems: "center", justifyContent: "flex-end", gap: 12 }}>
+                                            <div style={{ display: "flex", alignItems: "center", justifyContent: "flex-end", gap: 12 }}>
                                                 <span style={{ fontFamily: "monospace", fontSize: 14 }}>
-                                                    {v.auto_approve_below > 0 ? `$${v.auto_approve_below.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}` : "Requires Review"}
+                                                    {v.auto_approve_below > 0
+                                                        ? `$${v.auto_approve_below.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
+                                                        : "Requires Review"}
                                                 </span>
                                                 <button
-                                                    onClick={() => { setEditingId(v.id); setEditValue(v.auto_approve_below.toString()); }}
+                                                    onClick={() => { setEditingId(v.id); setEditValue(v.auto_approve_below.toString()); setSaveError(null); }}
                                                     style={{ background: "none", border: "none", color: "var(--text-muted)", cursor: "pointer", display: "flex", opacity: 0.6 }}
                                                     onMouseOver={e => e.currentTarget.style.opacity = "1"}
                                                     onMouseOut={e => e.currentTarget.style.opacity = "0.6"}
@@ -138,7 +225,7 @@ export default function VendorClient() {
                                         )}
                                     </td>
                                     <td style={{ padding: "16px 24px", textAlign: "right", fontFamily: "monospace", color: "var(--text-muted)" }}>
-                                        ${v.total_paid.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                                        ${(v.total_paid / 100).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                                     </td>
                                     <td style={{ padding: "16px 24px", textAlign: "right", fontSize: 13, color: "var(--text-muted)" }}>
                                         {new Date(v.last_seen).toLocaleDateString()}
@@ -149,6 +236,7 @@ export default function VendorClient() {
                     </tbody>
                 </table>
             </div>
+            <style>{`@keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }`}</style>
         </div>
     );
 }

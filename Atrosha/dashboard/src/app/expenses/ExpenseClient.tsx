@@ -1,57 +1,80 @@
-'use client';
+"use client";
 
-import React, { useState, useEffect } from 'react';
-import { Upload, Receipt, CheckCircle, AlertCircle, Clock } from 'lucide-react';
+import React, { useState, useEffect, useCallback } from 'react';
+import { Upload, Receipt, CheckCircle, AlertCircle, Clock, Loader2 } from 'lucide-react';
+import { useUser } from '../context/UserContext';
+import { createClient } from '@/lib/supabase-client';
 
 interface Expense {
-    id: number;
+    id: string;
     date: string;
     vendor_name: string;
-    amount: number;
+    amount: number | null;
     currency: string;
     status: string;
     matched_tx_id: string | null;
 }
 
-const seedExpenses: Expense[] = [
-    { id: 1, date: "2026-03-25", vendor_name: "AWS", amount: 2847.50, currency: "USD", status: "matched", matched_tx_id: "ch_3Qk9x2mP" },
-    { id: 2, date: "2026-03-24", vendor_name: "Vercel Inc", amount: 420.00, currency: "USD", status: "matched", matched_tx_id: "ch_1Px8y4nQ" },
-    { id: 3, date: "2026-03-23", vendor_name: "OpenAI", amount: 1250.00, currency: "USD", status: "pending", matched_tx_id: null },
-    { id: 4, date: "2026-03-22", vendor_name: "Figma", amount: 75.00, currency: "USD", status: "matched", matched_tx_id: "ch_7Rw2k5pA" },
-    { id: 5, date: "2026-03-20", vendor_name: "Unknown Vendor Co", amount: 9800.00, currency: "USD", status: "flagged", matched_tx_id: null },
-    { id: 6, date: "2026-03-18", vendor_name: "Google Cloud", amount: 3150.00, currency: "USD", status: "matched", matched_tx_id: "ch_4Tx9m3qB" },
-];
-
-let nid = 100;
-
 export default function ExpenseClient() {
+    const { orgId } = useUser();
     const [expenses, setExpenses] = useState<Expense[]>([]);
     const [loading, setLoading] = useState(true);
     const [uploading, setUploading] = useState(false);
+    const [error, setError] = useState<string | null>(null);
 
-    useEffect(() => {
-        const t = setTimeout(() => { setExpenses(seedExpenses); setLoading(false); }, 350);
-        return () => clearTimeout(t);
-    }, []);
+    // C1: real Supabase fetch — no more seed data
+    const fetchExpenses = useCallback(async () => {
+        if (!orgId) return;
+        setLoading(true);
+        try {
+            const supabase = createClient();
+            const { data, error: dbErr } = await supabase
+                .from('expenses')
+                .select('id, date, vendor_name, amount, currency, status, matched_tx_id')
+                .eq('organization_id', orgId)
+                .order('date', { ascending: false });
+            if (dbErr) throw dbErr;
+            setExpenses(data || []);
+        } catch (e: unknown) {
+            setError(e instanceof Error ? e.message : 'Failed to load expenses');
+        }
+        setLoading(false);
+    }, [orgId]);
+
+    useEffect(() => { fetchExpenses(); }, [fetchExpenses]);
 
     const handleUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
         const file = e.target.files?.[0];
-        if (!file) return;
+        if (!file || !orgId) return;
         setUploading(true);
+        setError(null);
 
-        // simulate OCR processing
-        await new Promise(r => setTimeout(r, 1500));
+        try {
+            // derive vendor name from filename — amount is null until manually entered
+            // M1: no random amount — amount stays null (pending review) to avoid data integrity trap
+            const vendorName = file.name
+                .replace(/\.[^/.]+$/, '')
+                .replace(/[_-]/g, ' ')
+                .trim() || 'Unknown Vendor';
 
-        const newExp: Expense = {
-            id: nid++,
-            date: new Date().toISOString().split('T')[0],
-            vendor_name: file.name.replace(/\.[^/.]+$/, "").replace(/[_-]/g, " "),
-            amount: Math.round(Math.random() * 5000 * 100) / 100,
-            currency: "USD",
-            status: "pending",
-            matched_tx_id: null,
-        };
-        setExpenses(prev => [newExp, ...prev]);
+            const supabase = createClient();
+            const { error: dbErr } = await supabase
+                .from('expenses')
+                .insert({
+                    organization_id: orgId,
+                    date: new Date().toISOString().split('T')[0],
+                    vendor_name: vendorName,
+                    amount: null,
+                    currency: 'USD',
+                    status: 'pending',
+                    matched_tx_id: null,
+                });
+            if (dbErr) throw dbErr;
+            await fetchExpenses();
+        } catch (err: unknown) {
+            setError(err instanceof Error ? err.message : 'Upload failed');
+        }
+
         setUploading(false);
         e.target.value = '';
     };
@@ -89,11 +112,17 @@ export default function ExpenseClient() {
                     color: uploading ? 'var(--text-muted)' : '#fff',
                     border: 'none', fontWeight: 600, fontSize: 13,
                 }}>
-                    <Upload size={16} />
-                    {uploading ? 'Processing...' : 'Upload Receipt'}
+                    {uploading ? <Loader2 size={16} className="animate-spin" /> : <Upload size={16} />}
+                    {uploading ? 'Uploading...' : 'Upload Receipt'}
                     <input type="file" style={{ display: 'none' }} onChange={handleUpload} disabled={uploading} accept="image/*,application/pdf" />
                 </label>
             </div>
+
+            {error && (
+                <div style={{ padding: "10px 14px", marginBottom: 20, borderRadius: 8, background: "rgba(239,68,68,0.08)", border: "1px solid rgba(239,68,68,0.2)", color: "#ef4444", fontSize: 13 }}>
+                    {error}
+                </div>
+            )}
 
             <div className="chart-card" style={{ padding: 0, overflow: "hidden" }}>
                 <table className="data-table" style={{ width: "100%", borderCollapse: "collapse" }}>
@@ -112,7 +141,7 @@ export default function ExpenseClient() {
                         ) : expenses.length === 0 ? (
                             <tr><td colSpan={5} style={{ textAlign: "center", padding: 40, color: "var(--text-muted)" }}>
                                 <Receipt size={32} style={{ margin: "0 auto 12px", opacity: 0.3 }} />
-                                <div>No expenses found. Start by uploading your first receipt.</div>
+                                <div>No expenses found. Upload a receipt to get started.</div>
                             </td></tr>
                         ) : (
                             expenses.map(exp => (
@@ -120,7 +149,10 @@ export default function ExpenseClient() {
                                     <td style={{ padding: "16px 24px", color: "var(--text-muted)", fontSize: 13 }}>{exp.date}</td>
                                     <td style={{ padding: "16px 24px", fontWeight: 500 }}>{exp.vendor_name}</td>
                                     <td style={{ padding: "16px 24px", textAlign: "right", fontFamily: "monospace", fontWeight: 600 }}>
-                                        {exp.currency} {exp.amount.toLocaleString(undefined, { minimumFractionDigits: 2 })}
+                                        {exp.amount != null
+                                            ? `${exp.currency} ${exp.amount.toLocaleString(undefined, { minimumFractionDigits: 2 })}`
+                                            : <span style={{ color: "var(--text-muted)", fontSize: 12 }}>Pending review</span>
+                                        }
                                     </td>
                                     <td style={{ padding: "16px 24px" }}>
                                         <div style={{ display: "flex", alignItems: "center", gap: 6, fontSize: 12, color: statusColor(exp.status), fontWeight: 600, textTransform: "uppercase" }}>
@@ -134,7 +166,7 @@ export default function ExpenseClient() {
                                                 {exp.matched_tx_id.substring(0, 12)}...
                                             </span>
                                         ) : (
-                                            <span style={{ fontSize: 12, color: "var(--text-muted)" }}>Manual Match</span>
+                                            <span style={{ fontSize: 12, color: "var(--text-muted)" }}>Unmatched</span>
                                         )}
                                     </td>
                                 </tr>

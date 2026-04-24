@@ -8,7 +8,7 @@ export async function saveAlertConfig(webhookUrl: string, thresholdPct: number, 
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) throw new Error("Unauthorized");
 
-    const orgId = user.user_metadata?.organization_id;
+    const orgId = user.user_metadata?.org_id;
     if (!orgId) throw new Error("No org");
 
     // upsert — one config per org

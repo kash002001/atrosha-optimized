@@ -1,9 +1,10 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { createBrowserClient } from "@supabase/ssr";
 import Link from "next/link";
 import { Suspense } from "react";
+import { isPwned } from "@/lib/pwned";
 
 function SignupForm() {
 
@@ -23,26 +24,50 @@ function SignupForm() {
     };
 
 
-    const hostname = typeof window !== 'undefined' ? window.location.hostname : 'localhost';
-    const cookieDomain = hostname.includes('atrosha.bond') ? '.atrosha.bond' : undefined;
-
-    const supabase = createBrowserClient(
-        process.env.NEXT_PUBLIC_SUPABASE_URL || "https://placeholder.supabase.co",
-        process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || "placeholder",
-        {
-            cookieOptions: {
-                domain: cookieDomain,
-                path: '/',
-                sameSite: 'lax',
-                secure: typeof window !== 'undefined' && window.location.protocol === 'https:',
+    // H5: memoize — prevents a new client instance on every re-render (every keystroke)
+    const supabase = useMemo(() => {
+        const hostname = typeof window !== 'undefined' ? window.location.hostname : 'localhost';
+        const cookieDomain = hostname.includes('atrosha.bond') ? '.atrosha.bond' : undefined;
+        return createBrowserClient(
+            process.env.NEXT_PUBLIC_SUPABASE_URL || "https://placeholder.supabase.co",
+            process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || "placeholder",
+            {
+                cookieOptions: {
+                    domain: cookieDomain,
+                    path: '/',
+                    sameSite: 'lax',
+                    secure: typeof window !== 'undefined' && window.location.protocol === 'https:',
+                }
             }
-        }
-    );
+        );
+    }, []);
+
+    const pwScore = (() => {
+        let s = 0;
+        if (password.length >= 8) s++;
+        if (password.length >= 12) s++;
+        if (/[0-9]/.test(password)) s++;
+        if (/[^a-zA-Z0-9]/.test(password)) s++;
+        return s;
+    })();
 
     const handleSignup = async (e: React.FormEvent) => {
         e.preventDefault();
         setLoading(true);
         setError("");
+
+        if (pwScore <= 1) {
+            setError("Password is too weak. Use at least 8 characters with a mix of letters, numbers, and symbols.");
+            setLoading(false);
+            return;
+        }
+
+        const compromised = await isPwned(password);
+        if (compromised) {
+            setError("This password has appeared in a data breach. Please choose a different one.");
+            setLoading(false);
+            return;
+        }
 
         const { data, error: authErr } = await supabase.auth.signUp({
             email,
@@ -58,19 +83,24 @@ function SignupForm() {
             return;
         }
 
-        // step 2: create org via API (service role will handle the insert)
+        // step 2: create org — pass session token so the API can verify identity
         if (data.user) {
+            const { data: { session } } = await supabase.auth.getSession();
+            const token = session?.access_token;
             const slug = orgName.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/(^-|-$)/g, "");
 
             try {
                 const res = await fetch("/api/onboard", {
                     method: "POST",
-                    headers: { "Content-Type": "application/json" },
+                    headers: {
+                        "Content-Type": "application/json",
+                        ...(token ? { "Authorization": `Bearer ${token}` } : {}),
+                    },
                     body: JSON.stringify({
                         user_id: data.user.id,
                         org_name: orgName,
                         slug,
-                        email, // passing email for Stripe/Resend
+                        email,
                         plan_tier: "explorer",
                     }),
                 });
@@ -85,7 +115,8 @@ function SignupForm() {
 
                 if (body.api_key) setApiKey(body.api_key);
 
-                if (body.checkout_url) {
+                // M5: only follow Stripe-owned URLs — prevents open redirect via compromised response
+                if (body.checkout_url && body.checkout_url.startsWith("https://checkout.stripe.com/")) {
                     window.location.href = body.checkout_url;
                     return;
                 }
@@ -97,13 +128,20 @@ function SignupForm() {
             }
         }
 
-        // show the "check your email" screen with the API key
         setDone(true);
         setLoading(false);
     };
 
     if (done) {
-        const dashUrl = process.env.NEXT_PUBLIC_DASHBOARD_URL || "https://app.atrosha.bond";
+        // L7: validate env var is a real URL before using as href
+        const rawDashUrl = process.env.NEXT_PUBLIC_DASHBOARD_URL || "https://app.atrosha.bond";
+        let dashUrl = "https://app.atrosha.bond";
+        try { new URL(rawDashUrl); dashUrl = rawDashUrl; } catch { /* bad env var */ }
+        const hostname = typeof window !== 'undefined' ? window.location.hostname : 'localhost';
+        const isProd = hostname.includes('atrosha.bond');
+        if (!isProd && dashUrl.includes('atrosha.bond')) {
+            dashUrl = "http://localhost:3001";
+        }
         return (
             <div className="flex flex-col items-center justify-center text-center py-6 animate-in fade-in zoom-in duration-500">
                 <div className="w-16 h-16 bg-green-500/10 dark:bg-green-500/20 text-green-600 dark:text-green-400 rounded-full flex items-center justify-center mb-6 ring-8 ring-green-500/5 dark:ring-green-500/10">
@@ -221,6 +259,7 @@ function SignupForm() {
                         onChange={(e) => setOrgName(e.target.value)}
                         placeholder="Acme Corp"
                         required
+                        autoComplete="organization"
                         className="w-full px-4 py-2.5 rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-surface-dark text-text-light dark:text-white placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-primary/50 text-sm transition-all"
                     />
                 </div>
@@ -234,6 +273,7 @@ function SignupForm() {
                         onChange={(e) => setEmail(e.target.value)}
                         placeholder="you@company.com"
                         required
+                        autoComplete="email"
                         className="w-full px-4 py-2.5 rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-surface-dark text-text-light dark:text-white placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-primary/50 text-sm transition-all"
                     />
                 </div>
@@ -248,28 +288,23 @@ function SignupForm() {
                         placeholder="Min 8 characters"
                         required
                         minLength={8}
+                        autoComplete="new-password"
                         className="w-full px-4 py-2.5 rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-surface-dark text-text-light dark:text-white placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-primary/50 text-sm transition-all"
                     />
-                    {password && (() => {
-                        let score = 0;
-                        if (password.length >= 8) score++;
-                        if (password.length >= 12) score++;
-                        if (/[0-9]/.test(password)) score++;
-                        if (/[^a-zA-Z0-9]/.test(password)) score++;
-                        const label = score <= 1 ? "Weak" : score <= 2 ? "Fair" : "Strong";
-                        const color = score <= 1 ? "bg-red-500" : score <= 2 ? "bg-yellow-500" : "bg-green-500";
-                        const width = score <= 1 ? "w-1/4" : score <= 2 ? "w-1/2" : "w-full";
-                        return (
-                            <div className="mt-1.5">
-                                <div className="h-1 rounded-full bg-gray-200 dark:bg-gray-700">
-                                    <div className={`h-1 rounded-full transition-all duration-300 ${color} ${width}`} />
-                                </div>
-                                <p className={`text-[11px] mt-0.5 ${score <= 1 ? "text-red-500" : score <= 2 ? "text-yellow-600" : "text-green-600"}`}>
-                                    {label}
-                                </p>
+                    {password && (
+                        <div className="mt-1.5">
+                            <div className="h-1 rounded-full bg-gray-200 dark:bg-gray-700">
+                                <div className={`h-1 rounded-full transition-all duration-300 ${
+                                    pwScore <= 1 ? "bg-red-500" : pwScore <= 2 ? "bg-yellow-500" : "bg-green-500"
+                                } ${
+                                    pwScore <= 1 ? "w-1/4" : pwScore <= 2 ? "w-1/2" : "w-full"
+                                }`} />
                             </div>
-                        );
-                    })()}
+                            <p className={`text-[11px] mt-0.5 ${pwScore <= 1 ? "text-red-500" : pwScore <= 2 ? "text-yellow-600" : "text-green-600"}`}>
+                                {pwScore <= 1 ? "Weak" : pwScore <= 2 ? "Fair" : "Strong"}
+                            </p>
+                        </div>
+                    )}
                 </div>
 
                 {error && (

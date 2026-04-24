@@ -8,11 +8,14 @@ export default function DevelopersPage() {
     const [loading, setLoading] = useState(false);
     const [showKey, setShowKey] = useState(false);
     const [copied, setCopied] = useState(false);
+    // M1: inline error state instead of alert()
+    const [keyError, setKeyError] = useState<string | null>(null);
 
     const regenerateKey = async () => {
         if (!confirm("Are you sure? This will INVALIDATE your old key immediately.")) return;
 
         setLoading(true);
+        setKeyError(null);
         try {
             const res = await fetch("/api/auth/regenerate-key", { method: "POST" });
             const data = await res.json();
@@ -20,10 +23,10 @@ export default function DevelopersPage() {
                 setApiKey(data.api_key);
                 setShowKey(true);
             } else {
-                alert("Failed to generate key: " + data.error);
+                setKeyError(data.error || "Failed to generate key.");
             }
         } catch {
-            alert("Error generating key");
+            setKeyError("Error connecting to server.");
         } finally {
             setLoading(false);
         }
@@ -113,6 +116,9 @@ export default function DevelopersPage() {
                                     {loading ? "Rolling..." : "Roll Key"}
                                 </button>
                             </div>
+                            {keyError && (
+                                <p style={{ fontSize: 11, color: "#ef4444", marginTop: 8 }}>{keyError}</p>
+                            )}
                             <p style={{ fontSize: 11, color: "var(--text-muted)", marginTop: 12, display: "flex", gap: 6 }}>
                                 <span style={{ color: "var(--yellow)" }}>⚠️</span>
                                 This key bypasses all policy checks. Never expose it in client-side code.
@@ -136,7 +142,8 @@ export default function DevelopersPage() {
                             </div>
                             <div className="quick-integration-right">
                                 <button
-                                    onClick={() => copyToClipboard(`curl -X POST https://kernel.atrosha.com/v1/chat/completions ...`)}
+                                    // L1: copy URL now matches the URL shown in the pre block below
+                                    onClick={() => copyToClipboard(`curl -X POST https://atrosha.onrender.com/proxy/ \\\n  -H "X-Atrosha-Agent-ID: agent_123" \\\n  -H "X-Atrosha-Target: https://api.stripe.com/v1/refunds" \\\n  -H "X-Atrosha-Signature: 7b8f2c...a91e" \\\n  -d '{ "charge": "ch_1Oz", "amount": 5000 }'`)}
                                     style={{ position: "absolute", top: 12, right: 12, background: "rgba(255,255,255,0.1)", border: "none", padding: 6, borderRadius: 4, cursor: "pointer", color: "#fff" }}
                                 >
                                     <Copy size={12} />

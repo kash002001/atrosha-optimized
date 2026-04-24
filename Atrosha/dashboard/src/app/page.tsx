@@ -19,6 +19,12 @@ export default async function Overview() {
   }
   const orgId = user.user_metadata?.org_id;
 
+  // M7: OAuth users who skipped onboarding won't have an org_id — send them to complete setup
+  if (!orgId) {
+    const loginBase = process.env.NEXT_PUBLIC_LOGIN_URL || "/login";
+    redirect(`${loginBase}?onboarding=required`);
+  }
+
   // Fetch Transactions
   const { data: transactions, error } = await supabase
     .from('transactions')
@@ -44,12 +50,28 @@ export default async function Overview() {
     .filter(t => t.status === 'denied')
     .reduce((sum, t) => sum + (t.amount || 0), 0);
 
-  // 3. Active Agents
-  const { count: agentCount } = await supabase
-    .from('agents')
-    .select('*', { count: 'exact', head: true })
-    .eq('organization_id', orgId);
-  const activeAgents = agentCount || 0;
+  // 3. Active Agents + security telemetry — run in parallel
+  const [agentRes, bypassRes, boundRes] = await Promise.all([
+    supabase
+      .from('agents')
+      .select('*', { count: 'exact', head: true })
+      .eq('organization_id', orgId),
+    // H1: real bypass count from security_events — was hardcoded 24,591
+    supabase
+      .from('security_events')
+      .select('*', { count: 'exact', head: true })
+      .eq('organization_id', orgId)
+      .eq('event_type', 'bypass_blocked'),
+    // H1: real bound violations count — was hardcoded 1,204
+    supabase
+      .from('security_events')
+      .select('*', { count: 'exact', head: true })
+      .eq('organization_id', orgId)
+      .eq('event_type', 'bound_violation'),
+  ]);
+  const activeAgents = agentRes.count || 0;
+  const bypassesBlocked = bypassRes.count ?? 0;
+  const boundViolations = boundRes.count ?? 0;
 
   // 4. Volume Chart Data (Real 24h historical aggregation)
   const chartBuckets: { t: string, approved: number, denied: number }[] = [];
@@ -204,7 +226,7 @@ export default async function Overview() {
               <span style={{ fontSize: 12, fontWeight: 600, color: "var(--red)", textTransform: "uppercase", letterSpacing: "0.5px", display: "flex", alignItems: "center", gap: 4 }}>
                 <ShieldAlert size={14} /> Bypasses Blocked
               </span>
-              <div className="stat-value" style={{ fontSize: 24, marginTop: 4, color: "var(--text)" }}>24,591</div>
+              <div className="stat-value" style={{ fontSize: 24, marginTop: 4, color: "var(--text)" }}>{bypassesBlocked.toLocaleString()}</div>
               <p style={{ fontSize: 12, color: "var(--text-muted)", marginTop: 4 }}>Self-Evolving Immune System</p>
             </div>
           </div>
@@ -228,7 +250,7 @@ export default async function Overview() {
               <span style={{ fontSize: 12, fontWeight: 600, color: "#8B5CF6", textTransform: "uppercase", letterSpacing: "0.5px", display: "flex", alignItems: "center", gap: 4 }}>
                 <Clock size={14} /> Bound Violations Prevented
               </span>
-              <div className="stat-value" style={{ fontSize: 24, marginTop: 4, color: "var(--text)" }}>1,204</div>
+              <div className="stat-value" style={{ fontSize: 24, marginTop: 4, color: "var(--text)" }}>{boundViolations.toLocaleString()}</div>
               <p style={{ fontSize: 12, color: "var(--text-muted)", marginTop: 4 }}>Temporal Logic Model Checker</p>
             </div>
           </div>

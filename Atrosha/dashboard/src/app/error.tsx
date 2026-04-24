@@ -26,8 +26,16 @@ export default function Error({
         }}>
             <h2 style={{ marginBottom: 16 }}>Something went wrong!</h2>
             <p style={{ color: "var(--text-muted)", marginBottom: 24, maxWidth: 400 }}>
-                {error.message || "An unexpected error occurred."}
+                {/* H2: don't leak internal error messages in production */}
+                {process.env.NODE_ENV === "development"
+                    ? error.message
+                    : "An unexpected error occurred. Please try again or contact support."}
             </p>
+            {error.digest && (
+                <p style={{ fontSize: 11, color: "var(--text-dim)", marginBottom: 24, fontFamily: "monospace" }}>
+                    Reference: {error.digest}
+                </p>
+            )}
             <button
                 className="btn-primary"
                 onClick={() => reset()}

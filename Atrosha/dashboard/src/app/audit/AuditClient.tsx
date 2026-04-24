@@ -1,8 +1,9 @@
 "use client";
 
 import { useEffect, useState, useCallback } from "react";
-import { ScrollText, Download, Clock, Zap, ShieldAlert, FileText, Lock } from "lucide-react";
+import { ScrollText, Download, Clock, Zap, ShieldAlert, FileText, Lock, type LucideIcon } from "lucide-react";
 import { useUser } from "../context/UserContext";
+import { createClient } from "@/lib/supabase-client";
 
 interface AuditEntry {
     id: number;
@@ -13,7 +14,8 @@ interface AuditEntry {
     actor: string;
 }
 
-const eventIcons: Record<string, any> = {
+// M1: LucideIcon instead of any
+const eventIcons: Record<string, LucideIcon> = {
     invoice_ingested: FileText,
     intent_locked: Lock,
     intent_authorized: Lock,
@@ -35,36 +37,44 @@ const eventColors: Record<string, string> = {
     rule_created: "#8b5cf6",
 };
 
-const mockAudit: AuditEntry[] = [
-    { id: 1, timestamp: new Date(Date.now() - 120000).toISOString(), event_type: "execution", session_id: "sess_k9x2m4", detail: "Payment $2,450.00 to Vercel Inc — Stripe charge ch_3Q2x...succeeded", actor: "sovereign-agent" },
-    { id: 2, timestamp: new Date(Date.now() - 300000).toISOString(), event_type: "intent_authorized", session_id: "sess_k9x2m4", detail: "Intent signed by Ed25519 key: 0x8b4f...a3e1 — amount=$2450, vendor=Vercel Inc", actor: "proxy-kernel" },
-    { id: 3, timestamp: new Date(Date.now() - 360000).toISOString(), event_type: "intent_locked", session_id: "sess_k9x2m4", detail: "Cryptographic lock acquired for session sess_k9x2m4 — TTL 300s", actor: "proxy-kernel" },
-    { id: 4, timestamp: new Date(Date.now() - 600000).toISOString(), event_type: "invoice_ingested", session_id: "sess_k9x2m4", detail: "Parsed invoice INV-2026-0847 from Vercel Inc — confidence: high, source: pdf-ocr", actor: "sovereign-agent" },
-    { id: 5, timestamp: new Date(Date.now() - 900000).toISOString(), event_type: "agent_registered", session_id: null, detail: "Agent 'payroll-bot' registered with daily limit $50,000 — pubkey: 0x7c2a...f891", actor: "admin" },
-    { id: 6, timestamp: new Date(Date.now() - 1200000).toISOString(), event_type: "payment_rejected", session_id: "sess_m2p8q1", detail: "Payment $87,500.00 to Unknown Corp DENIED — exceeds per-tx limit of $50,000", actor: "proxy-kernel" },
-    { id: 7, timestamp: new Date(Date.now() - 1500000).toISOString(), event_type: "rule_created", session_id: null, detail: "New intent proof: 'Allow all AWS invoices under $5000 automatically' — compiled to ALLOW policy", actor: "admin" },
-    { id: 8, timestamp: new Date(Date.now() - 1800000).toISOString(), event_type: "execution", session_id: "sess_j7n3w9", detail: "Payment $890.00 to AWS — Stripe charge ch_1Px9...succeeded", actor: "sovereign-agent" },
-    { id: 9, timestamp: new Date(Date.now() - 2100000).toISOString(), event_type: "intent_authorized", session_id: "sess_j7n3w9", detail: "Auto-approved by rule #12: amount < $5000 AND vendor in trusted_vendors", actor: "proxy-kernel" },
-    { id: 10, timestamp: new Date(Date.now() - 3600000).toISOString(), event_type: "invoice_ingested", session_id: "sess_j7n3w9", detail: "Parsed invoice INV-AWS-2026-0312 from Amazon Web Services — confidence: high, source: pdf-ocr", actor: "sovereign-agent" },
-    { id: 11, timestamp: new Date(Date.now() - 7200000).toISOString(), event_type: "execution", session_id: "sess_h2k9p4", detail: "Payment $12,800.00 to Stripe Atlas — Stripe charge ch_9Qk2...succeeded", actor: "sovereign-agent" },
-    { id: 12, timestamp: new Date(Date.now() - 10800000).toISOString(), event_type: "payment_rejected", session_id: "sess_r4t1v8", detail: "Payment $500.00 to unrecognized vendor DENIED — vendor not in allowlist, requires HITL approval", actor: "proxy-kernel" },
-];
-
 export default function AuditClient() {
-    const { entityId, role } = useUser();
+    const { orgId, entityId } = useUser();
     const [entries, setEntries] = useState<AuditEntry[]>([]);
+    const [allEntries, setAllEntries] = useState<AuditEntry[]>([]);
     const [loading, setLoading] = useState(true);
+    const [error, setError] = useState<string | null>(null);
     const [filter, setFilter] = useState<string>("");
 
+    // C1: real query against audit_logs table — no more mock data
+    const fetchAudit = useCallback(async () => {
+        if (!orgId) return;
+        setLoading(true);
+        setError(null);
+        try {
+            const supabase = createClient();
+            const { data, error: dbErr } = await supabase
+                .from("audit_logs")
+                .select("id, timestamp, event_type, session_id, detail, actor")
+                .eq("organization_id", orgId)
+                .order("timestamp", { ascending: false })
+                .limit(200);
+            if (dbErr) throw dbErr;
+            setAllEntries(data || []);
+        } catch (e: unknown) {
+            setError(e instanceof Error ? e.message : "Failed to load audit log");
+            setAllEntries([]);
+        }
+        setLoading(false);
+    }, [orgId]);
+
     useEffect(() => {
-        // slightly delayed to feel realistic
-        const t = setTimeout(() => {
-            const filtered = filter ? mockAudit.filter(e => e.event_type === filter) : mockAudit;
-            setEntries(filtered);
-            setLoading(false);
-        }, 400);
-        return () => clearTimeout(t);
-    }, [filter, entityId, role]);
+        fetchAudit();
+    }, [fetchAudit, entityId]);
+
+    // local filter — no extra DB round-trip for type filter
+    useEffect(() => {
+        setEntries(filter ? allEntries.filter(e => e.event_type === filter) : allEntries);
+    }, [filter, allEntries]);
 
     const exportCSV = () => {
         const header = "Timestamp,Event,Session,Detail,Actor\n";
@@ -77,9 +87,10 @@ export default function AuditClient() {
         a.href = url;
         a.download = `atrosha_audit_${new Date().toISOString().split("T")[0]}.csv`;
         a.click();
+        URL.revokeObjectURL(url);
     };
 
-    const eventTypes = [...new Set(mockAudit.map((e) => e.event_type))].sort();
+    const eventTypes = [...new Set(allEntries.map((e) => e.event_type))].sort();
 
     return (
         <div>
@@ -88,13 +99,13 @@ export default function AuditClient() {
                     <ScrollText size={22} style={{ color: "var(--primary)" }} />
                     <h2 style={{ margin: 0, fontSize: 20 }}>Audit Log</h2>
                     <span style={{ fontSize: 12, color: "var(--text-muted)", background: "var(--bg-card)", padding: "2px 8px", borderRadius: 4 }}>
-                        {entries.length} entries (Entity {entityId})
+                        {entries.length} entries
                     </span>
                 </div>
                 <div style={{ display: "flex", gap: 8 }}>
                     <select
                         value={filter}
-                        onChange={(e) => { setLoading(true); setFilter(e.target.value); }}
+                        onChange={(e) => setFilter(e.target.value)}
                         style={{
                             padding: "6px 10px", borderRadius: 6, fontSize: 12,
                             background: "var(--bg-card)", border: "1px solid var(--border)",
@@ -104,17 +115,28 @@ export default function AuditClient() {
                         <option value="">All events</option>
                         {eventTypes.map((t) => <option key={t} value={t}>{t.replace(/_/g, " ")}</option>)}
                     </select>
-                    <button onClick={exportCSV} className="btn-secondary" style={{ padding: "6px 12px", fontSize: 12, color: 'var(--text-muted)', border: '1px solid var(--border)', background: 'transparent', borderRadius: 6, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 4 }}>
+                    <button
+                        onClick={exportCSV}
+                        disabled={entries.length === 0}
+                        className="btn-secondary"
+                        style={{ padding: "6px 12px", fontSize: 12, color: "var(--text-muted)", border: "1px solid var(--border)", background: "transparent", borderRadius: 6, cursor: entries.length ? "pointer" : "not-allowed", display: "flex", alignItems: "center", gap: 4, opacity: entries.length ? 1 : 0.5 }}
+                    >
                         <Download size={14} /> Export
                     </button>
                 </div>
             </div>
 
+            {error && (
+                <div style={{ padding: "12px 16px", marginBottom: 16, borderRadius: 8, background: "rgba(239,68,68,0.08)", border: "1px solid rgba(239,68,68,0.2)", color: "#ef4444", fontSize: 13 }}>
+                    {error}
+                </div>
+            )}
+
             {loading ? (
-                <div style={{ textAlign: "center", padding: "3rem", color: "var(--text-muted)" }}>Loading...</div>
+                <div style={{ textAlign: "center", padding: "3rem", color: "var(--text-muted)" }}>Loading audit log...</div>
             ) : entries.length === 0 ? (
                 <div style={{ textAlign: "center", padding: "3rem", color: "var(--text-muted)" }}>
-                    No audit entries match this filter.
+                    {filter ? "No audit entries match this filter." : "No audit events recorded yet."}
                 </div>
             ) : (
                 <div style={{ display: "flex", flexDirection: "column", gap: 2 }}>
@@ -138,6 +160,9 @@ export default function AuditClient() {
                                     <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
                                         <span style={{ fontSize: 13, fontWeight: 600, color }}>{e.event_type.replace(/_/g, " ")}</span>
                                         <span style={{ fontSize: 11, color: "var(--text-muted)" }}>by {e.actor}</span>
+                                        {e.session_id && (
+                                            <span style={{ fontSize: 10, color: "var(--text-dim)", fontFamily: "monospace" }}>{e.session_id}</span>
+                                        )}
                                     </div>
                                     {e.detail && (
                                         <div style={{ fontSize: 12, color: "var(--text-muted)", fontFamily: "monospace", marginTop: 2, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>

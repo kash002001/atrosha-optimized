@@ -3,6 +3,7 @@
 import * as Sentry from "@sentry/nextjs";
 import Head from "next/head";
 import { useEffect, useState } from "react";
+import { notFound } from "next/navigation";
 
 class SentryExampleFrontendError extends Error {
   constructor(message: string | undefined) {
@@ -12,6 +13,10 @@ class SentryExampleFrontendError extends Error {
 }
 
 export default function Page() {
+  // L5: never expose this page in production
+  if (process.env.NODE_ENV === "production") notFound();
+
+
   const [hasSentError, setHasSentError] = useState(false);
   const [isConnected, setIsConnected] = useState(true);
 
