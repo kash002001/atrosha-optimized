@@ -228,12 +228,49 @@ function SignupForm() {
                     onClick={() => {
                         setLoading(true);
                         setError("");
-                        supabase.auth.signInWithOAuth({
-                            provider: 'google',
-                            options: { redirectTo: `${window.location.origin}/auth/callback` },
-                        }).then(({ error: authErr }) => {
-                            if (authErr) { setError("Google sign in failed."); setLoading(false); }
-                        });
+                        const clientId = process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID || "188135681276-a8hku6v826enktucikvvjjrlst2up31k.apps.googleusercontent.com";
+
+                        const doLogin = () => {
+                            const g = (window as any).google;
+                            if (!g?.accounts?.id) { setError("Google sign-in unavailable."); setLoading(false); return; }
+
+                            g.accounts.id.initialize({
+                                client_id: clientId,
+                                callback: async (response: any) => {
+                                    if (!response.credential) { setError("Google sign-in cancelled."); setLoading(false); return; }
+                                    const { error: tokenErr } = await supabase.auth.signInWithIdToken({
+                                        provider: 'google',
+                                        token: response.credential,
+                                    });
+                                    if (tokenErr) { setError("Sign up failed. Please try again."); setLoading(false); return; }
+                                    const isProd = window.location.hostname.includes('atrosha.bond');
+                                    window.location.replace(isProd ? "https://app.atrosha.bond" : "http://localhost:3001");
+                                },
+                            });
+
+                            g.accounts.id.prompt((n: any) => {
+                                if (n.isNotDisplayed() || n.isSkippedMoment()) {
+                                    // fallback to supabase redirect if one-tap blocked
+                                    supabase.auth.signInWithOAuth({
+                                        provider: 'google',
+                                        options: { redirectTo: `${window.location.origin}/auth/callback` },
+                                    }).then(({ error: authErr }) => {
+                                        if (authErr) { setError("Google sign in failed."); setLoading(false); }
+                                    });
+                                }
+                            });
+                        };
+
+                        if ((window as any).google?.accounts?.id) {
+                            doLogin();
+                        } else {
+                            const s = document.createElement('script');
+                            s.src = 'https://accounts.google.com/gsi/client';
+                            s.async = true;
+                            s.onload = doLogin;
+                            s.onerror = () => { setError("Failed to load Google sign-in."); setLoading(false); };
+                            document.head.appendChild(s);
+                        }
                     }}
                     disabled={loading}
                     className="w-full flex items-center justify-center gap-3 bg-white dark:bg-surface-dark border border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-800 text-text-light dark:text-white px-4 py-2.5 rounded-lg text-sm font-medium transition-all focus:outline-none focus:ring-2 focus:ring-primary/50"

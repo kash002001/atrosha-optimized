@@ -80,36 +80,96 @@ export default function LoginPage() {
         setLoading(false);
     };
 
-    const handleOAuthLogin = async (provider: 'google') => {
+    const handleGoogleLogin = () => {
         setLoading(true);
         setError("");
-        
-        const hostname = typeof window !== 'undefined' ? window.location.hostname : 'localhost';
-        const cookieDomain = hostname.includes('atrosha.bond') ? '.atrosha.bond' : undefined;
 
-        const supabase = createBrowserClient(
-            process.env.NEXT_PUBLIC_SUPABASE_URL || "https://placeholder.supabase.co",
-            process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || "placeholder",
-            {
-                cookieOptions: {
-                    domain: cookieDomain,
-                    path: '/',
-                    sameSite: 'lax',
-                    secure: typeof window !== 'undefined' && window.location.protocol === 'https:',
-                }
+        const clientId = process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID || "188135681276-a8hku6v826enktucikvvjjrlst2up31k.apps.googleusercontent.com";
+
+        // load GIS script if not already loaded
+        const doLogin = () => {
+            const google = (window as any).google;
+            if (!google?.accounts?.id) {
+                setError("Google sign-in unavailable. Please try again.");
+                setLoading(false);
+                return;
             }
-        );
 
-        const { error: authErr } = await supabase.auth.signInWithOAuth({
-            provider,
-            options: {
-                redirectTo: `${window.location.origin}/auth/callback`,
-            },
-        });
+            google.accounts.id.initialize({
+                client_id: clientId,
+                callback: async (response: any) => {
+                    if (!response.credential) {
+                        setError("Google sign-in was cancelled.");
+                        setLoading(false);
+                        return;
+                    }
 
-        if (authErr) {
-            setError("OAuth sign in failed. Please try again.");
-            setLoading(false);
+                    const supabase = createBrowserClient(
+                        process.env.NEXT_PUBLIC_SUPABASE_URL || "https://placeholder.supabase.co",
+                        process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || "placeholder"
+                    );
+
+                    const { error: tokenErr } = await supabase.auth.signInWithIdToken({
+                        provider: 'google',
+                        token: response.credential,
+                    });
+
+                    if (tokenErr) {
+                        setError("Sign in failed. Please try again.");
+                        setLoading(false);
+                        return;
+                    }
+
+                    const hostname = window.location.hostname;
+                    const isProd = hostname.includes('atrosha.bond');
+                    const dashUrl = isProd ? "https://app.atrosha.bond" : "http://localhost:3001";
+                    window.location.replace(dashUrl);
+                },
+            });
+
+            // trigger the one-tap / popup prompt
+            google.accounts.id.prompt((notification: any) => {
+                if (notification.isNotDisplayed() || notification.isSkippedMoment()) {
+                    // one-tap blocked (e.g. incognito) — fall back to button-based popup
+                    google.accounts.id.renderButton(
+                        document.createElement('div'),
+                        { type: 'standard' }
+                    );
+                    // use the redirect flow as last resort
+                    google.accounts.oauth2.initCodeClient({
+                        client_id: clientId,
+                        scope: 'email profile',
+                        ux_mode: 'popup',
+                        callback: async (resp: any) => {
+                            if (resp.error) {
+                                setError("Google sign-in was cancelled.");
+                                setLoading(false);
+                                return;
+                            }
+                            // code flow needs server exchange — fall back to supabase redirect
+                            const supabase = createBrowserClient(
+                                process.env.NEXT_PUBLIC_SUPABASE_URL || "https://placeholder.supabase.co",
+                                process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || "placeholder"
+                            );
+                            await supabase.auth.signInWithOAuth({
+                                provider: 'google',
+                                options: { redirectTo: `${window.location.origin}/auth/callback` },
+                            });
+                        },
+                    }).requestCode();
+                }
+            });
+        };
+
+        if ((window as any).google?.accounts?.id) {
+            doLogin();
+        } else {
+            const script = document.createElement('script');
+            script.src = 'https://accounts.google.com/gsi/client';
+            script.async = true;
+            script.onload = doLogin;
+            script.onerror = () => { setError("Failed to load Google sign-in."); setLoading(false); };
+            document.head.appendChild(script);
         }
     };
 
@@ -136,7 +196,7 @@ export default function LoginPage() {
                 <div className="flex flex-col gap-4 mb-6">
                     <button
                         type="button"
-                        onClick={() => handleOAuthLogin('google')}
+                        onClick={() => handleGoogleLogin()}
                         disabled={loading}
                         className="w-full flex items-center justify-center gap-3 bg-white dark:bg-surface-dark border border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-800 text-text-light dark:text-white px-4 py-2.5 rounded-lg text-sm font-medium transition-all focus:outline-none focus:ring-2 focus:ring-primary/50"
                     >
