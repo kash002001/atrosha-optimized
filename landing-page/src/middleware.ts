@@ -15,12 +15,43 @@ export async function middleware(req: NextRequest) {
     res.headers.set("Referrer-Policy", "strict-origin-when-cross-origin");
     res.headers.set("Strict-Transport-Security", "max-age=31536000; includeSubDomains; preload");
 
-    // supabase sometimes drops ?code= on the wrong page — catch it and forward to the callback route
+    // supabase drops ?code= on the root page when it rejects the redirectTo — handle the exchange inline
     const authCode = req.nextUrl.searchParams.get('code');
-    if (authCode && path !== '/auth/callback') {
-        const callbackUrl = new URL('/auth/callback', req.url);
-        callbackUrl.searchParams.set('code', authCode);
-        return NextResponse.redirect(callbackUrl);
+    if (authCode && path !== '/auth/callback' && process.env.NEXT_PUBLIC_SUPABASE_URL && process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY) {
+        if (authCode.length <= 512 && /^[\w\-]+$/.test(authCode)) {
+            const hostname = req.headers.get('host') || 'localhost';
+            const prodHost = hostname.includes('atrosha.bond');
+            const cookieDomain = prodHost ? '.atrosha.bond' : undefined;
+
+            const exchangeRes = NextResponse.redirect(
+                new URL(prodHost ? 'https://app.atrosha.bond' : 'http://localhost:3001', req.url)
+            );
+
+            const supaExchange = createServerClient(
+                process.env.NEXT_PUBLIC_SUPABASE_URL,
+                process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY,
+                {
+                    cookies: {
+                        getAll() { return req.cookies.getAll(); },
+                        setAll(cookiesToSet) {
+                            cookiesToSet.forEach(({ name, value, options }) => {
+                                exchangeRes.cookies.set(name, value, {
+                                    ...options,
+                                    domain: cookieDomain,
+                                    path: '/',
+                                    sameSite: 'lax',
+                                    secure: prodHost,
+                                });
+                            });
+                        },
+                    },
+                }
+            );
+
+            const { error: exchErr } = await supaExchange.auth.exchangeCodeForSession(authCode);
+            if (!exchErr) return exchangeRes;
+            // exchange failed — fall through to normal page load
+        }
     }
 
     if (path.startsWith('/api/')) {
